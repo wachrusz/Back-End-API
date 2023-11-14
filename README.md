@@ -1,10 +1,41 @@
 # Back-End-API
+
 API для разработки приложения на android ios
-# **RESTful API Документация**
+
+## **RESTful API Документация**
 
 Добро пожаловать в документацию для RESTful API бекенда мобильного приложения. Этот API предоставляет доступ к функциям авторизации, управлению профилем, истории пользователя и данным по категориям.
 
 ## **Аутентификация**
+
+### **Регистрация пользователя (`POST /user/register`)**
+
+Регистрация нового пользователя в системе сопровождается генерацией API-ключа для него.
+
+**Параметры запроса:**
+
+- **`username`**: Имя нового пользователя
+- **`password`**: Пароль нового пользователя
+
+**Пример запроса:**
+
+```bash
+bashCopy code
+curl -X POST
+  <optional>-H "Content-Type: application/x-www-form-urlencoded"
+  -d "username=newuser&password=newpassword"
+  http://localhost:8080/user/register
+
+```
+
+**Обработка ошибок:**
+
+- **`200 OK`**: Успешная регистрация
+- **`400 Bad Request`**: Ошибка регистрации, например, дублирование имени пользователя
+
+**Логирование ошибок:**
+
+Логируются ошибки, связанные с некорректными параметрами запроса или дублированием имени пользователя.
 
 ### **Вход в систему (`POST /auth/login`)**
 
@@ -19,7 +50,7 @@ API для разработки приложения на android ios
 
 ```bash
 
-curl -X POST -d "username=user&password=pass" http://localhost:8080/auth/login
+curl -X POST -d "username=user&password=pass" -H "API-Key: ваш-ключ" http://localhost:8080/auth/login
 
 ```
 

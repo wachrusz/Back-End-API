@@ -14,7 +14,7 @@ func RegisterHandlers(router *mux.Router) {
 }
 
 func GetAnalytics(w http.ResponseWriter, r *http.Request) {
-	//TODO: Реализация логики получения данных по категории "Аналитика"
+	//TODO Реализация логики получения данных по категории "Аналитика"
 
 	// В данном примере просто возвращаем успешный ответ
 	w.WriteHeader(http.StatusOK)
@@ -22,7 +22,7 @@ func GetAnalytics(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetTracker(w http.ResponseWriter, r *http.Request) {
-	//TODO: Реализация логики получения данных по категории "Трекер"
+	//TODO Реализация логики получения данных по категории "Трекер"
 
 	// В данном примере просто возвращаем успешный ответ
 	w.WriteHeader(http.StatusOK)
@@ -30,7 +30,7 @@ func GetTracker(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetSettings(w http.ResponseWriter, r *http.Request) {
-	//TODO: Реализация логики получения данных по категории "Настройки"
+	//TODO Реализация логики получения данных по категории "Настройки"
 	// В данном примере просто возвращаем успешный ответ
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Settings data"))

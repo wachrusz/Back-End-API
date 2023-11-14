@@ -36,7 +36,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	//TODO: Реализация логики обновления профиля
+	//TODO Реализация логики обновления профиля
 
 	// В данном примере просто возвращаем успешный ответ
 	w.WriteHeader(http.StatusOK)
