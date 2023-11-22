@@ -7,9 +7,14 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Database структура представляет соединение с базой данных.
 type Database struct {
 	*sql.DB
+}
+
+var GlobalDB *Database
+
+func SetDB(db *Database) {
+	GlobalDB = db
 }
 
 // Init инициализирует соединение с базой данных.

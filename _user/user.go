@@ -19,24 +19,22 @@ type User struct {
 
 // mutex - мьютекс для безопасного доступа к мапе Users
 var (
-	mutex    sync.Mutex
-	globalDB *mydb.Database
+	mutex sync.Mutex
 )
 
-func SetDB(db *mydb.Database) {
-	globalDB = db
-}
-
 // RegisterUser - функция для регистрации нового пользователя
-func RegisterUser(username, password string) error {
+func RegisterUser(username, name, password string) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// Проверка, что пользователь с таким именем не существует
 	if _, exists := GetUserByUsername(username); exists {
 		errMsg := "User with username " + username + " already exists"
 		logger.ErrorLogger.Println(errMsg)
 		return errors.New("Already exists")
+	}
+
+	if username == "" || name == "" || password == "" {
+		return errors.New("Blank fields are not allowed")
 	}
 
 	hashedPassword, err := HashPassword(password)
@@ -44,7 +42,7 @@ func RegisterUser(username, password string) error {
 		return err
 	}
 
-	_, err = globalDB.Exec("INSERT INTO users (username, hashed_password) VALUES ($1, $2)", username, hashedPassword)
+	_, err = mydb.GlobalDB.Exec("INSERT INTO users (username, hashed_password, name) VALUES ($1, $2, $3)", username, hashedPassword, name)
 	if err != nil {
 		logger.ErrorLogger.Println("Error inserting user:", err)
 		return err
@@ -68,7 +66,7 @@ func GetUserByUsername(username string) (User, bool) {
 	var user User
 	var id int
 
-	row := globalDB.QueryRow("SELECT id, username, hashed_password FROM users WHERE username = $1", username)
+	row := mydb.GlobalDB.QueryRow("SELECT id, username, hashed_password FROM users WHERE username = $1", username)
 	err := row.Scan(&id, &user.Username, &user.HashedPassword)
 	if err == sql.ErrNoRows {
 		return user, false
