@@ -1,10 +1,14 @@
 package auth
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
+	"strconv"
+	"sync"
 
 	logger "backEndAPI/_logger"
-	mydb "backEndAPI/_mydatabase"
 	user "backEndAPI/_user"
 
 	"github.com/gorilla/mux"
@@ -12,12 +16,18 @@ import (
 )
 
 var (
-	globalDB     *mydb.Database
-	secretAPIKey string
+	secretAPIKey          string
+	sessionMutex          sync.Mutex
+	globalCurrentDeviceID string
 )
 
-func SetDB(db *mydb.Database) {
-	globalDB = db
+const (
+	SessionName = "session-name"
+	deviceIDKey = "deviceID"
+)
+
+func setUserIDInContext(ctx context.Context, userID int) context.Context {
+	return context.WithValue(ctx, "Key", userID)
 }
 
 func RegisterHandlers(router *mux.Router) {
@@ -25,50 +35,29 @@ func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/logout", Logout).Methods("POST")
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	var (
-		username string
-		password string
-	)
-
-	username = r.FormValue("username")
-	password = r.FormValue("password")
-
-	// Проверка наличия логина и пароля в запросе
-	if username == "" || password == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Missing username or password"))
-		logger.ErrorLogger.Printf("Missing username or password in login request from %s\n", r.RemoteAddr)
-		return
-	}
-
-	// Проверка правильности логина и пароля (реализуйте свою логику проверки)
-	if !isValidCredentials(username, password) {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid username or password"))
-		logger.ErrorLogger.Printf("Invalid username or password in login request from %s\n", r.RemoteAddr)
-		return
-	}
-
-	// Добавляем поддержку API-ключа
-	apiKey := r.Header.Get("API-Key")
-	if apiKey != secretAPIKey {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid API key"))
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login successful"))
-
-	logger.InfoLogger.Printf("User %s logged in from %s\n", username, r.RemoteAddr)
+func setGlobalCurrentDeviceID(deviceID string) {
+	globalCurrentDeviceID = deviceID
+	log.Print("setGlobalCurrentDeviceID: ", globalCurrentDeviceID)
 }
 
-func Logout(w http.ResponseWriter, r *http.Request) {
-	//TODO Реализация логики выхода
-	//TODO Добавить логику завершения сеанса пользователя
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logout successful"))
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		deviceID := GetDeviceIDFromRequest(r)
+		userID, err := GetUserIDFromSessionDatabase(deviceID)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error getting session: %v", err), http.StatusInternalServerError)
+			logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
+			return
+		}
+		if !IsUserActive(userID) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		intUserID, _ := strconv.Atoi(userID)
+		r = r.WithContext(setUserIDInContext(r.Context(), intUserID))
+
+		next.ServeHTTP(w, r)
+	}
 }
 
 func SetAPIKey(apiKey string) {
