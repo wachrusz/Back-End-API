@@ -20,7 +20,6 @@ API для разработки приложения на android ios
 **Пример запроса:**
 
 ```bash
-bashCopy code
 curl -X POST
   <optional>-H "Content-Type: application/x-www-form-urlencoded"
   -d "username=newuser&password=newpassword"
