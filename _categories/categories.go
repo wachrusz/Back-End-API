@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package categories provides functionality related to user analytics, tracking, and additional information.
 package categories
 
 import (
@@ -9,23 +13,35 @@ import (
 	"log"
 )
 
+// Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
 type Analytics struct {
 	Income     []models.Income
 	Expense    []models.Expense
 	WealthFund []models.WealthFund
 }
 
+// Tracker represents the structure for tracking data, including tracking state and goals.
 type Tracker struct {
 	TrackingState models.TrackingState
 	Goal          []models.Goal
 	//! TODO: FinHealth models.FinHealth
 }
 
+// More represents additional user information, including app and settings details.
 type More struct {
 	App      models.App
 	Settings models.Settings
 }
 
+// @Summary Get user analytics from the database
+// @Description Get income, expense, and wealth fund data for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} Analytics "User analytics data"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/analytics/{userID} [get]
 func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 
 	queryIncome := "SELECT id, amount, date, planned FROM income WHERE user_id = $1"
@@ -87,6 +103,16 @@ func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 	return analytics, nil
 }
 
+// @Summary Get user tracker data from the database
+// @Description Get tracking state and goal data for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Param analytics body Analytics true "User analytics data"
+// @Success 200 {object} Tracker "User tracker data"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/tracker/{userID} [get]
 func GetTrackerFromDB(userID string, analytics *Analytics) (*Tracker, error) {
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1"
 	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID)
@@ -129,6 +155,15 @@ func getTotalState(analytics *Analytics) float64 {
 	return Sum
 }
 
+// @Summary Get user information from the database
+// @Description Get username and name information for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} string "User information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/userinfo/{userID} [get]
 func GetUserInfoFromDB(userID string) (string, string, error) {
 	query := "SELECT username, name FROM users WHERE id = $1"
 	var username, name string
@@ -143,6 +178,15 @@ func GetUserInfoFromDB(userID string) (string, string, error) {
 	return username, name, nil
 }
 
+// @Summary Get additional user information from the database
+// @Description Get more details, including app and settings information, for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} More "Additional user information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/more/{userID} [get]
 func GetMoreFromDB(userID string) (*More, error) {
 	var more More
 
@@ -167,6 +211,15 @@ func GetMoreFromDB(userID string) (*More, error) {
 	return &more, nil
 }
 
+// @Summary Get app information from the database
+// @Description Get app details, including connected accounts, category settings, and operation archive, for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.App "App information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/app/{userID} [get]
 func GetAppFromDB(userID string) (*models.App, error) {
 	connectedAccounts, err := GetConnectedAccountsFromDB(userID)
 	if err != nil {
@@ -192,6 +245,15 @@ func GetAppFromDB(userID string) (*models.App, error) {
 	return app, nil
 }
 
+// @Summary Get subscription information from the database
+// @Description Get subscription details for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.Subscription "Subscription information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/subscription/{userID} [get]
 func GetSubscriptionFromDB(userID string) (*models.Subscription, error) {
 	var subscription models.Subscription
 
@@ -207,12 +269,30 @@ func GetSubscriptionFromDB(userID string) (*models.Subscription, error) {
 	return &subscription, nil
 }
 
+// @Summary Get connected accounts information from the database
+// @Description Get connected accounts details for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} []models.ConnectedAccount "Connected accounts information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/connectedaccounts/{userID} [get]
 func GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error) {
 	// Здесь реализация получения связанных счетов из базы данных
 	//! TODO
 	return []models.ConnectedAccount{}, nil
 }
 
+// @Summary Get category settings information from the database
+// @Description Get category settings, including income, expense, and investment category details, for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} models.CategorySettings "Category settings information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/categorysettings/{userID} [get]
 func GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error) {
 	var categorySettings models.CategorySettings
 
@@ -280,6 +360,15 @@ func GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error) 
 	return &categorySettings, nil
 }
 
+// @Summary Get operation archive information from the database
+// @Description Get operation archive details for a specific user from the database.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {object} []models.Operation "Operation archive information"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /categories/operationarchive/{userID} [get]
 func GetOperationArchiveFromDB(userID string) ([]models.Operation, error) {
 	// Здесь реализация получения архива операций из базы данных
 	//! TODO

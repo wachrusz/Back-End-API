@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package handlers provides http functionality.
 package handlers
 
 import (
@@ -6,7 +10,16 @@ import (
 	"net/http"
 )
 
-// CreateSubscriptionHandler обрабатывает запрос на создание категории расходов.
+// @Summary Create a subscription
+// @Description Create a new subscription.
+// @Tags Settings
+// @Accept json
+// @Produce json
+// @Param subscription body models.Subscription true "Subscription object"
+// @Success 201 {string} string "Subscription created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating subscription"
+// @Router /settings/subscription [post]
 func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	var subscription models.Subscription
 

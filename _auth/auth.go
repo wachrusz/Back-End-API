@@ -1,7 +1,13 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package auth provides authentication and authorization functionality.
 package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -60,8 +66,29 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SetAPIKey(apiKey string) {
-	secretAPIKey = apiKey
+func SetAPIKey() (string, error) {
+	apiKey, err := generateAPIKey()
+	if err != nil {
+		return "", err
+	}
+
+	log.Println(apiKey)
+
+	return apiKey, nil
+}
+
+func generateAPIKey() (string, error) {
+	// Генерируем случайные байты для ключа
+	keyBytes := make([]byte, 32)
+	_, err := rand.Read(keyBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Преобразуем байты в строку шестнадцатеричного формата
+	apiKey := hex.EncodeToString(keyBytes)
+
+	return apiKey, nil
 }
 
 func GetAPIKey() string {

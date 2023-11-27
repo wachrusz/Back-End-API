@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package models provides basic financial models functionality.
 package models
 
 import (
@@ -15,6 +19,16 @@ type Subscription struct {
 	IsActive  bool   `json:"is_active"`
 }
 
+// @Summary Create subscription
+// @Description Create a new subscription entry.
+// @Tags Subscription
+// @Accept json
+// @Produce json
+// @Param subscription body Subscription true "Subscription details"
+// @Success 201 {string} string "Subscription created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating subscription"
+// @Router /models/subscription [post]
 func CreateSubscription(subscription *Subscription) error {
 	parsedDateStart, err := time.Parse("2006-01-02", subscription.StartDate)
 	if err != nil {

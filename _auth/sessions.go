@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package auth provides authentication and authorization functionality.
 package auth
 
 import (
@@ -21,7 +25,12 @@ var (
 	activeMu    sync.Mutex
 )
 
-// ACTIVE USER
+// @Title Get active user sessions
+// @Description Get information about active user sessions.
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} map[string]ActiveUser "List of active user sessions"
+// @Router /auth/sessions [get]
 func InitActiveUsers() {
 	var query string = "SELECT user_id, username, device_id FROM sessions"
 	rows, err := mydb.GlobalDB.Query(query)

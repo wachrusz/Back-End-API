@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package handlers provides http functionality.
 package handlers
 
 /*
