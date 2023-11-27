@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package handlers provides http functionality.
 package handlers
 
 import (
@@ -6,7 +10,16 @@ import (
 	"net/http"
 )
 
-// CreateExpenseCategoryHandler обрабатывает запрос на создание категории расходов.
+// @Summary Create an expense category
+// @Description Create a new expense category.
+// @Tags App
+// @Accept json
+// @Produce json
+// @Param category body models.ExpenseCategory true "Expense category object"
+// @Success 201 {string} string "Expense category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating expense category"
+// @Router /app/category/expense [post]
 func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.ExpenseCategory
 
@@ -25,7 +38,16 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Expense category created successfully"))
 }
 
-// CreateIncomeCategoryHandler обрабатывает запрос на создание категории доходов.
+// @Summary Create an income category
+// @Description Create a new income category.
+// @Tags App
+// @Accept json
+// @Produce json
+// @Param category body models.IncomeCategory true "Income category object"
+// @Success 201 {string} string "Income category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating income category"
+// @Router /app/category/income [post]
 func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.IncomeCategory
 
@@ -44,6 +66,16 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Income category created successfully"))
 }
 
+// @Summary Create an investment category
+// @Description Create a new investment category.
+// @Tags App
+// @Accept json
+// @Produce json
+// @Param category body models.InvestmentCategory true "Investment category object"
+// @Success 201 {string} string "Investment category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating investment category"
+// @Router /app/category/investment [post]
 func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.InvestmentCategory
 

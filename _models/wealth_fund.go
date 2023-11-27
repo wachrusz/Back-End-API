@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package models provides basic financial models functionality.
 package models
 
 import (
@@ -13,6 +17,16 @@ type WealthFund struct {
 	UserID string  `json:"user_id"`
 }
 
+// @Summary Create wealth fund entry
+// @Description Create a new wealth fund entry.
+// @Tags WealthFund
+// @Accept json
+// @Produce json
+// @Param wealthFund body WealthFund true "Wealth fund details"
+// @Success 201 {string} string "Wealth fund created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating wealth fund"
+// @Router /models/wealth-fund [post]
 func CreateWealthFund(wealthFund *WealthFund) error {
 	parsedDate, err := time.Parse("2006-01-02", wealthFund.Date)
 	if err != nil {
@@ -29,6 +43,14 @@ func CreateWealthFund(wealthFund *WealthFund) error {
 	return nil
 }
 
+// @Summary Get wealth funds by user ID
+// @Description Get a list of wealth funds for a specific user.
+// @Tags WealthFund
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {array} WealthFund "List of wealth funds"
+// @Failure 500 {string} string "Error querying wealth funds"
+// @Router /models/wealth-fund/{userID} [get]
 func GetWealthFundsByUserID(userID string) ([]WealthFund, error) {
 	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date FROM wealthFund WHERE user_id = $1", userID)
 	if err != nil {

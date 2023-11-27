@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package handlers provides http functionality.
 package handlers
 
 import (
@@ -9,6 +13,17 @@ import (
 	"net/http"
 )
 
+// @Summary Create an income
+// @Description Create a new income.
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Param income body models.Income true "Income object"
+// @Success 201 {string} string "Income created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 401 {string} string "User not authenticated"
+// @Failure 500 {string} string "Error creating income"
+// @Router /analytics/income [post]
 func CreateIncomeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Started CreateIncomeHandler")
 	var income models.Income

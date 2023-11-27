@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package models provides basic financial models functionality.
 package models
 
 import (
@@ -15,6 +19,16 @@ type Expense struct {
 	UserID  string  `json:"user_id"`
 }
 
+// @Summary Create expense entry
+// @Description Create a new expense entry.
+// @Tags Expense
+// @Accept json
+// @Produce json
+// @Param expense body Expense true "Expense details"
+// @Success 201 {string} string "Expense created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating expense"
+// @Router /analytics/expence [post]
 func CreateExpense(expense *Expense) error {
 	parsedDate, err := time.Parse("2006-01-02", expense.Date)
 	if err != nil {
@@ -30,7 +44,14 @@ func CreateExpense(expense *Expense) error {
 	return nil
 }
 
-// GetExpensesByUserID возвращает список записей о доходе для определенного пользователя.
+// @Summary Get expenses by user ID
+// @Description Get a list of expenses for a specific user.
+// @Tags Expense
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {array} Expense "List of expenses"
+// @Failure 500 {string} string "Error querying expenses"
+// @Router /analytics/expence/{userID} [get]
 func GetExpensesByUserID(userID string) ([]Expense, error) {
 	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned FROM expense WHERE user_id = $1", userID)
 	if err != nil {

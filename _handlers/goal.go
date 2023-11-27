@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package handlers provides http functionality.
 package handlers
 
 import (
@@ -9,6 +13,17 @@ import (
 	"net/http"
 )
 
+// @Summary Create a goal
+// @Description Create a new goal.
+// @Tags Tracker
+// @Accept json
+// @Produce json
+// @Param goal body models.Goal true "Goal object"
+// @Success 201 {string} string "Goal created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 401 {string} string "User not authenticated"
+// @Failure 500 {string} string "Error creating goal"
+// @Router /tracker/goal [post]
 func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Started CreateGoalHandler")
 	var goal models.Goal

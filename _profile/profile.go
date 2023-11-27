@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package profile provides profile information and it's functionality.
 package profile
 
 import (
@@ -27,6 +31,14 @@ func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/profile/get", GetProfile).Methods("GET")
 }
 
+// @Summary Get user profile
+// @Description Get the user profile for the authenticated user.
+// @Tags Profile
+// @Produce json
+// @Success 200 {string} string "User profile retrieved successfully"
+// @Failure 401 {string} string "User not authenticated"
+// @Failure 500 {string} string "Error getting user profile"
+// @Router /profile/get [get]
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	deviceID := auth.GetDeviceIDFromRequest(r)
 

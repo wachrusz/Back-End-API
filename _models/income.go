@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package models provides basic financial models functionality.
 package models
 
 import (
@@ -15,6 +19,16 @@ type Income struct {
 	UserID  string  `json:"user_id"`
 }
 
+// @Summary Create income entry
+// @Description Create a new income entry.
+// @Tags Income
+// @Accept json
+// @Produce json
+// @Param income body Income true "Income details"
+// @Success 201 {string} string "Income created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating income"
+// @Router /models/income [post]
 func CreateIncome(income *Income) error {
 	parsedDate, err := time.Parse("2006-01-02", income.Date)
 	if err != nil {
@@ -30,7 +44,14 @@ func CreateIncome(income *Income) error {
 	return nil
 }
 
-// GetIncomesByUserID возвращает список записей о доходе для определенного пользователя.
+// @Summary Get incomes by user ID
+// @Description Get a list of incomes for a specific user.
+// @Tags Income
+// @Produce json
+// @Param userID path string true "User ID"
+// @Success 200 {array} Income "List of incomes"
+// @Failure 500 {string} string "Error querying incomes"
+// @Router /models/income/{userID} [get]
 func GetIncomesByUserID(userID string) ([]Income, error) {
 	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned FROM income WHERE user_id = $1", userID)
 	if err != nil {

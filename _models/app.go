@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package models provides basic financial models functionality.
 package models
 
 import (
@@ -62,6 +66,16 @@ type InvestmentCategory struct {
 	UserID     string `json:"user_id"`
 }
 
+// @Summary Create income category
+// @Description Create a new income category.
+// @Tags Income
+// @Accept json
+// @Produce json
+// @Param category body IncomeCategory true "Income category details"
+// @Success 201 {string} string "Income category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating income category"
+// @Router /models/income/category [post]
 func CreateIncomeCategory(category *IncomeCategory) error {
 	_, err := mydb.GlobalDB.Exec("INSERT INTO income_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
 		category.Name, category.Icon, category.IsConstant, category.UserID)
@@ -72,6 +86,16 @@ func CreateIncomeCategory(category *IncomeCategory) error {
 	return nil
 }
 
+// @Summary Create expense category
+// @Description Create a new expense category.
+// @Tags Expense
+// @Accept json
+// @Produce json
+// @Param category body ExpenseCategory true "Expense category details"
+// @Success 201 {string} string "Expense category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating expense category"
+// @Router /models/expense/category [post]
 func CreateExpenseCategory(category *ExpenseCategory) error {
 	log.Println("category: ", category)
 	_, err := mydb.GlobalDB.Exec("INSERT INTO expense_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
@@ -83,6 +107,16 @@ func CreateExpenseCategory(category *ExpenseCategory) error {
 	return nil
 }
 
+// @Summary Create investment category
+// @Description Create a new investment category.
+// @Tags Investment
+// @Accept json
+// @Produce json
+// @Param category body InvestmentCategory true "Investment category details"
+// @Success 201 {string} string "Investment category created successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error creating investment category"
+// @Router /models/investment/category [post]
 func CreateInvestmentCategory(category *InvestmentCategory) error {
 	_, err := mydb.GlobalDB.Exec("INSERT INTO investment_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
 		category.Name, category.Icon, category.IsConstant, category.UserID)

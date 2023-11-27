@@ -1,0 +1,1440 @@
+basePath: /v1
+definitions:
+  auth.ActiveUser:
+    properties:
+      deviceID:
+        type: string
+      userID:
+        type: string
+      username:
+        type: string
+    type: object
+  categories.Analytics:
+    properties:
+      expense:
+        items:
+          $ref: '#/definitions/models.Expense'
+        type: array
+      income:
+        items:
+          $ref: '#/definitions/models.Income'
+        type: array
+      wealthFund:
+        items:
+          $ref: '#/definitions/models.WealthFund'
+        type: array
+    type: object
+  categories.More:
+    properties:
+      app:
+        $ref: '#/definitions/models.App'
+      settings:
+        $ref: '#/definitions/models.Settings'
+    type: object
+  categories.Tracker:
+    properties:
+      goal:
+        items:
+          $ref: '#/definitions/models.Goal'
+        type: array
+      trackingState:
+        $ref: '#/definitions/models.TrackingState'
+    type: object
+  models.App:
+    properties:
+      category_settings:
+        $ref: '#/definitions/models.CategorySettings'
+      connected_accounts:
+        items:
+          $ref: '#/definitions/models.ConnectedAccount'
+        type: array
+      operation_archive:
+        items:
+          $ref: '#/definitions/models.Operation'
+        type: array
+    type: object
+  models.CategorySettings:
+    properties:
+      expense_categories:
+        items:
+          $ref: '#/definitions/models.ExpenseCategory'
+        type: array
+      income_categories:
+        items:
+          $ref: '#/definitions/models.IncomeCategory'
+        type: array
+      investment_category:
+        items:
+          $ref: '#/definitions/models.InvestmentCategory'
+        type: array
+    type: object
+  models.ConnectedAccount:
+    properties:
+      balance:
+        type: number
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  models.Expense:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      id:
+        type: string
+      planned:
+        type: boolean
+      user_id:
+        type: string
+    type: object
+  models.ExpenseCategory:
+    properties:
+      icon:
+        type: string
+      id:
+        type: string
+      is_constant:
+        type: boolean
+      name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.Goal:
+    properties:
+      current_state:
+        type: number
+      goal:
+        type: string
+      id:
+        type: string
+      need:
+        type: number
+      user_id:
+        type: string
+    type: object
+  models.Income:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      id:
+        type: string
+      planned:
+        type: boolean
+      user_id:
+        type: string
+    type: object
+  models.IncomeCategory:
+    properties:
+      icon:
+        type: string
+      id:
+        type: string
+      is_constant:
+        type: boolean
+      name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.InvestmentCategory:
+    properties:
+      icon:
+        type: string
+      id:
+        type: string
+      is_constant:
+        type: boolean
+      name:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.Operation:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+    type: object
+  models.Settings:
+    properties:
+      subscriptions:
+        $ref: '#/definitions/models.Subscription'
+    type: object
+  models.Subscription:
+    properties:
+      end_date:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+      user_id:
+        type: string
+    type: object
+  models.TrackingState:
+    properties:
+      state:
+        type: number
+      user_id:
+        type: string
+    type: object
+  models.WealthFund:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  user.User:
+    properties:
+      hashedPassword:
+        type: string
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: lstwrd@yandex.com
+    name: Mikhail Vakhrushin
+  description: Backend API for managing user profiles, authentication, analytics,
+    and more.
+  title: Cash Advisor API
+  version: "1.0"
+paths:
+  /analytics/expence:
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense entry.
+      parameters:
+      - description: Expense details
+        in: body
+        name: expense
+        required: true
+        schema:
+          $ref: '#/definitions/models.Expense'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Expense created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating expense
+          schema:
+            type: string
+      summary: Create expense entry
+      tags:
+      - Expense
+  /analytics/expence/{userID}:
+    get:
+      description: Get a list of expenses for a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of expenses
+          schema:
+            items:
+              $ref: '#/definitions/models.Expense'
+            type: array
+        "500":
+          description: Error querying expenses
+          schema:
+            type: string
+      summary: Get expenses by user ID
+      tags:
+      - Expense
+  /analytics/expense:
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense.
+      parameters:
+      - description: Expense object
+        in: body
+        name: expense
+        required: true
+        schema:
+          $ref: '#/definitions/models.Expense'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Expense created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            type: string
+        "500":
+          description: Error creating expense
+          schema:
+            type: string
+      summary: Create an expense
+      tags:
+      - Analytics
+  /analytics/income:
+    post:
+      consumes:
+      - application/json
+      description: Create a new income.
+      parameters:
+      - description: Income object
+        in: body
+        name: income
+        required: true
+        schema:
+          $ref: '#/definitions/models.Income'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Income created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            type: string
+        "500":
+          description: Error creating income
+          schema:
+            type: string
+      summary: Create an income
+      tags:
+      - Analytics
+  /analytics/wealth_fund:
+    post:
+      consumes:
+      - application/json
+      description: Create a new wealth fund.
+      parameters:
+      - description: Wealth fund object
+        in: body
+        name: wealthFund
+        required: true
+        schema:
+          $ref: '#/definitions/models.WealthFund'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Wealth fund created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            type: string
+        "500":
+          description: Error creating wealth fund
+          schema:
+            type: string
+      summary: Create a wealth fund
+      tags:
+      - Analytics
+  /app/category/expense:
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense category.
+      parameters:
+      - description: Expense category object
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExpenseCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Expense category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating expense category
+          schema:
+            type: string
+      summary: Create an expense category
+      tags:
+      - App
+  /app/category/income:
+    post:
+      consumes:
+      - application/json
+      description: Create a new income category.
+      parameters:
+      - description: Income category object
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.IncomeCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Income category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating income category
+          schema:
+            type: string
+      summary: Create an income category
+      tags:
+      - App
+  /app/category/investment:
+    post:
+      consumes:
+      - application/json
+      description: Create a new investment category.
+      parameters:
+      - description: Investment category object
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.InvestmentCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Investment category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating investment category
+          schema:
+            type: string
+      summary: Create an investment category
+      tags:
+      - App
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login to the system and get an authentication token
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Login to the system
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Logs out the user, terminating the session.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Logout the user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user.
+      parameters:
+      - description: Username
+        in: query
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: query
+        name: password
+        required: true
+        type: string
+      - description: Name
+        in: query
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User registered successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error registering user
+          schema:
+            type: string
+      summary: Register user
+      tags:
+      - User
+  /auth/sessions:
+    get:
+      description: Get information about active user sessions.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of active user sessions
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/auth.ActiveUser'
+            type: object
+      tags:
+      - Auth
+  /categories/analytics/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get income, expense, and wealth fund data for a specific user from
+        the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User analytics data
+          schema:
+            $ref: '#/definitions/categories.Analytics'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get user analytics from the database
+      tags:
+      - Categories
+  /categories/app/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get app details, including connected accounts, category settings,
+        and operation archive, for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: App information
+          schema:
+            $ref: '#/definitions/models.App'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get app information from the database
+      tags:
+      - Categories
+  /categories/categorysettings/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get category settings, including income, expense, and investment
+        category details, for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category settings information
+          schema:
+            $ref: '#/definitions/models.CategorySettings'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get category settings information from the database
+      tags:
+      - Categories
+  /categories/connectedaccounts/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get connected accounts details for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Connected accounts information
+          schema:
+            items:
+              $ref: '#/definitions/models.ConnectedAccount'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get connected accounts information from the database
+      tags:
+      - Categories
+  /categories/more/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get more details, including app and settings information, for a
+        specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Additional user information
+          schema:
+            $ref: '#/definitions/categories.More'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get additional user information from the database
+      tags:
+      - Categories
+  /categories/operationarchive/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get operation archive details for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation archive information
+          schema:
+            items:
+              $ref: '#/definitions/models.Operation'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get operation archive information from the database
+      tags:
+      - Categories
+  /categories/subscription/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get subscription details for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subscription information
+          schema:
+            $ref: '#/definitions/models.Subscription'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get subscription information from the database
+      tags:
+      - Categories
+  /categories/tracker/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get tracking state and goal data for a specific user from the database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      - description: User analytics data
+        in: body
+        name: analytics
+        required: true
+        schema:
+          $ref: '#/definitions/categories.Analytics'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User tracker data
+          schema:
+            $ref: '#/definitions/categories.Tracker'
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get user tracker data from the database
+      tags:
+      - Categories
+  /categories/userinfo/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Get username and name information for a specific user from the
+        database.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get user information from the database
+      tags:
+      - Categories
+  /docs/swagger.json:
+    get:
+      description: Get the Swagger JSON file.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Swagger JSON retrieved successfully
+          schema:
+            type: string
+      summary: Get Swagger JSON
+      tags:
+      - Swagger
+  /history/add:
+    post:
+      consumes:
+      - application/json
+      description: Add a new entry to the history.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: History entry added successfully
+          schema:
+            type: string
+      summary: Add history entry
+      tags:
+      - History
+  /history/get:
+    get:
+      description: Get a list of history entries.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of history entries
+          schema:
+            items:
+              type: string
+            type: array
+      summary: Get history entries
+      tags:
+      - History
+  /logger:
+    post:
+      description: Initialize the info and error loggers.
+      responses: {}
+      summary: Initialize loggers
+      tags:
+      - Logger
+  /models/expense/category:
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense category.
+      parameters:
+      - description: Expense category details
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.ExpenseCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Expense category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating expense category
+          schema:
+            type: string
+      summary: Create expense category
+      tags:
+      - Expense
+  /models/goal:
+    post:
+      consumes:
+      - application/json
+      description: Create a new goal entry.
+      parameters:
+      - description: Goal details
+        in: body
+        name: goal
+        required: true
+        schema:
+          $ref: '#/definitions/models.Goal'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Goal created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating goal
+          schema:
+            type: string
+      summary: Create goal
+      tags:
+      - Goal
+  /models/goal/{userID}:
+    get:
+      description: Get a list of goals for a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of goals
+          schema:
+            items:
+              $ref: '#/definitions/models.Goal'
+            type: array
+        "500":
+          description: Error querying goals
+          schema:
+            type: string
+      summary: Get goals by user ID
+      tags:
+      - Goal
+  /models/income:
+    post:
+      consumes:
+      - application/json
+      description: Create a new income entry.
+      parameters:
+      - description: Income details
+        in: body
+        name: income
+        required: true
+        schema:
+          $ref: '#/definitions/models.Income'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Income created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating income
+          schema:
+            type: string
+      summary: Create income entry
+      tags:
+      - Income
+  /models/income/{userID}:
+    get:
+      description: Get a list of incomes for a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of incomes
+          schema:
+            items:
+              $ref: '#/definitions/models.Income'
+            type: array
+        "500":
+          description: Error querying incomes
+          schema:
+            type: string
+      summary: Get incomes by user ID
+      tags:
+      - Income
+  /models/income/category:
+    post:
+      consumes:
+      - application/json
+      description: Create a new income category.
+      parameters:
+      - description: Income category details
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.IncomeCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Income category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating income category
+          schema:
+            type: string
+      summary: Create income category
+      tags:
+      - Income
+  /models/investment/category:
+    post:
+      consumes:
+      - application/json
+      description: Create a new investment category.
+      parameters:
+      - description: Investment category details
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/models.InvestmentCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Investment category created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating investment category
+          schema:
+            type: string
+      summary: Create investment category
+      tags:
+      - Investment
+  /models/subscription:
+    post:
+      consumes:
+      - application/json
+      description: Create a new subscription entry.
+      parameters:
+      - description: Subscription details
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/models.Subscription'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Subscription created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating subscription
+          schema:
+            type: string
+      summary: Create subscription
+      tags:
+      - Subscription
+  /models/tracking-state:
+    post:
+      consumes:
+      - application/json
+      description: Create a new tracking state entry.
+      parameters:
+      - description: Tracking state details
+        in: body
+        name: trackingState
+        required: true
+        schema:
+          $ref: '#/definitions/models.TrackingState'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tracking state created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating tracking state
+          schema:
+            type: string
+      summary: Create tracking state
+      tags:
+      - TrackingState
+  /models/tracking-state/{userID}:
+    get:
+      description: Get a list of tracking states for a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of tracking states
+          schema:
+            items:
+              $ref: '#/definitions/models.TrackingState'
+            type: array
+        "500":
+          description: Error querying tracking states
+          schema:
+            type: string
+      summary: Get tracking states by user ID
+      tags:
+      - TrackingState
+  /models/wealth-fund:
+    post:
+      consumes:
+      - application/json
+      description: Create a new wealth fund entry.
+      parameters:
+      - description: Wealth fund details
+        in: body
+        name: wealthFund
+        required: true
+        schema:
+          $ref: '#/definitions/models.WealthFund'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Wealth fund created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating wealth fund
+          schema:
+            type: string
+      summary: Create wealth fund entry
+      tags:
+      - WealthFund
+  /models/wealth-fund/{userID}:
+    get:
+      description: Get a list of wealth funds for a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of wealth funds
+          schema:
+            items:
+              $ref: '#/definitions/models.WealthFund'
+            type: array
+        "500":
+          description: Error querying wealth funds
+          schema:
+            type: string
+      summary: Get wealth funds by user ID
+      tags:
+      - WealthFund
+  /mydatabase/close:
+    post:
+      description: Closes the connection to the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Database connection closed successfully
+          schema:
+            type: string
+        "500":
+          description: Error closing database connection
+          schema:
+            type: string
+      summary: Close database connection
+      tags:
+      - Database
+  /mydatabase/exec:
+    post:
+      description: Executes a query on the database.
+      parameters:
+      - description: Database query
+        in: body
+        name: query
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Query executed successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error executing database query
+          schema:
+            type: string
+      summary: Execute database query
+      tags:
+      - Database
+  /mydatabase/init:
+    post:
+      description: Initializes a connection to the database.
+      parameters:
+      - description: Database URL
+        in: query
+        name: databaseURL
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Database connection initialized successfully
+          schema:
+            type: string
+        "500":
+          description: Error initializing database connection
+          schema:
+            type: string
+      summary: Initialize database connection
+      tags:
+      - Database
+  /profile/get:
+    get:
+      description: Get the user profile for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            type: string
+        "500":
+          description: Error getting user profile
+          schema:
+            type: string
+      summary: Get user profile
+      tags:
+      - Profile
+  /settings/subscription:
+    post:
+      consumes:
+      - application/json
+      description: Create a new subscription.
+      parameters:
+      - description: Subscription object
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/models.Subscription'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Subscription created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error creating subscription
+          schema:
+            type: string
+      summary: Create a subscription
+      tags:
+      - Settings
+  /swagger/index.html:
+    get:
+      description: Get the Swagger UI.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Swagger UI retrieved successfully
+          schema:
+            type: string
+      summary: Get Swagger UI
+      tags:
+      - Swagger
+  /swagger/json:
+    get:
+      description: Get the Swagger JSON file.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Swagger JSON retrieved successfully
+          schema:
+            type: string
+      summary: Get Swagger JSON
+      tags:
+      - Swagger
+  /swagger/ui:
+    get:
+      description: Get the Swagger UI.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Swagger UI retrieved successfully
+          schema:
+            type: string
+      summary: Get Swagger UI
+      tags:
+      - Swagger
+  /tracker/goal:
+    post:
+      consumes:
+      - application/json
+      description: Create a new goal.
+      parameters:
+      - description: Goal object
+        in: body
+        name: goal
+        required: true
+        schema:
+          $ref: '#/definitions/models.Goal'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Goal created successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "401":
+          description: User not authenticated
+          schema:
+            type: string
+        "500":
+          description: Error creating goal
+          schema:
+            type: string
+      summary: Create a goal
+      tags:
+      - Tracker
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with the provided details.
+      parameters:
+      - description: User details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid request payload
+          schema:
+            type: string
+        "500":
+          description: Error registering user
+          schema:
+            type: string
+      summary: Register new user
+      tags:
+      - User
+schemes:
+- http
+securityDefinitions:
+  headerKey:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package user provides register functionality.
 package user
 
 import (
@@ -22,7 +26,16 @@ var (
 	mutex sync.Mutex
 )
 
-// RegisterUser - функция для регистрации нового пользователя
+// @Summary Register new user
+// @Description Register a new user with the provided details.
+// @Tags User
+// @Accept json
+// @Produce json
+// @Param user body User true "User details"
+// @Success 201 {string} string "User registered successfully"
+// @Failure 400 {string} string "Invalid request payload"
+// @Failure 500 {string} string "Error registering user"
+// @Router /user/register [post]
 func RegisterUser(username, name, password string) error {
 	mutex.Lock()
 	defer mutex.Unlock()

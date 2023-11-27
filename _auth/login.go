@@ -1,3 +1,7 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package auth provides authentication and authorization functionality.
 package auth
 
 import (
@@ -10,6 +14,18 @@ import (
 	"net/http"
 )
 
+// @Summary Login to the system
+// @Description Login to the system and get an authentication token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param username formData string true "Username"
+// @Param password formData string true "Password"
+// @Success 200 {string} string "Login successful"
+// @Failure 400 {string} string "Bad Request"
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 500 {string} string "Internal Server Error"
+// @Router /auth/login [post]
 func Login(w http.ResponseWriter, r *http.Request) {
 
 	var (
