@@ -6,54 +6,44 @@ package models
 
 import (
 	mydb "backEndAPI/_mydatabase"
+	"database/sql"
 
 	"log"
 	"time"
 )
 
 type Expense struct {
-	ID      string  `json:"id"`
-	Amount  float64 `json:"amount"`
-	Date    string  `json:"date"`
-	Planned bool    `json:"planned"`
-	UserID  string  `json:"user_id"`
+	ID         string  `json:"id"`
+	Amount     float64 `json:"amount"`
+	Date       string  `json:"date"`
+	Planned    bool    `json:"planned"`
+	UserID     string  `json:"user_id"`
+	CategoryID string  `json:"category_id"`
 }
 
-// @Summary Create expense entry
-// @Description Create a new expense entry.
-// @Tags Expense
-// @Accept json
-// @Produce json
-// @Param expense body Expense true "Expense details"
-// @Success 201 {string} string "Expense created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error creating expense"
-// @Router /analytics/expence [post]
 func CreateExpense(expense *Expense) error {
 	parsedDate, err := time.Parse("2006-01-02", expense.Date)
 	if err != nil {
 		log.Println("Error parsing date:", err)
 		return err
 	}
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO expense (amount, date, planned, user_id) VALUES ($1, $2, $3, $4)",
-		expense.Amount, parsedDate, expense.Planned, expense.UserID)
+	_, err1 := mydb.GlobalDB.Exec("INSERT INTO expense (amount, date, planned, user_id, category) VALUES ($1, $2, $3, $4, $5)",
+		expense.Amount, parsedDate, expense.Planned, expense.UserID, expense.CategoryID)
 	if err1 != nil {
 		log.Println("Error creating expense:", err)
 		return err1
 	}
+	_, err = mydb.GlobalDB.Exec("INSERT INTO operations (user_id, description, amount, date, category, operation_type) VALUES ($1, $2, $3, $4, $5, $6)",
+		expense.UserID, "Расход", expense.Amount, parsedDate, expense.CategoryID, expense.CategoryID)
+	if err != nil {
+		log.Println("Error creating expense operation:", err)
+		return err
+	}
 	return nil
 }
 
-// @Summary Get expenses by user ID
-// @Description Get a list of expenses for a specific user.
-// @Tags Expense
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {array} Expense "List of expenses"
-// @Failure 500 {string} string "Error querying expenses"
-// @Router /analytics/expence/{userID} [get]
 func GetExpensesByUserID(userID string) ([]Expense, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned FROM expense WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category FROM expense WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying expenses:", err)
 		return nil, err
@@ -63,7 +53,7 @@ func GetExpensesByUserID(userID string) ([]Expense, error) {
 	var expenses []Expense
 	for rows.Next() {
 		var expense Expense
-		if err := rows.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned); err != nil {
+		if err := rows.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID); err != nil {
 			log.Println("Error scanning expense row:", err)
 			return nil, err
 		}
@@ -72,4 +62,55 @@ func GetExpensesByUserID(userID string) ([]Expense, error) {
 	}
 
 	return expenses, nil
+}
+
+func GetExpenseForMonth(userID string, month time.Month, year int) (float64, float64, error) {
+
+	query := `
+		SELECT
+			COALESCE(SUM(amount), 0) AS total_expense,
+			COALESCE(SUM(CASE WHEN planned THEN amount ELSE 0 END), 0) AS planned_expense
+		FROM expense
+		WHERE user_id = $1
+		AND EXTRACT(MONTH FROM date) = $2
+		AND EXTRACT(YEAR FROM date) = $3
+	`
+
+	var totalExpense, plannedExpense float64
+	err := mydb.GlobalDB.QueryRow(query, userID, int(month), year).Scan(&totalExpense, &plannedExpense)
+	if err != nil && err != sql.ErrNoRows {
+		log.Printf("Error getting expense for month: %v", err)
+		return 0, 0, err
+	}
+
+	return totalExpense, plannedExpense, nil
+}
+
+func GetMonthlyExpenseIncrease(userID string) (int, int, error) {
+	currentDate := time.Now()
+
+	currentMonth := currentDate.Month()
+	currentYear := currentDate.Year()
+
+	previousMonth := currentMonth - 1
+	previousYear := currentYear
+
+	if currentMonth == time.January {
+		previousMonth = time.December
+		previousYear--
+	}
+
+	currentMonthExpense, currentMonthPlanned, err := GetExpenseForMonth(userID, currentMonth, currentYear)
+	if err != nil {
+		log.Printf("Error fetching current month income: %v", err)
+		return 0, 0, err
+	}
+
+	previousMonthExpense, _, err := GetExpenseForMonth(userID, previousMonth, previousYear)
+	if err != nil {
+		log.Printf("Error fetching previous month income: %v", err)
+		return 0, 0, err
+	}
+
+	return int(((currentMonthExpense / previousMonthExpense) - 1) * 100), int(((currentMonthPlanned / previousMonthExpense) - 1) * 100), nil
 }

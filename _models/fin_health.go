@@ -4,6 +4,7 @@
 // Package models provides basic financial models functionality.
 package models
 
+//FinHealth
 type FinHealth struct {
 	ID              string `json:"id"`
 	IncomeScore     int    `json:"income_score"`
@@ -53,5 +54,26 @@ func getIncomeScore(userID string) int {
 	}
 
 	return totalScore
+}
+
+func FinHealthCalculations(userID string) (*FinHealth, error) {
+	var finHealth FinHealth
+
+	incomeTemp, incomePerc, err := GetMonthlyIncomeIncrease(userID)
+	if err != nil {
+		return &finHealth, err
+	}
+
+	expenseTemp, expensePerc, err := GetMonthlyExpenseIncrease(userID)
+	if err != nil {
+		return &finHealth, err
+	}
+
+	incomeExpenseDiff := incomeTemp - expenseTemp
+	if incomeExpenseDiff < 0 {
+		incomeExpenseDiff = 0
+	}
+
+	return &finHealth, nil
 }
 */

@@ -19,6 +19,7 @@ import (
 // @Success 201 {string} string "Expense category created successfully"
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error creating expense category"
+// @Security JWT
 // @Router /app/category/expense [post]
 func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.ExpenseCategory
@@ -47,6 +48,7 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {string} string "Income category created successfully"
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error creating income category"
+// @Security JWT
 // @Router /app/category/income [post]
 func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.IncomeCategory
@@ -75,6 +77,7 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {string} string "Investment category created successfully"
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error creating investment category"
+// @Security JWT
 // @Router /app/category/investment [post]
 func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.InvestmentCategory

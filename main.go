@@ -2,38 +2,33 @@
 // @version 1.0
 // @description Backend API for managing user profiles, authentication, analytics, and more.
 // @host localhost:8080
-// @BasePath /
-// @schemes http
+// @BasePath /v1
+// @schemes https
 // @produces json
 // @consumes json
 // @license MIT
 // @contact.email lstwrd@yandex.com
 // @contact.name Mikhail Vakhrushin
 // @contact.url
-// @BasePath /v1
-// @SecurityDefinitions.apiKey headerKey
-// @Security api_key
-// @in header
-// @name Authorization
-// @Server http://localhost:8080
+// @Security JWT
+// @securityDefinitions.JWT.type apiKey
+// @securityDefinitions.JWT.name Authorization
+// @securityDefinitions.JWT.in header
+// @Server https://localhost:8080
+
 package main
 
 import (
-	auth "backEndAPI/_auth"
-	handlers "backEndAPI/_handlers"
-	history "backEndAPI/_history"
+	logger "backEndAPI/_logger"
 	mydb "backEndAPI/_mydatabase"
-	profile "backEndAPI/_profile"
-	user "backEndAPI/_user"
+	initialisation "backEndAPI/initialisation"
+	"log"
+
 	"os"
 
 	//"encoding/json"
 
-	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type UserProfile struct {
@@ -42,8 +37,11 @@ type UserProfile struct {
 }
 
 var (
-	databaseURL string = "postgres://postgres:123@localhost:5432/backendapi?sslmode=disable"
-	db          *mydb.Database
+	databaseURL        string = "postgres://postgres:PASSWORD@IP:5432/backendapi?sslmode=disable"
+	db                 *mydb.Database
+	privateKeyPassword string = "CashAdvisor"
+	certFile           string = "ok_server.crt"
+	keyFile            string = "ok_server.key"
 )
 
 func main() {
@@ -56,72 +54,22 @@ func main() {
 
 	mydb.SetDB(db)
 
-	router := mux.NewRouter().PathPrefix("/v1").Subrouter()
-	docRouter := mux.NewRouter()
+	router, docRouter, errR := initialisation.InitRouters()
 
-	auth.SetAPIKey()
-
-	registerHandlers(router)
-
-	docRouter.PathPrefix("/docs/").Handler(http.StripPrefix("/docs/", http.FileServer(http.Dir("./docs"))))
-	docRouter.PathPrefix("/swagger/").Handler(httpSwagger.Handler(httpSwagger.URL("/docs/swagger.json")))
-	docRouter.PathPrefix("/docs/").Handler(httpSwagger.Handler(
-		httpSwagger.URL("/docs/swagger.json"),
-	))
-
-	auth.InitActiveUsers()
+	if errR != nil {
+		logger.ErrorLogger.Fatal(errR)
+	}
 
 	http.Handle("/", router)
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
-	http.ListenAndServe(":8080", nil)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
-	os.Exit(0)
-}
-
-func registerHandlers(router *mux.Router) {
-	auth.RegisterHandlers(router)
-	profile.RegisterHandlers(router)
-	history.RegisterHandlers(router)
-	router.HandleFunc("/auth/register", RegisterUser).Methods("POST")
-	router.HandleFunc("/analytics/income", auth.AuthMiddleware(handlers.CreateIncomeHandler)).Methods("POST")
-	router.HandleFunc("/analytics/expence", auth.AuthMiddleware(handlers.CreateExpenseHandler)).Methods("POST")
-	router.HandleFunc("/analytics/wealth_fund", auth.AuthMiddleware(handlers.CreateWealthFundHandler)).Methods("POST")
-	router.HandleFunc("/tracker/goal", auth.AuthMiddleware(handlers.CreateGoalHandler)).Methods("POST")
-	router.HandleFunc("/app/category/expense", auth.AuthMiddleware(handlers.CreateExpenseCategoryHandler)).Methods("POST")
-	router.HandleFunc("/app/category/income", auth.AuthMiddleware(handlers.CreateIncomeCategoryHandler)).Methods("POST")
-	router.HandleFunc("/app/category/investment", auth.AuthMiddleware(handlers.CreateInvestmentCategoryHandler)).Methods("POST")
-	router.HandleFunc("/settings/subscription", auth.AuthMiddleware(handlers.CreateSubscriptionHandler)).Methods("POST")
-}
-
-// @Summary Register user
-// @Description Register a new user.
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param username query string true "Username"
-// @Param password query string true "Password"
-// @Param name query string true "Name"
-// @Success 200 {string} string "User registered successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error registering user"
-// @Router /auth/register [post]
-func RegisterUser(w http.ResponseWriter, r *http.Request) {
-
-	username := r.FormValue("username")
-	password := r.FormValue("password")
-	name := r.FormValue("name")
-
-	err := user.RegisterUser(username, name, password)
+	err = http.ListenAndServeTLS(":8080", certFile, keyFile, router)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
-		return
+		log.Fatal(err)
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Succesfully registred"))
+	os.Exit(0)
 }
 
 // @Summary Get Swagger JSON

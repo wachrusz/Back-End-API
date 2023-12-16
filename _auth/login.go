@@ -5,13 +5,14 @@
 package auth
 
 import (
+	enc "backEndAPI/_encryption"
 	logger "backEndAPI/_logger"
+
 	"encoding/json"
-
-	"github.com/dgrijalva/jwt-go"
-
 	"fmt"
 	"net/http"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 // @Summary Login to the system
@@ -19,96 +20,98 @@ import (
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param username formData string true "Username"
-// @Param password formData string true "Password"
+// @Param loginRequest body auth.UserAuthenticationRequest true "UserAuthenticationRequest object"
 // @Success 200 {string} string "Login successful"
 // @Failure 400 {string} string "Bad Request"
 // @Failure 401 {string} string "Unauthorized"
 // @Failure 500 {string} string "Internal Server Error"
 // @Router /auth/login [post]
 func Login(w http.ResponseWriter, r *http.Request) {
-
-	var (
-		username string
-		password string
-		userID   string
-	)
-
-	username = r.FormValue("username")
-	password = r.FormValue("password")
-	apiKey := r.Header.Get("API-Key")
-
-	if !checkLoginConds(apiKey, username, password, w, r) {
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid Content-Type, expected application/json"))
 		return
 	}
 
-	token, err := generateToken(username)
+	var loginRequest UserAuthenticationRequest
+
+	err := json.NewDecoder(r.Body).Decode(&loginRequest)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid request payload"))
+		return
+	}
+
+	email := loginRequest.Email
+	password := loginRequest.Password
+
+	if !checkLoginConds(email, password, w, r) {
 		return
 	}
 
 	//! SESSIONS
 
-	userID, err_id := getUserIDFromUsersDatabase(username)
+	userID, err_id := getUserIDFromUsersDatabase(email)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error getting session: %v", err_id), http.StatusInternalServerError)
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 	}
 
+	token, err := generateToken(userID)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	deviceID := GetDeviceIDFromRequest(r)
 
-	if IsUserActive(userID) { //in session
-		currentUser := activeUsers[userID]
+	if IsUserActive(userID) {
+		currentUser := ActiveUsers[userID]
 		if currentUser.DeviceID == deviceID {
 			http.Error(w, fmt.Sprintf("Already logged in"), http.StatusUnauthorized)
 			return
 		} else {
+			removeSessionFromDatabase(currentUser.DeviceID, currentUser.UserID)
 			currentUser.DeviceID = deviceID
-			activeUsers[userID] = currentUser
-			removeSessionFromDatabase(deviceID)
+			ActiveUsers[userID] = currentUser
 		}
 	}
 
 	//! SAVE SESSIONS
-	AddActiveUser(userID, username, deviceID)
+	AddActiveUser(userID, email, deviceID, token)
 
-	saveSessionToDatabase(username, deviceID, userID)
+	saveSessionToDatabase(email, deviceID, userID, token)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Login successful"))
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 
-	logger.InfoLogger.Printf("User %s logged in from %s\n", username, r.RemoteAddr)
+	logger.InfoLogger.Printf("User %s logged in from %s\n", email, r.RemoteAddr)
 }
 
-func checkLoginConds(apiKey, username, password string, w http.ResponseWriter, r *http.Request) bool {
-	if apiKey != secretAPIKey {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid API key"))
+func checkLoginConds(email, password string, w http.ResponseWriter, r *http.Request) bool {
+
+	if email == "" || password == "" {
+		http.Error(w, "Missing email or password", http.StatusBadRequest)
+		logger.ErrorLogger.Printf("Missing email or password in login request from %s\n", r.RemoteAddr)
 		return false
 	}
 
-	if username == "" || password == "" {
-		http.Error(w, "Missing username or password", http.StatusBadRequest)
-		logger.ErrorLogger.Printf("Missing username or password in login request from %s\n", r.RemoteAddr)
-		return false
-	}
-
-	if !isValidCredentials(username, password) {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
-		logger.ErrorLogger.Printf("Invalid username or password in login request from %s\n", r.RemoteAddr)
+	if !isValidCredentials(email, password) {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		logger.ErrorLogger.Printf("Invalid email or password in login request from %s\n", r.RemoteAddr)
 		return false
 	}
 	return true
 }
 
-func generateToken(username string) (string, error) {
+func generateToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
+		"sub": userID,
 	})
 
-	tokenString, err := token.SignedString([]byte(GetAPIKey()))
+	tokenString, err := token.SignedString([]byte(enc.SecretKey))
 	if err != nil {
 		return "", err
 	}

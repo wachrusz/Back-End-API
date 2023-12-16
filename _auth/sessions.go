@@ -5,8 +5,10 @@
 package auth
 
 import (
+	enc "backEndAPI/_encryption"
 	logger "backEndAPI/_logger"
 	mydb "backEndAPI/_mydatabase"
+
 	"net"
 
 	"fmt"
@@ -15,24 +17,19 @@ import (
 )
 
 type ActiveUser struct {
-	UserID   string
-	Username string
-	DeviceID string
+	UserID         string
+	Email          string
+	DeviceID       string
+	DecryptedToken string
 }
 
 var (
-	activeUsers = make(map[string]ActiveUser)
+	ActiveUsers = make(map[string]ActiveUser)
 	activeMu    sync.Mutex
 )
 
-// @Title Get active user sessions
-// @Description Get information about active user sessions.
-// @Tags Auth
-// @Produce json
-// @Success 200 {object} map[string]ActiveUser "List of active user sessions"
-// @Router /auth/sessions [get]
 func InitActiveUsers() {
-	var query string = "SELECT user_id, username, device_id FROM sessions"
+	var query string = "SELECT user_id, email, device_id, token FROM sessions"
 	rows, err := mydb.GlobalDB.Query(query)
 	if err != nil {
 		logger.ErrorLogger.Printf("Unnable to check DB DUE TO: %v", err)
@@ -40,48 +37,56 @@ func InitActiveUsers() {
 	defer rows.Close()
 
 	for rows.Next() {
-		var userID, username, deviceID string
-		if err := rows.Scan(&userID, &username, &deviceID); err != nil {
+		var userID, email, deviceID, token string
+		if err := rows.Scan(&userID, &email, &deviceID, &token); err != nil {
 			logger.ErrorLogger.Printf("Strange error at: %v", err)
 		}
 
-		activeUser := ActiveUser{
-			UserID:   userID,
-			Username: username,
-			DeviceID: deviceID,
+		decryptedToken, err := enc.DecryptToken(token)
+		if err != nil {
+			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID)
 		}
 
-		activeUsers[userID] = activeUser
+		activeUser := ActiveUser{
+			UserID:         userID,
+			Email:          email,
+			DeviceID:       deviceID,
+			DecryptedToken: decryptedToken,
+		}
+
+		ActiveUsers[userID] = activeUser
 	}
-	for userID, activeUser := range activeUsers {
-		fmt.Printf("User ID: %s, Username: %s, Device ID: %s\n", userID, activeUser.Username, activeUser.DeviceID)
-	}
+	logger.InfoLogger.Printf("Active Users: \n%v", ActiveUsers)
 }
 
 func getActiveUser(userID string) ActiveUser {
-	return activeUsers[userID]
+	return ActiveUsers[userID]
 }
 
 func IsUserActive(userID string) bool {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 
-	_, ok := activeUsers[userID]
+	_, ok := ActiveUsers[userID]
+	if !ok {
+		logger.ErrorLogger.Printf("User %s is not active", userID)
+	}
 	return ok
 }
 
-func AddActiveUser(userID, username, deviceID string) {
+func AddActiveUser(userID, email, deviceID, token string) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 
-	activeUsers[userID] = ActiveUser{userID, username, deviceID}
+	ActiveUsers[userID] = ActiveUser{userID, email, deviceID, token}
+	logger.InfoLogger.Printf("List of active users: %v", ActiveUsers)
 }
 
 func RemoveActiveUser(userID string) {
 	activeMu.Lock()
 	defer activeMu.Unlock()
 
-	delete(activeUsers, userID)
+	delete(ActiveUsers, userID)
 }
 
 /*
@@ -97,21 +102,27 @@ func SetDeviceIDInSession(r *http.Request, w http.ResponseWriter, deviceID strin
 }*/
 
 // DATABASE OPERATIONS
-func saveSessionToDatabase(username, deviceID, user_id string) error {
-	_, err := mydb.GlobalDB.Exec(`
-        INSERT INTO sessions (username, device_id, created_at, last_activity, user_id)
-        VALUES ($1, $2, NOW(), NOW(), $3)`,
-		username, deviceID, user_id)
+func saveSessionToDatabase(email, deviceID, user_id, token string) error {
+
+	encryptedToken, err := enc.EncryptToken(token)
+	if err != nil {
+		return err
+	}
+
+	_, err = mydb.GlobalDB.Exec(`
+        INSERT INTO sessions (email, device_id, created_at, last_activity, user_id, token)
+        VALUES ($1, $2, NOW(), NOW(), $3, $4)`,
+		email, deviceID, user_id, encryptedToken)
 	return err
 }
 
-func checkSessionInDatabase(username, deviceID string) (bool, error) {
+func checkSessionInDatabase(email, deviceID string) (bool, error) {
 	var count int
 
 	err := mydb.GlobalDB.QueryRow(`
         SELECT COUNT(*) FROM sessions WHERE
-            username = $1 AND device_id = $2;`,
-		username, deviceID).Scan(&count)
+            email = $1 AND device_id = $2;`,
+		email, deviceID).Scan(&count)
 
 	if err != nil {
 		return false, fmt.Errorf("error checking session in database: %v", err)
@@ -120,20 +131,20 @@ func checkSessionInDatabase(username, deviceID string) (bool, error) {
 	return count > 0, nil
 }
 
-func removeSessionFromDatabase(deviceID string) error {
+func removeSessionFromDatabase(deviceID, userID string) error {
 	_, err := mydb.GlobalDB.Exec(`
-        DELETE FROM sessions WHERE device_id = $1`,
-		deviceID)
+        DELETE FROM sessions WHERE device_id = $1 AND user_id = $2`,
+		deviceID, userID)
 	return err
 }
 
 // SERVICE FUNCTIONS
-func isDeviceIDAlreadyUsed(db *mydb.Database, username, deviceID string) (error, bool) {
+func isDeviceIDAlreadyUsed(db *mydb.Database, email, deviceID string) (error, bool) {
 
-	query := "SELECT COUNT(*) FROM sessions WHERE username = $1 AND device_id = $2"
+	query := "SELECT COUNT(*) FROM sessions WHERE email = $1 AND device_id = $2"
 
 	var count int
-	err := db.QueryRow(query, username, deviceID).Scan(&count)
+	err := db.QueryRow(query, email, deviceID).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("error checking device ID: %v", err), false
 	}
@@ -156,7 +167,7 @@ func getUserIDFromUsersDatabase(usernameOrDeviceID string) (string, error) {
 	var result string
 
 	err := mydb.GlobalDB.QueryRow(`
-	SELECT id FROM users WHERE username = $1;
+	SELECT id FROM users WHERE email = $1;
 	`, usernameOrDeviceID).Scan(&result)
 
 	if err != nil {
