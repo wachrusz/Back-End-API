@@ -32,10 +32,8 @@ func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceID := auth.GetDeviceIDFromRequest(r)
-
-	userID, ok := auth.GetUserIDFromSessionDatabase(deviceID)
-	if ok != nil {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
 		http.Error(w, "User not authenticated", http.StatusUnauthorized)
 		return
 	}

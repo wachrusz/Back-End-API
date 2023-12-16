@@ -22,6 +22,7 @@ import (
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 401 {string} string "User not authenticated"
 // @Failure 500 {string} string "Error creating expense"
+// @Security JWT
 // @Router /analytics/expense [post]
 func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	var expense models.Expense
@@ -30,10 +31,8 @@ func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deviceID := auth.GetDeviceIDFromRequest(r)
-
-	userID, ok := auth.GetUserIDFromSessionDatabase(deviceID)
-	if ok != nil {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
 		http.Error(w, "User not authenticated", http.StatusUnauthorized)
 		return
 	}

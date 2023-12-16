@@ -18,92 +18,13 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/analytics/expence": {
-            "post": {
-                "description": "Create a new expense entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Expense"
-                ],
-                "summary": "Create expense entry",
-                "parameters": [
-                    {
-                        "description": "Expense details",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Expense"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Expense created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/analytics/expence/{userID}": {
-            "get": {
-                "description": "Get a list of expenses for a specific user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Expense"
-                ],
-                "summary": "Get expenses by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of expenses",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Expense"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error querying expenses",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/analytics/expense": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new expense.",
                 "consumes": [
                     "application/json"
@@ -156,6 +77,11 @@ const docTemplate = `{
         },
         "/analytics/income": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new income.",
                 "consumes": [
                     "application/json"
@@ -208,6 +134,11 @@ const docTemplate = `{
         },
         "/analytics/wealth_fund": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new wealth fund.",
                 "consumes": [
                     "application/json"
@@ -260,6 +191,11 @@ const docTemplate = `{
         },
         "/app/category/expense": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new expense category.",
                 "consumes": [
                     "application/json"
@@ -306,6 +242,11 @@ const docTemplate = `{
         },
         "/app/category/income": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new income category.",
                 "consumes": [
                     "application/json"
@@ -352,6 +293,11 @@ const docTemplate = `{
         },
         "/app/category/investment": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new investment category.",
                 "consumes": [
                     "application/json"
@@ -396,6 +342,147 @@ const docTemplate = `{
                 }
             }
         },
+        "/app/connected-accounts/add": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new connected account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Create a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding connected account",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/connected-accounts/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete an existing connected account.",
+                "tags": [
+                    "App"
+                ],
+                "summary": "Delete a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding connected account",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/report": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Get a financial report .",
+                "tags": [
+                    "App"
+                ],
+                "summary": "Exports report",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding connected account",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Login to the system and get an authentication token",
@@ -411,18 +498,13 @@ const docTemplate = `{
                 "summary": "Login to the system",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Username",
-                        "name": "username",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
+                        "description": "UserAuthenticationRequest object",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.UserAuthenticationRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -453,8 +535,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/login/reset": {
+            "post": {
+                "description": "Confirm the user's email using the provided token and confirmation code.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Confirm user email for password reset",
+                "parameters": [
+                    {
+                        "description": "Confirm Email Request",
+                        "name": "confirmEmailRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email confirmed successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or Content-Type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error confirming email or reseting password",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/logout": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Logs out the user, terminating the session.",
                 "produces": [
                     "application/json"
@@ -489,7 +625,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "User"
+                    "Auth"
                 ],
                 "summary": "Register user",
                 "parameters": [
@@ -537,378 +673,48 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/sessions": {
-            "get": {
-                "description": "Get information about active user sessions.",
+        "/auth/register/confirm-email": {
+            "post": {
+                "description": "Confirm the user's email using the provided token and confirmation code.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Auth"
                 ],
-                "responses": {
-                    "200": {
-                        "description": "List of active user sessions",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "$ref": "#/definitions/auth.ActiveUser"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/analytics/{userID}": {
-            "get": {
-                "description": "Get income, expense, and wealth fund data for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get user analytics from the database",
+                "summary": "Confirm user email",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User analytics data",
-                        "schema": {
-                            "$ref": "#/definitions/categories.Analytics"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/app/{userID}": {
-            "get": {
-                "description": "Get app details, including connected accounts, category settings, and operation archive, for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get app information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "App information",
-                        "schema": {
-                            "$ref": "#/definitions/models.App"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/categorysettings/{userID}": {
-            "get": {
-                "description": "Get category settings, including income, expense, and investment category details, for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get category settings information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Category settings information",
-                        "schema": {
-                            "$ref": "#/definitions/models.CategorySettings"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/connectedaccounts/{userID}": {
-            "get": {
-                "description": "Get connected accounts details for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get connected accounts information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Connected accounts information",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.ConnectedAccount"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/more/{userID}": {
-            "get": {
-                "description": "Get more details, including app and settings information, for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get additional user information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Additional user information",
-                        "schema": {
-                            "$ref": "#/definitions/categories.More"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/operationarchive/{userID}": {
-            "get": {
-                "description": "Get operation archive details for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get operation archive information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Operation archive information",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Operation"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/subscription/{userID}": {
-            "get": {
-                "description": "Get subscription details for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get subscription information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Subscription information",
-                        "schema": {
-                            "$ref": "#/definitions/models.Subscription"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/categories/tracker/{userID}": {
-            "get": {
-                "description": "Get tracking state and goal data for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get user tracker data from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "User analytics data",
-                        "name": "analytics",
+                        "description": "Confirm Email Request",
+                        "name": "confirmEmailRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/categories.Analytics"
+                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "User tracker data",
-                        "schema": {
-                            "$ref": "#/definitions/categories.Tracker"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                        "description": "Email confirmed successfully",
                         "schema": {
                             "type": "string"
                         }
-                    }
-                }
-            }
-        },
-        "/categories/userinfo/{userID}": {
-            "get": {
-                "description": "Get username and name information for a specific user from the database.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Categories"
-                ],
-                "summary": "Get user information from the database",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User information",
+                    },
+                    "400": {
+                        "description": "Invalid request payload or Content-Type",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Error confirming email or registering user",
                         "schema": {
                             "type": "string"
                         }
@@ -982,642 +788,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/logger": {
-            "post": {
-                "description": "Initialize the info and error loggers.",
-                "tags": [
-                    "Logger"
-                ],
-                "summary": "Initialize loggers",
-                "responses": {}
-            }
-        },
-        "/models/expense/category": {
-            "post": {
-                "description": "Create a new expense category.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Expense"
-                ],
-                "summary": "Create expense category",
-                "parameters": [
-                    {
-                        "description": "Expense category details",
-                        "name": "category",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ExpenseCategory"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Expense category created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense category",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/goal": {
-            "post": {
-                "description": "Create a new goal entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Goal"
-                ],
-                "summary": "Create goal",
-                "parameters": [
-                    {
-                        "description": "Goal details",
-                        "name": "goal",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Goal"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Goal created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating goal",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/goal/{userID}": {
-            "get": {
-                "description": "Get a list of goals for a specific user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Goal"
-                ],
-                "summary": "Get goals by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of goals",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Goal"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error querying goals",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/income": {
-            "post": {
-                "description": "Create a new income entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Income"
-                ],
-                "summary": "Create income entry",
-                "parameters": [
-                    {
-                        "description": "Income details",
-                        "name": "income",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Income"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Income created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating income",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/income/category": {
-            "post": {
-                "description": "Create a new income category.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Income"
-                ],
-                "summary": "Create income category",
-                "parameters": [
-                    {
-                        "description": "Income category details",
-                        "name": "category",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.IncomeCategory"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Income category created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating income category",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/income/{userID}": {
-            "get": {
-                "description": "Get a list of incomes for a specific user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Income"
-                ],
-                "summary": "Get incomes by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of incomes",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Income"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error querying incomes",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/investment/category": {
-            "post": {
-                "description": "Create a new investment category.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Investment"
-                ],
-                "summary": "Create investment category",
-                "parameters": [
-                    {
-                        "description": "Investment category details",
-                        "name": "category",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.InvestmentCategory"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Investment category created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating investment category",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/subscription": {
-            "post": {
-                "description": "Create a new subscription entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Subscription"
-                ],
-                "summary": "Create subscription",
-                "parameters": [
-                    {
-                        "description": "Subscription details",
-                        "name": "subscription",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Subscription"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Subscription created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating subscription",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/tracking-state": {
-            "post": {
-                "description": "Create a new tracking state entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "TrackingState"
-                ],
-                "summary": "Create tracking state",
-                "parameters": [
-                    {
-                        "description": "Tracking state details",
-                        "name": "trackingState",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.TrackingState"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Tracking state created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating tracking state",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/tracking-state/{userID}": {
-            "get": {
-                "description": "Get a list of tracking states for a specific user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "TrackingState"
-                ],
-                "summary": "Get tracking states by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of tracking states",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.TrackingState"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error querying tracking states",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/wealth-fund": {
-            "post": {
-                "description": "Create a new wealth fund entry.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "WealthFund"
-                ],
-                "summary": "Create wealth fund entry",
-                "parameters": [
-                    {
-                        "description": "Wealth fund details",
-                        "name": "wealthFund",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.WealthFund"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Wealth fund created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating wealth fund",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/models/wealth-fund/{userID}": {
-            "get": {
-                "description": "Get a list of wealth funds for a specific user.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "WealthFund"
-                ],
-                "summary": "Get wealth funds by user ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID",
-                        "name": "userID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of wealth funds",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.WealthFund"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Error querying wealth funds",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/mydatabase/close": {
-            "post": {
-                "description": "Closes the connection to the database.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Database"
-                ],
-                "summary": "Close database connection",
-                "responses": {
-                    "200": {
-                        "description": "Database connection closed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error closing database connection",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/mydatabase/exec": {
-            "post": {
-                "description": "Executes a query on the database.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Database"
-                ],
-                "summary": "Execute database query",
-                "parameters": [
-                    {
-                        "description": "Database query",
-                        "name": "query",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Query executed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error executing database query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/mydatabase/init": {
-            "post": {
-                "description": "Initializes a connection to the database.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Database"
-                ],
-                "summary": "Initialize database connection",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Database URL",
-                        "name": "databaseURL",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Database connection initialized successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error initializing database connection",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/profile/get": {
             "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Get the user profile for the authenticated user.",
                 "produces": [
                     "application/json"
@@ -1641,6 +818,57 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error getting user profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/update-name": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update the user profile for the authenticated user with a new name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update user profile with name",
+                "parameters": [
+                    {
+                        "description": "New name to be added to the profile",
+                        "name": "name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating user profile",
                         "schema": {
                             "type": "string"
                         }
@@ -1687,6 +915,52 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating subscription",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/support/request": {
+            "post": {
+                "description": "Send a support request to the technical support team.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Send support request",
+                "parameters": [
+                    {
+                        "description": "Support request object",
+                        "name": "supportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SupportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Support request sent successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error sending support request",
                         "schema": {
                             "type": "string"
                         }
@@ -1805,170 +1079,67 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/user/register": {
-            "post": {
-                "description": "Register a new user with the provided details.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Register new user",
-                "parameters": [
-                    {
-                        "description": "User details",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.User"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "User registered successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error registering user",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
-        "auth.ActiveUser": {
+        "auth.ConfirmEmailRequest": {
             "type": "object",
             "properties": {
-                "deviceID": {
+                "code": {
                     "type": "string"
                 },
-                "userID": {
-                    "type": "string"
-                },
-                "username": {
+                "token": {
                     "type": "string"
                 }
             }
         },
-        "categories.Analytics": {
+        "auth.UserAuthenticationRequest": {
             "type": "object",
             "properties": {
-                "expense": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Expense"
-                    }
+                "email": {
+                    "type": "string"
                 },
-                "income": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Income"
-                    }
-                },
-                "wealthFund": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.WealthFund"
-                    }
+                "password": {
+                    "type": "string"
                 }
             }
         },
-        "categories.More": {
+        "handlers.SupportRequest": {
             "type": "object",
             "properties": {
-                "app": {
-                    "$ref": "#/definitions/models.App"
+                "email": {
+                    "type": "string"
                 },
-                "settings": {
-                    "$ref": "#/definitions/models.Settings"
-                }
-            }
-        },
-        "categories.Tracker": {
-            "type": "object",
-            "properties": {
-                "goal": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Goal"
-                    }
+                "message": {
+                    "type": "string"
                 },
-                "trackingState": {
-                    "$ref": "#/definitions/models.TrackingState"
-                }
-            }
-        },
-        "models.App": {
-            "type": "object",
-            "properties": {
-                "category_settings": {
-                    "$ref": "#/definitions/models.CategorySettings"
+                "name": {
+                    "type": "string"
                 },
-                "connected_accounts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ConnectedAccount"
-                    }
+                "subject": {
+                    "type": "string"
                 },
-                "operation_archive": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Operation"
-                    }
-                }
-            }
-        },
-        "models.CategorySettings": {
-            "type": "object",
-            "properties": {
-                "expense_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExpenseCategory"
-                    }
-                },
-                "income_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IncomeCategory"
-                    }
-                },
-                "investment_category": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.InvestmentCategory"
-                    }
+                "user_id": {
+                    "type": "string"
                 }
             }
         },
         "models.ConnectedAccount": {
             "type": "object",
             "properties": {
-                "balance": {
-                    "type": "number"
+                "account_number": {
+                    "type": "string"
+                },
+                "account_type": {
+                    "type": "string"
+                },
+                "bank_id": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
-                "name": {
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -1978,6 +1149,9 @@ const docTemplate = `{
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "category_id": {
+                    "type": "string"
                 },
                 "date": {
                     "type": "string"
@@ -2039,6 +1213,9 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "category_id": {
+                    "type": "string"
+                },
                 "date": {
                     "type": "string"
                 },
@@ -2093,37 +1270,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Operation": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "category": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Settings": {
-            "type": "object",
-            "properties": {
-                "subscriptions": {
-                    "$ref": "#/definitions/models.Subscription"
-                }
-            }
-        },
         "models.Subscription": {
             "type": "object",
             "properties": {
@@ -2144,17 +1290,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.TrackingState": {
-            "type": "object",
-            "properties": {
-                "state": {
-                    "type": "number"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "models.WealthFund": {
             "type": "object",
             "properties": {
@@ -2167,30 +1302,31 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "planned": {
+                    "$ref": "#/definitions/models.WelfareFund"
+                },
                 "user_id": {
                     "type": "string"
                 }
             }
         },
-        "user.User": {
-            "type": "object",
-            "properties": {
-                "hashedPassword": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
+        "models.WelfareFund": {
+            "type": "integer",
+            "enum": [
+                0,
+                1
+            ],
+            "x-enum-varnames": [
+                "Planned",
+                "Unplanned"
+            ]
         }
     },
-    "securityDefinitions": {
-        "headerKey": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+    "security": [
+        {
+            "JWT": []
         }
-    }
+    ]
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
@@ -2198,7 +1334,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
 	BasePath:         "/v1",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "Cash Advisor API",
 	Description:      "Backend API for managing user profiles, authentication, analytics, and more.",
 	InfoInstanceName: "swagger",

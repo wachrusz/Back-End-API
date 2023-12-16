@@ -12,6 +12,7 @@ import (
 	auth "backEndAPI/_auth"
 	categories "backEndAPI/_categories"
 	models "backEndAPI/_models"
+	mydb "backEndAPI/_mydatabase"
 
 	"github.com/gorilla/mux"
 )
@@ -28,7 +29,8 @@ type UserProfile struct {
 var userProfiles = make(map[string]UserProfile)
 
 func RegisterHandlers(router *mux.Router) {
-	router.HandleFunc("/profile/get", GetProfile).Methods("GET")
+	router.HandleFunc("/profile/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
+	router.HandleFunc("/profile/update-name", auth.AuthMiddleware(UpdateName)).Methods("PUT")
 }
 
 // @Summary Get user profile
@@ -38,12 +40,11 @@ func RegisterHandlers(router *mux.Router) {
 // @Success 200 {string} string "User profile retrieved successfully"
 // @Failure 401 {string} string "User not authenticated"
 // @Failure 500 {string} string "Error getting user profile"
+// @Security JWT
 // @Router /profile/get [get]
 func GetProfile(w http.ResponseWriter, r *http.Request) {
-	deviceID := auth.GetDeviceIDFromRequest(r)
-
-	userID, ok := auth.GetUserIDFromSessionDatabase(deviceID)
-	if ok != nil {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
 		http.Error(w, "User not authenticated", http.StatusUnauthorized)
 		return
 	}
@@ -97,4 +98,46 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(userProfileJSON)
+}
+
+// @Summary Update user profile with name
+// @Description Update the user profile for the authenticated user with a new name.
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param name body string true "New name to be added to the profile"
+// @Success 200 {string} string "User profile updated successfully"
+// @Failure 401 {string} string "User not authenticated"
+// @Failure 500 {string} string "Error updating user profile"
+// @Security JWT
+// @Router /profile/update-name [put]
+func UpdateName(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		return
+	}
+	var request struct {
+		Name string `json:"name"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := UpdateUserNameInDB(userID, request.Name)
+	if err != nil {
+		http.Error(w, "Error updating name in the database", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User profile updated successfully"))
+}
+
+func UpdateUserNameInDB(userID string, newName string) error {
+	_, err := mydb.GlobalDB.Exec("UPDATE users SET name = $1 WHERE id = $2", newName, userID)
+	return err
 }

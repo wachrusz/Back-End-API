@@ -15,38 +15,26 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// User - структура для представления пользователя
 type User struct {
-	Username       string
+	Email          string
 	HashedPassword string
 }
 
-// mutex - мьютекс для безопасного доступа к мапе Users
 var (
 	mutex sync.Mutex
 )
 
-// @Summary Register new user
-// @Description Register a new user with the provided details.
-// @Tags User
-// @Accept json
-// @Produce json
-// @Param user body User true "User details"
-// @Success 201 {string} string "User registered successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error registering user"
-// @Router /user/register [post]
-func RegisterUser(username, name, password string) error {
+func RegisterUser(email, password string) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	if _, exists := GetUserByUsername(username); exists {
-		errMsg := "User with username " + username + " already exists"
+	if _, exists := GetUserByEmail(email); exists {
+		errMsg := "User with email " + email + " already exists"
 		logger.ErrorLogger.Println(errMsg)
 		return errors.New("Already exists")
 	}
 
-	if username == "" || name == "" || password == "" {
+	if email == "" || password == "" {
 		return errors.New("Blank fields are not allowed")
 	}
 
@@ -55,13 +43,13 @@ func RegisterUser(username, name, password string) error {
 		return err
 	}
 
-	_, err = mydb.GlobalDB.Exec("INSERT INTO users (username, hashed_password, name) VALUES ($1, $2, $3)", username, hashedPassword, name)
+	_, err = mydb.GlobalDB.Exec("INSERT INTO users (email, hashed_password) VALUES ($1, $2)", email, hashedPassword)
 	if err != nil {
 		logger.ErrorLogger.Println("Error inserting user:", err)
 		return err
 	}
 
-	logger.InfoLogger.Printf("New user registered: %s\n", username)
+	logger.InfoLogger.Printf("New user registered: %s\n", email)
 
 	return nil
 }
@@ -75,12 +63,12 @@ func HashPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
-func GetUserByUsername(username string) (User, bool) {
+func GetUserByEmail(email string) (User, bool) {
 	var user User
 	var id int
 
-	row := mydb.GlobalDB.QueryRow("SELECT id, username, hashed_password FROM users WHERE username = $1", username)
-	err := row.Scan(&id, &user.Username, &user.HashedPassword)
+	row := mydb.GlobalDB.QueryRow("SELECT id, email, hashed_password FROM users WHERE email = $1", email)
+	err := row.Scan(&id, &user.Email, &user.HashedPassword)
 	if err == sql.ErrNoRows {
 		return user, false
 	} else if err != nil {
@@ -90,13 +78,13 @@ func GetUserByUsername(username string) (User, bool) {
 	return user, true
 }
 
-func GetHashedPasswordByUsername(username string) (string, error) {
+func GetHashedPasswordByUsername(email string) (string, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	user, exists := GetUserByUsername(username)
+	user, exists := GetUserByEmail(email)
 	if !exists {
-		errMsg := "User with username " + username + " not found"
+		errMsg := "User with email " + email + " not found"
 		logger.ErrorLogger.Println(errMsg)
 		return "", errors.New("User not found")
 	}

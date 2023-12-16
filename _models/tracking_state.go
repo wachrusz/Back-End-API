@@ -14,16 +14,6 @@ type TrackingState struct {
 	UserID string  `json:"user_id"`
 }
 
-// @Summary Create tracking state
-// @Description Create a new tracking state entry.
-// @Tags TrackingState
-// @Accept json
-// @Produce json
-// @Param trackingState body TrackingState true "Tracking state details"
-// @Success 201 {string} string "Tracking state created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error creating tracking state"
-// @Router /models/tracking-state [post]
 func CreateTrackingState(trackingState *TrackingState) error {
 	_, err := mydb.GlobalDB.Exec("INSERT INTO trackingState (state, user_id) VALUES ($1, $2)",
 		trackingState.State, trackingState.UserID)
@@ -34,14 +24,6 @@ func CreateTrackingState(trackingState *TrackingState) error {
 	return nil
 }
 
-// @Summary Get tracking states by user ID
-// @Description Get a list of tracking states for a specific user.
-// @Tags TrackingState
-// @Produce json
-// @Param userID path string true "User ID"
-// @Success 200 {array} TrackingState "List of tracking states"
-// @Failure 500 {string} string "Error querying tracking states"
-// @Router /models/tracking-state/{userID} [get]
 func GetTrackingStatesByUserID(userID string) ([]TrackingState, error) {
 	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned FROM trackingState WHERE user_id = $1", userID)
 	if err != nil {
