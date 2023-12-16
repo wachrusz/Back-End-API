@@ -11,6 +11,74 @@ info:
 host: localhost:8080
 basePath: /v1
 paths:
+  /auth/login/vk:
+    post:
+        description: Login to the system and get an authentication token
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        tags:
+          - Auth
+        summary: Login to the system through vk
+        parameters:
+          - description: UserAuthenticationRequest object
+            name: loginRequest
+            in: body
+            required: true
+            schema:
+              $ref: '#/definitions/auth.UserAuthenticationRequest'
+        responses:
+          '200':
+            description: Login successful
+            schema:
+              type: string
+          '400':
+            description: Bad Request
+            schema:
+              type: string
+          '401':
+            description: Unauthorized
+            schema:
+              type: string
+          '500':
+            description: Internal Server Error
+            schema:
+              type: string
+  /auth/login/google:
+    post:
+        description: Login to the system and get an authentication token
+        consumes:
+          - application/json
+        produces:
+          - application/json
+        tags:
+          - Auth
+        summary: Login to the system through google
+        parameters:
+          - description: UserAuthenticationRequest object
+            name: loginRequest
+            in: body
+            required: true
+            schema:
+              $ref: '#/definitions/auth.UserAuthenticationRequest'
+        responses:
+          '200':
+            description: Login successful
+            schema:
+              type: string
+          '400':
+            description: Bad Request
+            schema:
+              type: string
+          '401':
+            description: Unauthorized
+            schema:
+              type: string
+          '500':
+            description: Internal Server Error
+            schema:
+              type: string
   /analytics/expense:
     post:
       security:
@@ -592,7 +660,7 @@ paths:
   /support/request:
     post:
       security:
-          - JWT: []
+        - JWT: []
       description: Send a support request to the technical support team.
       consumes:
         - application/json
@@ -893,7 +961,7 @@ definitions:
       income:
         type: array
         items:
-           $ref: '#/definitions/models.Income'
+          $ref: '#/definitions/models.Income'
       expense:
         type: array
         items:
@@ -902,7 +970,6 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/models.WealthFund'
-
   Subscription:
     type: object
     properties:
@@ -912,13 +979,12 @@ definitions:
         type: string
       start_date:
         type: string
-        format: date # Предполагая, что это дата
+        format: date
       end_date:
         type: string
-        format: date # Предполагая, что это дата
+        format: date
       is_active:
         type: boolean
-
   TrackingState:
     type: object
     properties:
@@ -926,7 +992,6 @@ definitions:
         type: number
       user_id:
         type: string
-
   App:
     type: object
     properties:
@@ -935,12 +1000,11 @@ definitions:
         items:
           $ref: '#/definitions/ConnectedAccount'
       categorySettings:
-          $ref: '#/definitions/CategorySettings'
+        $ref: '#/definitions/CategorySettings'
       operationArchive:
         type: array
         items:
           $ref: '#/definitions/Operation'
-
   CategorySettings:
     type: object
     properties:
@@ -956,7 +1020,6 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/InvestmentCategory'
-
   Operation:
     type: object
     properties:
@@ -972,7 +1035,6 @@ definitions:
         type: string
       type:
         type: string
-
   ExpenseCategory:
     type: object
     properties:
@@ -986,7 +1048,6 @@ definitions:
         type: boolean
       user_id:
         type: string
-
   IncomeCategory:
     type: object
     properties:
@@ -1000,7 +1061,6 @@ definitions:
         type: boolean
       user_id:
         type: string
-
   InvestmentCategory:
     type: object
     properties:
@@ -1014,7 +1074,6 @@ definitions:
         type: boolean
       user_id:
         type: string
-        
   ConnectedAccount:
     type: object
     properties:
@@ -1028,7 +1087,6 @@ definitions:
         type: string
       account_type:
         type: string
-
   Tracker:
     type: object
     properties:
@@ -1047,7 +1105,6 @@ definitions:
         $ref: '#/definitions/App'
       settings:
         $ref: '#/definitions/Settings'
-
   Settings:
     type: object
     properties:
@@ -1058,4 +1115,3 @@ securityDefinitions:
     type: apiKey
     name: Authorization
     in: header
-
