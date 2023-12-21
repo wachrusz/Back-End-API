@@ -6,7 +6,9 @@ package handlers
 
 import (
 	auth "backEndAPI/_auth"
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
+	"errors"
 
 	"encoding/json"
 	"net/http"
@@ -27,25 +29,28 @@ import (
 func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	var expense models.Expense
 	if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
 	expense.UserID = userID
 
 	if err := models.CreateExpense(&expense); err != nil {
-		http.Error(w, "Error creating expense", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Expense created successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully created an expense",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 /*

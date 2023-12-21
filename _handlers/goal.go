@@ -6,7 +6,9 @@ package handlers
 
 import (
 	auth "backEndAPI/_auth"
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
+	"errors"
 	"log"
 
 	"encoding/json"
@@ -28,13 +30,13 @@ func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Started CreateGoalHandler")
 	var goal models.Goal
 	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
@@ -42,10 +44,13 @@ func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print(goal.UserID)
 
 	if err := models.CreateGoal(&goal); err != nil {
-		http.Error(w, "Error creating goal", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating goal: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Goal created successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully created a goal",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }

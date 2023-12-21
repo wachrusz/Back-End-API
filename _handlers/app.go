@@ -5,8 +5,10 @@
 package handlers
 
 import (
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -25,18 +27,21 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.ExpenseCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := models.CreateExpenseCategory(&category)
 	if err != nil {
-		http.Error(w, "Error creating expense category", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Expense category created successfully"))
+	response := map[string]interface{}{
+		"message":     "Expense category created successfully",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Create an income category
@@ -54,18 +59,21 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.IncomeCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := models.CreateIncomeCategory(&category)
 	if err != nil {
-		http.Error(w, "Error creating income category", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating income category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Income category created successfully"))
+	response := map[string]interface{}{
+		"message":     "Income category created successfully",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Create an investment category
@@ -83,16 +91,19 @@ func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.InvestmentCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := models.CreateInvestmentCategory(&category)
 	if err != nil {
-		http.Error(w, "Error creating income category", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating income category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Investment category created successfully"))
+	response := map[string]interface{}{
+		"message":     "Investment category created successfully",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }

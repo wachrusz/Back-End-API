@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
 	auth "backEndAPI/_auth"
 	email "backEndAPI/_email"
+	jsonresponse "backEndAPI/_json_response"
 	logger "backEndAPI/_logger"
 )
 
@@ -32,23 +34,26 @@ type SupportRequest struct {
 func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 	var supportRequest SupportRequest
 	if err := json.NewDecoder(r.Body).Decode(&supportRequest); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
 	if err := sendSupportRequest(supportRequest, userID); err != nil {
-		http.Error(w, "Error sending support request", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error sending support request: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Support request sent successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully sent a suuport request",
+		"status_code": http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func sendSupportRequest(request SupportRequest, userID string) error {

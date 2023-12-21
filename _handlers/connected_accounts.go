@@ -6,8 +6,11 @@ package handlers
 
 import (
 	auth "backEndAPI/_auth"
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
+
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -26,18 +29,21 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var account models.ConnectedAccount
 
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := models.AddConnectedAccount(&account)
 	if err != nil {
-		http.Error(w, "Error adding connected account", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error adding connected account: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Connected account added successfully"))
+	response := map[string]interface{}{
+		"message":     "Connected account added successfully",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Delete a connected account
@@ -52,16 +58,19 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 func DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "Error deleting connected account: UNAUTHORIZED", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("Error deleting connected account: UNAUTHORIZED: "), http.StatusUnauthorized)
 		return
 	}
 
 	err := models.DeleteConnectedAccount(userID)
 	if err != nil {
-		http.Error(w, "Error deleting connected account: DB_Error", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error deleting connected account: DB_Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Connected account deleted successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfuly deleted connected account",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }

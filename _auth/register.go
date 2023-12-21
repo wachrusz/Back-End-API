@@ -2,6 +2,9 @@ package auth
 
 import (
 	email_conf "backEndAPI/_email"
+	jsonresponse "backEndAPI/_json_response"
+	"errors"
+
 	//user "backEndAPI/_user"
 	utility "backEndAPI/_utility"
 
@@ -25,8 +28,8 @@ import (
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid Content-Type, expected application/json"))
+		err := errors.New("Empty 'Content-Type' HEADER")
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -34,41 +37,134 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&registrationRequest)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request payload"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	email := registrationRequest.Email
 	password := registrationRequest.Password
 	if !isValidEmail(email) {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid email"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
 		return
 	}
 
 	token, err := utility.GenerateRegisterJWTToken(email, password)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error generating confirmation token"))
+		jsonresponse.SendErrorResponse(w, errors.New("Error generating confirmation token: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	err = email_conf.SendConfirmationEmail(email, token)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		jsonresponse.SendErrorResponse(w, errors.New("Error sending confirm email: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message": "Confirm your email",
-		"token":   token,
+		"message":     "Confirm your email",
+		"token":       token,
+		"status_code": http.StatusOK,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+type ResetPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		err := errors.New("Empty 'Content-Type' HEADER")
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	var resetRequest ResetPasswordRequest
+
+	err := json.NewDecoder(r.Body).Decode(&resetRequest)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	email := resetRequest.Email
+	if !isValidEmail(email) {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		return
+	}
+
+	token, err := utility.GenerateResetJWTToken(email)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Error generating confirmation token: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	err = email_conf.SendConfirmationEmail(email, token)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Error sending confirm email: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message":     "Confirm your email",
+		"token":       token,
+		"status_code": http.StatusOK,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		err := errors.New("Empty 'Content-Type' HEADER")
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+	var registrationRequest UserAuthenticationRequest
+
+	err := json.NewDecoder(r.Body).Decode(&registrationRequest)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	email := registrationRequest.Email
+	password := registrationRequest.Password
+	if !isValidEmail(email) {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		return
+	}
+
+	resetToken := r.Header.Get("Authorization")
+	if resetToken == "" {
+		jsonresponse.SendErrorResponse(w, errors.New("Reset token is required"), http.StatusBadRequest)
+		return
+	}
+	_, err = utility.VerifyResetJWTToken(resetToken)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired reset token: "+err.Error()), http.StatusUnauthorized)
+		return
+	}
+
+	err = ResetPassword(email, password)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Error resetting password: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]interface{}{
+		"message":     "Successfuly reseted password",
+		"status_code": http.StatusOK,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+	Login(w, r)
 }
 
 func isValidEmail(email string) bool {

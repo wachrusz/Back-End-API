@@ -37,7 +37,7 @@ type UserProfile struct {
 }
 
 var (
-	databaseURL        string = "postgres://postgres:PASSWORD@IP:5432/backendapi?sslmode=disable"
+	databaseURL        string = "postgres://postgres:@:5432/backendapi?sslmode=disable"
 	db                 *mydb.Database
 	privateKeyPassword string = "CashAdvisor"
 	certFile           string = "ok_server.crt"
@@ -64,7 +64,8 @@ func main() {
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 
-	err = http.ListenAndServeTLS(":8080", certFile, keyFile, router)
+	//changed tls hosting now everything works
+	err = http.ListenAndServeTLS(":8080", certFile, keyFile, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
