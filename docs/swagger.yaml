@@ -11,7 +11,7 @@ info:
 host: 212.233.78.3:8080
 basePath: /v1
 paths:
-  /auth/login/reset/put:
+  /auth/login/reset/password/put:
     put:
       summary: Reset Password for Recovery
       tags:
@@ -57,7 +57,7 @@ paths:
           description: Internal Server Error - Failed to reset password
           schema:
             $ref: '#/definitions/Error'
-  /auth/reset:
+  /auth/reset/password:
     post:
       summary: Initiate Password Reset
       tags:
