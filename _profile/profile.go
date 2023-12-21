@@ -6,11 +6,12 @@ package profile
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 
 	auth "backEndAPI/_auth"
 	categories "backEndAPI/_categories"
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
 	mydb "backEndAPI/_mydatabase"
 
@@ -45,7 +46,7 @@ func RegisterHandlers(router *mux.Router) {
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
@@ -87,17 +88,13 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	userProfiles[userID] = userProfile
 
-	fmt.Printf("User Profile: %+v\n", userProfile)
-
-	userProfileJSON, err := json.Marshal(userProfile)
-	if err != nil {
-		http.Error(w, "Error encoding JSON", http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write(userProfileJSON)
+	response := map[string]interface{}{
+		"message":     "Successfully got a profile",
+		"status_code": http.StatusOK,
+		"profile":     userProfile,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Update user profile with name
@@ -114,7 +111,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 func UpdateName(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 	var request struct {
@@ -123,18 +120,21 @@ func UpdateName(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&request); err != nil {
-		http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Error decoding JSON: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := UpdateUserNameInDB(userID, request.Name)
 	if err != nil {
-		http.Error(w, "Error updating name in the database", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error updating name in the database: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("User profile updated successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully updated a profile",
+		"status_code": http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func UpdateUserNameInDB(userID string, newName string) error {

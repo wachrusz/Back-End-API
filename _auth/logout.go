@@ -5,7 +5,10 @@
 package auth
 
 import (
-	logger "backEndAPI/_logger"
+	jsonresponse "backEndAPI/_json_response"
+	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 )
 
@@ -21,21 +24,23 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	currentDeviceID := GetDeviceIDFromRequest(r)
 
 	userID, ok := GetUserIDFromContext(r.Context())
+	log.Println(currentDeviceID, userID)
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
 	err := removeSessionFromDatabase(currentDeviceID, userID)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error removing session from the database: %v\n", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error removing session from the database: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	delete(ActiveUsers, userID)
 
-	logger.InfoLogger.Printf("User %s logged out from %s\n", userID, r.RemoteAddr)
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Logout successful"))
+	response := map[string]interface{}{
+		"message":     "Logout Successful",
+		"status_code": http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(response)
 }

@@ -6,11 +6,12 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 
 	enc "backEndAPI/_encryption"
-	logger "backEndAPI/_logger"
+	jsonresponse "backEndAPI/_json_response"
 	user "backEndAPI/_user"
 
 	"github.com/dgrijalva/jwt-go"
@@ -40,11 +41,14 @@ func setUserIDInContext(ctx context.Context, userID string) context.Context {
 
 func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/login", Login).Methods("POST")
-	router.HandleFunc("/auth/logout", Logout).Methods("POST")
+	router.HandleFunc("/auth/logout", AuthMiddleware(Logout)).Methods("POST")
 	router.HandleFunc("/auth/register", RegisterUser).Methods("POST")
-	router.HandleFunc("/auth/login/vk", handleVKLogin).Methods("POST")
-	router.HandleFunc("/auth/login/google", handleGoogleLogin).Methods("POST")
+	router.HandleFunc("/auth/login/vk", handleVKLogin).Methods("GET")
+	router.HandleFunc("/auth/login/google", handleGoogleLogin).Methods("GET")
 	router.HandleFunc("/auth/register/confirm-email", ConfirmEmailHandler).Methods("POST")
+	router.HandleFunc("/auth/login/reset-confirm", ResetPasswordConfirmHandler).Methods("POST")
+	router.HandleFunc("/auth/login/reset", ResetPasswordHandler).Methods("POST")
+	router.HandleFunc("/auth/login/reset/put", ChangePasswordForRecoverHandler).Methods("PUT")
 }
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -52,8 +56,8 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" {
-			logger.ErrorLogger.Printf("Error in tokenString")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Error in tokenString")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
@@ -62,40 +66,40 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil {
-			logger.ErrorLogger.Printf("Error in parsing")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Error in parsing")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		if !token.Valid {
-			logger.ErrorLogger.Printf("Invalid token")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Invalid token")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			logger.ErrorLogger.Printf("Claims error")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Claims error")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 		userIDClaim, ok := claims["sub"]
 		if !ok {
-			logger.ErrorLogger.Printf("No 'sub' claim in token")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("No 'sub' claim in token")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		userID, ok := userIDClaim.(string)
 		if !ok {
-			logger.ErrorLogger.Printf("Failed to convert 'sub' claim to string")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Failed to convert 'sub' claim to string")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 
 		if !IsUserActive(userID) {
-			logger.ErrorLogger.Printf("Not active, userID: %v", userID)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			err := errors.New("Inactive user")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
 

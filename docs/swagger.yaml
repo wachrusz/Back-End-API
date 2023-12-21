@@ -8,149 +8,213 @@ info:
     name: Mikhail Vakhrushin
     email: lstwrd@yandex.com
   version: '1.0'
-host: localhost:8080
+host: 212.233.78.3:8080
 basePath: /v1
 paths:
-  /auth/login/vk:
-    post:
-        description: Login to the system and get an authentication token
-        consumes:
-          - application/json
-        produces:
-          - application/json
-        tags:
-          - Auth
-        summary: Login to the system through vk
-        parameters:
-          - description: UserAuthenticationRequest object
-            name: loginRequest
-            in: body
-            required: true
-            schema:
-              $ref: '#/definitions/auth.UserAuthenticationRequest'
-        responses:
-          '200':
-            description: Login successful
-            schema:
-              type: string
-          '400':
-            description: Bad Request
-            schema:
-              type: string
-          '401':
-            description: Unauthorized
-            schema:
-              type: string
-          '500':
-            description: Internal Server Error
-            schema:
-              type: string
-  /auth/login/google:
-    post:
-        description: Login to the system and get an authentication token
-        consumes:
-          - application/json
-        produces:
-          - application/json
-        tags:
-          - Auth
-        summary: Login to the system through google
-        parameters:
-          - description: UserAuthenticationRequest object
-            name: loginRequest
-            in: body
-            required: true
-            schema:
-              $ref: '#/definitions/auth.UserAuthenticationRequest'
-        responses:
-          '200':
-            description: Login successful
-            schema:
-              type: string
-          '400':
-            description: Bad Request
-            schema:
-              type: string
-          '401':
-            description: Unauthorized
-            schema:
-              type: string
-          '500':
-            description: Internal Server Error
-            schema:
-              type: string
-  /analytics/expense:
-    post:
-      security:
-        - JWT: []
-      description: Create a new expense.
+  /auth/login/reset/put:
+    put:
+      summary: Reset Password for Recovery
+      tags:
+        - Auth
+      description: |
+        Resets the user password using a valid reset token.
       consumes:
         - application/json
       produces:
         - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Request body containing email and password for password reset
+          required: true
+          schema:
+            $ref: '#/definitions/UserAuthenticationRequest'
+        - name: Authorization
+          in: header
+          type: string
+          description: JWT reset token
+      responses:
+        '200':
+          description: Password reset successful
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating the successful password reset
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+        '400':
+          description: Bad Request - Invalid input or content type
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Unauthorized - Invalid or expired reset token
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to reset password
+          schema:
+            $ref: '#/definitions/Error'
+  /auth/reset:
+    post:
+      summary: Initiate Password Reset
+      tags:
+        - Auth
+      description: |
+        Initiates the password reset process by sending a confirmation email with a reset token.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Request body containing the email for password reset
+          required: true
+          schema:
+            $ref: '#/definitions/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset initiated successfully
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating the user to confirm their email
+              token:
+                type: string
+                description: Reset token for the user
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+
+        '400':
+          description: Bad Request - Invalid input or content type
+          schema:
+            $ref: '#/definitions/Error'
+        
+        '500':
+          description: Internal Server Error - Failed to generate token or send email
+          schema:
+            $ref: '#/definitions/Error'
+
+  /auth/login/google:
+    get:
+      summary: Initiate Google OAuth Login
+      tags:
+        - Auth
+      description: |
+        Initiates the Google OAuth login process. Redirects the user to the Google OAuth authorization page.
+      responses:
+        '307':
+          description: Temporary Redirect
+          headers:
+            Location:
+              type: string
+              description: The URL to redirect the user for Google OAuth login.
+
+  /auth/login/vk:
+    get:
+      summary: Initiate VK OAuth Login
+      tags:
+        - Auth
+      description: |
+        Initiates the VK (Vkontakte) OAuth login process. Redirects the user to the VK OAuth authorization page.
+      responses:
+        '307':
+          description: Temporary Redirect
+          headers:
+            Location:
+              type: string
+              description: The URL to redirect the user for VK OAuth login.
+  /analytics/expense:
+    post:
+      security:
+        - JWT: []
+      summary: Create Expense
       tags:
         - Analytics
-      summary: Create an expense
+      description: Create a new expense for the authenticated user.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: Expense object
-          name: expense
+        - name: body
           in: body
+          description: Expense creation request payload
           required: true
           schema:
             $ref: '#/definitions/models.Expense'
       responses:
         '201':
-          description: Expense created successfully
+          description: Successfully created an expense
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful expense creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '401':
-          description: User not authenticated
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating expense
+          description: Internal Server Error - Failed to create expense
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /analytics/income:
     post:
       security:
         - JWT: []
-      description: Create a new income.
-      consumes:
-        - application/json
-      produces:
-        - application/json
       tags:
         - Analytics
-      summary: Create an income
+      description: Create a new income for the authenticated user.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: Income object
-          name: income
+        - name: body
           in: body
+          description: Income creation request payload
           required: true
           schema:
             $ref: '#/definitions/models.Income'
       responses:
         '201':
-          description: Income created successfully
+          description: Successfully created an income
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful income creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '401':
-          description: User not authenticated
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating income
+          description: Internal Server Error - Failed to create income
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /analytics/wealth_fund:
     post:
       security:
@@ -191,342 +255,411 @@ paths:
     post:
       security:
         - JWT: []
-      description: Create a new expense category.
-      consumes:
-        - application/json
-      produces:
-        - application/json
       tags:
         - App
-      summary: Create an expense category
+      description: Create a new expense category.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: Expense category object
-          name: category
+        - name: body
           in: body
+          description: Expense category creation request payload
           required: true
           schema:
-            $ref: '#/definitions/models.ExpenseCategory'
+            $ref: '#/definitions/ExpenseCategory'
       responses:
         '201':
-          description: Expense category created successfully
+          description: Successfully created an expense category
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful expense category creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating expense category
+          description: Internal Server Error - Failed to create expense category
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /app/category/income:
     post:
       security:
         - JWT: []
-      description: Create a new income category.
-      consumes:
-        - application/json
-      produces:
-        - application/json
       tags:
         - App
-      summary: Create an income category
+      description: Create a new income category.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: Income category object
-          name: category
+        - name: body
           in: body
+          description: Income category creation request payload
           required: true
           schema:
-            $ref: '#/definitions/models.IncomeCategory'
+            $ref: '#/definitions/IncomeCategory'
       responses:
         '201':
-          description: Income category created successfully
+          description: Successfully created an income category
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful income category creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating income category
+          description: Internal Server Error - Failed to create income category
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /app/category/investment:
     post:
       security:
         - JWT: []
-      description: Create a new investment category.
-      consumes:
-        - application/json
-      produces:
-        - application/json
       tags:
         - App
-      summary: Create an investment category
+      description: Create a new investment category.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: Investment category object
-          name: category
+        - name: body
           in: body
+          description: Investment category creation request payload
           required: true
           schema:
-            $ref: '#/definitions/models.InvestmentCategory'
+            $ref: '#/definitions/InvestmentCategory'
       responses:
         '201':
-          description: Investment category created successfully
+          description: Successfully created an investment category
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful investment category creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating investment category
+          description: Internal Server Error - Failed to create investment category
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /app/connected-accounts/add:
     post:
       security:
         - JWT: []
-      description: Create a new connected account.
-      consumes:
-        - application/json
-      produces:
-        - application/json
       tags:
         - App
-      summary: Create a connected account
+      description: Add a new connected account.
+      produces:
+        - application/json
+      consumes:
+        - application/json
       parameters:
-        - description: ConnectedAccount object
-          name: ConnectedAccount
+        - name: body
           in: body
+          description: Connected account creation request payload
           required: true
           schema:
-            $ref: '#/definitions/models.ConnectedAccount'
+            $ref: '#/definitions/ConnectedAccount'
       responses:
         '201':
-          description: Connected account created successfully
+          description: Connected account added successfully
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful connected account addition
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error adding connected account
+          description: Internal Server Error - Failed to add connected account
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /app/connected-accounts/delete:
     delete:
       security:
         - JWT: []
-      description: Delete an existing connected account.
       tags:
         - App
-      summary: Delete a connected account
-      parameters:
-        - description: ConnectedAccount object
-          name: ConnectedAccount
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/models.ConnectedAccount'
+      description: Delete the connected account for the authenticated user.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters: []
       responses:
-        '201':
-          description: Connected account created successfully
+        '200':
+          description: Successfuly deleted connected account
           schema:
-            type: string
-        '400':
-          description: Invalid request payload
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful connected account deletion
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+        '401':
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error adding connected account
+          description: Internal Server Error - Failed to delete connected account
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /app/report:
     get:
       security:
         - JWT: []
-      description: Get a financial report .
       tags:
         - App
-      summary: Exports report
-      parameters:
-        - description: ConnectedAccount object
-          name: expense
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/models.ConnectedAccount'
+      description: Export user data to Excel and PDF formats.
+      produces:
+        - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        - application/pdf
+      parameters: []
       responses:
-        '201':
-          description: Connected account created successfully
+        '200':
+          description: Successfully exported data
+
+        '401':
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
-        '400':
-          description: Invalid request payload
-          schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error adding connected account
+          description: Internal Server Error - Failed to export data
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /auth/login:
     post:
-      description: Login to the system and get an authentication token
+      summary: User Login
+      tags:
+        - Auth
+      description: |
+        Authenticates a user and generates an access token.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Auth
-      summary: Login to the system
       parameters:
-        - description: UserAuthenticationRequest object
-          name: loginRequest
+        - name: body
           in: body
+          description: Request body containing email and password for login
           required: true
           schema:
-            $ref: '#/definitions/auth.UserAuthenticationRequest'
+            $ref: '#/definitions/UserAuthenticationRequest'
       responses:
         '200':
           description: Login successful
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful login
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+              token:
+                type: string
+                description: Access token for the user
+              refresh_token:
+                type: string
+                description: Temporary placeholder for refresh token
         '400':
-          description: Bad Request
+          description: Bad Request - Invalid input or content type
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Unauthorized - Invalid email or password
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Internal Server Error
+          description: Internal Server Error - Failed to generate token
           schema:
-            type: string
-  /auth/login/reset:
+            $ref: '#/definitions/Error'
+  /auth/reset/password/confirm:
     post:
-      description: Confirm the user's email using the provided token and confirmation code.
-      produces:
-        - application/json
+      summary: Confirm Password Reset
       tags:
         - Auth
-      summary: Confirm user email for password reset
-      parameters:
-        - description: Confirm Email Request
-          name: confirmEmailRequest
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/auth.ConfirmEmailRequest'
-      responses:
-        '200':
-          description: Email confirmed successfully
-          schema:
-            type: string
-        '400':
-          description: Invalid request payload or Content-Type
-          schema:
-            type: string
-        '401':
-          description: Invalid or expired token
-          schema:
-            type: string
-        '500':
-          description: Error confirming email or reseting password
-          schema:
-            type: string
-  /auth/logout:
-    post:
-      security:
-        - JWT: []
-      description: Logs out the user, terminating the session.
-      produces:
-        - application/json
-      tags:
-        - Auth
-      summary: Logout the user
-      responses:
-        '200':
-          description: Logout successful
-          schema:
-            type: string
-        '500':
-          description: Internal Server Error
-          schema:
-            type: string
-  /auth/register:
-    post:
-      description: Register a new user.
+      description: |
+        Confirms a password reset by verifying the token and confirmation code.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Auth
-      summary: Register user
       parameters:
-        - type: string
-          description: Username
-          name: username
-          in: query
-          required: true
-        - type: string
-          description: Password
-          name: password
-          in: query
-          required: true
-        - type: string
-          description: Name
-          name: name
-          in: query
-          required: true
-      responses:
-        '200':
-          description: User registered successfully
-          schema:
-            type: string
-        '400':
-          description: Invalid request payload
-          schema:
-            type: string
-        '500':
-          description: Error registering user
-          schema:
-            type: string
-  /auth/register/confirm-email:
-    post:
-      description: Confirm the user's email using the provided token and confirmation code.
-      produces:
-        - application/json
-      tags:
-        - Auth
-      summary: Confirm user email
-      parameters:
-        - description: Confirm Email Request
-          name: confirmEmailRequest
+        - name: body
           in: body
+          description: Request body containing reset confirmation details
           required: true
           schema:
             $ref: '#/definitions/auth.ConfirmEmailRequest'
       responses:
         '200':
-          description: Email confirmed successfully
+          description: Password reset confirmation successful
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful confirmation
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
         '400':
-          description: Invalid request payload or Content-Type
+          description: Bad Request - Invalid input or content type
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '401':
-          description: Invalid or expired token
+          description: Unauthorized - Invalid or expired token
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error confirming email or registering user
+          description: Internal Server Error - Failed to confirm password reset
           schema:
-            type: string
+            $ref: '#/definitions/Error'
+
+  /auth/logout:
+    post:
+      security:
+        - JWT: []
+      summary: Logout
+      tags:
+        - Auth
+      description: Logs out the authenticated user, removing the session.
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Logout successful
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful logout
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+        '401':
+          description: Unauthorized - Invalid or expired token
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to remove session
+          schema:
+            $ref: '#/definitions/Error'
+  /auth/register:
+    post:
+      summary: Register User
+      tags:
+        - Auth
+      description: Registers a new user and sends a confirmation email.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Registration request payload
+          required: true
+          schema:
+            $ref: '#/definitions/UserAuthenticationRequest'
+      responses:
+        '200':
+          description: Confirm your email
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating the need to confirm the email
+              token:
+                type: string
+                description: JWT token for email confirmation
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+        '400':
+          description: Bad Request - Invalid email or missing Content-Type header
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to generate confirmation token or send confirmation email
+          schema:
+            $ref: '#/definitions/Error'
+  /auth/confirm-email:
+    post:
+      summary: Confirm Email
+      tags:
+        - Auth
+      description: Confirm user's email based on the received token and confirmation code.
+      produces:
+        - application/json
+      consumes:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Confirmation request payload
+          required: true
+          schema:
+            $ref: '#/definitions/auth.ConfirmEmailRequest'
+      responses:
+        '200':
+          description: Successfully confirmed email
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful email confirmation
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
+        '400':
+          description: Bad Request - Invalid token or missing Content-Type header
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Unauthorized - Invalid or expired token
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to confirm email or register user
+          schema:
+            $ref: '#/definitions/Error'
   /docs/swagger.json:
     get:
       description: Get the Swagger JSON file.
@@ -574,73 +707,92 @@ paths:
     get:
       security:
         - JWT: []
-      description: Get the user profile for the authenticated user.
-      produces:
-        - application/json
       tags:
         - Profile
-      summary: Get user profile
+      description: Retrieve the user profile including analytics, tracker, and more.
       responses:
         '200':
-          description: User profile retrieved successfully
+          description: Successfully retrieved the user profile
           schema:
-            type: string
+            type: object
+            properties:
+              status_code:
+                type: integer
+              message:
+                type: string
+              profile:
+                  $ref: '#/definitions/profile.UserProfile'
         '401':
-          description: User not authenticated
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error getting user profile
+          description: Internal Server Error - Failed to retrieve user profile
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /profile/update-name:
     put:
       security:
         - JWT: []
-      description: Update the user profile for the authenticated user with a new name.
+      tags:
+        - Profile
+      description: |
+        Updates the user's name.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Profile
-      summary: Update user profile with name
-      parameters:
-        - description: New name to be added to the profile
-          name: name
+      parameters: 
+        - name: body
           in: body
+          description: Request body containing the new name
           required: true
           schema:
-            type: string
+            type: object
+            properties:
+              name:
+                type: string
+                description: New name for the user
       responses:
         '200':
-          description: User profile updated successfully
+          description: Profile updated successfully
           schema:
-            type: string
+            type: object
+            properties:
+                message:
+                  type: string
+                  description: Message indicating successful update
+                status_code:
+                  type: integer
+                  description: HTTP status code (200 OK)
+        '400':
+          description: Bad Request - Invalid input or content type
+          schema:
+            $ref: '#/definitions/Error'
         '401':
-          description: User not authenticated
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error updating user profile
+          description: Internal Server Error - Failed to update profile
           schema:
-            type: string
+              $ref: '#/definitions/Error'
   /settings/subscription:
     post:
       security:
         - JWT: []
-      description: Create a new subscription.
+      tags:
+        - Settings
+      description: |
+        Creates a new subscription.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Settings
-      summary: Create a subscription
       parameters:
-        - description: Subscription object
-          name: subscription
+        - name: body
           in: body
+          description: Request body containing details for creating a subscription
           required: true
           schema:
             $ref: '#/definitions/models.Subscription'
@@ -648,31 +800,38 @@ paths:
         '201':
           description: Subscription created successfully
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful subscription creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid input or content type
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating subscription
+          description: Internal Server Error - Failed to create subscription
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /support/request:
     post:
       security:
         - JWT: []
-      description: Send a support request to the technical support team.
+      tags:
+        - Support
+      description: |
+        Sends a support request.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Support
-      summary: Send support request
       parameters:
-        - description: Support request object
-          name: supportRequest
+        - name: body
           in: body
+          description: Request body containing the support request details
           required: true
           schema:
             $ref: '#/definitions/handlers.SupportRequest'
@@ -680,15 +839,26 @@ paths:
         '200':
           description: Support request sent successfully
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful request
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid input or content type
           schema:
-            type: string
+            $ref: '#/definitions/Error'
+        '401':
+          description: Unauthorized - User not authenticated
+          schema:
+            $ref: '#/definitions/Error'
         '500':
-          description: Error sending support request
+          description: Internal Server Error - Failed to send support request
           schema:
-            type: string
+            $ref: '#/definitions/Error'
   /swagger/index.html:
     get:
       description: Get the Swagger UI.
@@ -732,18 +902,18 @@ paths:
     post:
       security:
         - JWT: []
-      description: Create a new goal.
+      tags:
+        - Tracker
+      description: |
+        Creates a new goal.
       consumes:
         - application/json
       produces:
         - application/json
-      tags:
-        - Tracker
-      summary: Create a goal
       parameters:
-        - description: Goal object
-          name: goal
+        - name: body
           in: body
+          description: Request body containing details for creating a goal
           required: true
           schema:
             $ref: '#/definitions/models.Goal'
@@ -751,20 +921,53 @@ paths:
         '201':
           description: Goal created successfully
           schema:
-            type: string
+            type: object
+            properties:
+              message:
+                type: string
+                description: Message indicating successful goal creation
+              status_code:
+                type: integer
+                description: HTTP status code (201 Created)
         '400':
-          description: Invalid request payload
+          description: Bad Request - Invalid input or content type
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '401':
-          description: User not authenticated
+          description: Unauthorized - User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/Error'
         '500':
-          description: Error creating goal
+          description: Internal Server Error - Failed to create goal
           schema:
-            type: string
+            $ref: '#/definitions/Error'
 definitions:
+  ResetPasswordRequest:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+        description: User's email address for password reset
+  UserAuthenticationRequest:
+    type: object
+    properties:
+      email:
+        type: string
+        format: email
+        description: User's email address
+      password:
+        type: string
+        description: User's new password
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+        description: Error message
+      status_code:
+        type: integer
+        description: Status Code
   auth.ConfirmEmailRequest:
     type: object
     properties:

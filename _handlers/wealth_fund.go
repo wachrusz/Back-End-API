@@ -6,7 +6,9 @@ package handlers
 
 import (
 	auth "backEndAPI/_auth"
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
+	"errors"
 
 	"encoding/json"
 	"net/http"
@@ -27,23 +29,26 @@ import (
 func CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
 	var wealthFund models.WealthFund
 	if err := json.NewDecoder(r.Body).Decode(&wealthFund); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := auth.GetUserIDFromContext(r.Context())
 	if !ok {
-		http.Error(w, "User not authenticated", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
 	wealthFund.UserID = userID
 
 	if err := models.CreateWealthFund(&wealthFund); err != nil {
-		http.Error(w, "Error creating wealthFund", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating wealthFund: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("WealthFund created successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully created a wealth fund",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }

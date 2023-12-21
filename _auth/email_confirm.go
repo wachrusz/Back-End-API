@@ -6,8 +6,11 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	jsonresponse "backEndAPI/_json_response"
+	mydb "backEndAPI/_mydatabase"
 	utility "backEndAPI/_utility"
 
 	email_conf "backEndAPI/_email"
@@ -34,55 +37,54 @@ type ConfirmEmailRequest struct {
 func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid Content-Type, expected application/json"))
+		err := errors.New("Empty 'Content-Type' HEADER")
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request payload"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Token is required"))
+		err := errors.New("Empty token")
+		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var registerRequest utility.UserAuthenticationRequest
 	registerRequest, err := utility.VerifyRegisterJWTToken(token)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid or expired token"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusUnauthorized)
 		return
 	}
 
 	if !email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode) {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Wrong confiramtion code"))
+		err := errors.New("Error in CheckConfirmationCode")
+		jsonresponse.SendErrorResponse(w, errors.New("Wrong confiramtion code: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	err = email_conf.ConfirmEmail(registerRequest.Email)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error confirming email"))
+		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	err = user.RegisterUser(registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error registring user"))
+		jsonresponse.SendErrorResponse(w, errors.New("Error registring user: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Email confirmed successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully confirmed email",
+		"status_code": http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Confirm user email for password reset
@@ -94,57 +96,59 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {string} string "Invalid request payload or Content-Type"
 // @Failure 401 {string} string "Invalid or expired token"
 // @Failure 500 {string} string "Error confirming email or reseting password"
-// @Router /auth/login/reset [post]
-func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+// @Router /auth/login/reset-confirm [post]
+func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid Content-Type, expected application/json"))
+		err := errors.New("Empty 'Content-Type' HEADER")
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request payload"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Token is required"))
+		err := errors.New("Empty token")
+		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err := utility.VerifyRegisterJWTToken(token)
+	registerRequest, err := utility.VerifyResetJWTToken(token)
 	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte("Invalid or expired token"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusUnauthorized)
 		return
 	}
 
 	if !email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode) {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Wrong confiramtion code"))
+		err := errors.New("Error in CheckConfirmationCode")
+		jsonresponse.SendErrorResponse(w, errors.New("Wrong confiramtion code: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	err = email_conf.ConfirmEmail(registerRequest.Email)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error confirming email"))
+		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-	/*
-		err = ResetPassword(registerRequest.Email, registerRequest.Password)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error registring user"))
-			return
-		}
-	*/
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Email confirmed successfully"))
+
+	response := map[string]interface{}{
+		"message":     "Successfully confirmed email",
+		"status_code": http.StatusOK,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func ResetPassword(email, password string) error {
+	hashedPassword, err := user.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	_, err = mydb.GlobalDB.Exec("UPDATE users SET hashed_password = $1 WHERE email = $2", hashedPassword, email)
+	return err
 }

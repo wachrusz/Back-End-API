@@ -5,8 +5,10 @@
 package handlers
 
 import (
+	jsonresponse "backEndAPI/_json_response"
 	models "backEndAPI/_models"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -24,16 +26,19 @@ func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	var subscription models.Subscription
 
 	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	err := models.CreateSubscription(&subscription)
 	if err != nil {
-		http.Error(w, "Error creating subscription", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Error creating subscription: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Subscription created successfully"))
+	response := map[string]interface{}{
+		"message":     "Successfully created a subscription",
+		"status_code": http.StatusCreated,
+	}
+	json.NewEncoder(w).Encode(response)
 }

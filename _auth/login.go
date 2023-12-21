@@ -6,7 +6,9 @@ package auth
 
 import (
 	enc "backEndAPI/_encryption"
+	jsonresponse "backEndAPI/_json_response"
 	logger "backEndAPI/_logger"
+	"errors"
 
 	"encoding/json"
 	"fmt"
@@ -29,8 +31,7 @@ import (
 func Login(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid Content-Type, expected application/json"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "), http.StatusBadRequest)
 		return
 	}
 
@@ -38,8 +39,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&loginRequest)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Invalid request payload"))
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -60,7 +60,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := generateToken(userID)
 	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
@@ -83,23 +83,25 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	saveSessionToDatabase(email, deviceID, userID, token)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Login successful"))
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-
-	logger.InfoLogger.Printf("User %s logged in from %s\n", email, r.RemoteAddr)
+	response := map[string]interface{}{
+		"message":       "Successfuly logged in",
+		"status_code":   http.StatusOK,
+		"token":         token,
+		"refresh_token": "temp_blank",
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
 func checkLoginConds(email, password string, w http.ResponseWriter, r *http.Request) bool {
 
 	if email == "" || password == "" {
-		http.Error(w, "Missing email or password", http.StatusBadRequest)
+		jsonresponse.SendErrorResponse(w, errors.New("Missing email or password: "), http.StatusBadRequest)
 		logger.ErrorLogger.Printf("Missing email or password in login request from %s\n", r.RemoteAddr)
 		return false
 	}
 
 	if !isValidCredentials(email, password) {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid email or password: "), http.StatusUnauthorized)
 		logger.ErrorLogger.Printf("Invalid email or password in login request from %s\n", r.RemoteAddr)
 		return false
 	}
