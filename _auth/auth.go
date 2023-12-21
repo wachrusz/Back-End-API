@@ -46,9 +46,9 @@ func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/login/vk", handleVKLogin).Methods("GET")
 	router.HandleFunc("/auth/login/google", handleGoogleLogin).Methods("GET")
 	router.HandleFunc("/auth/register/confirm-email", ConfirmEmailHandler).Methods("POST")
-	router.HandleFunc("/auth/login/reset-confirm", ResetPasswordConfirmHandler).Methods("POST")
-	router.HandleFunc("/auth/login/reset", ResetPasswordHandler).Methods("POST")
-	router.HandleFunc("/auth/login/reset/put", ChangePasswordForRecoverHandler).Methods("PUT")
+	router.HandleFunc("/auth/login/reset/password/confirm", ResetPasswordConfirmHandler).Methods("POST")
+	router.HandleFunc("/auth/login/reset/password", ResetPasswordHandler).Methods("POST")
+	router.HandleFunc("/auth/login/reset/password/put", ChangePasswordForRecoverHandler).Methods("PUT")
 }
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
