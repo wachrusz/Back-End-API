@@ -83,7 +83,7 @@
         }
       }
     },
-    "/auth/reset/password": {
+    "/auth/login/reset/password": {
       "post": {
         "summary": "Initiate Password Reset",
         "tags": [

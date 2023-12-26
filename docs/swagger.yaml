@@ -57,13 +57,14 @@ paths:
           description: Internal Server Error - Failed to reset password
           schema:
             $ref: '#/definitions/Error'
-  /auth/reset/password:
+  /auth/login/reset/password:
     post:
       summary: Initiate Password Reset
       tags:
         - Auth
-      description: |
-        Initiates the password reset process by sending a confirmation email with a reset token.
+      description: >
+        Initiates the password reset process by sending a confirmation email
+        with a reset token.
       consumes:
         - application/json
       produces:
@@ -90,24 +91,22 @@ paths:
               status_code:
                 type: integer
                 description: HTTP status code (200 OK)
-
         '400':
           description: Bad Request - Invalid input or content type
           schema:
             $ref: '#/definitions/Error'
-        
         '500':
           description: Internal Server Error - Failed to generate token or send email
           schema:
             $ref: '#/definitions/Error'
-
   /auth/login/google:
     get:
       summary: Initiate Google OAuth Login
       tags:
         - Auth
-      description: |
-        Initiates the Google OAuth login process. Redirects the user to the Google OAuth authorization page.
+      description: >
+        Initiates the Google OAuth login process. Redirects the user to the
+        Google OAuth authorization page.
       responses:
         '307':
           description: Temporary Redirect
@@ -115,14 +114,14 @@ paths:
             Location:
               type: string
               description: The URL to redirect the user for Google OAuth login.
-
   /auth/login/vk:
     get:
       summary: Initiate VK OAuth Login
       tags:
         - Auth
-      description: |
-        Initiates the VK (Vkontakte) OAuth login process. Redirects the user to the VK OAuth authorization page.
+      description: >
+        Initiates the VK (Vkontakte) OAuth login process. Redirects the user to
+        the VK OAuth authorization page.
       responses:
         '307':
           description: Temporary Redirect
@@ -449,7 +448,6 @@ paths:
       responses:
         '200':
           description: Successfully exported data
-
         '401':
           description: Unauthorized - User not authenticated
           schema:
@@ -548,7 +546,6 @@ paths:
           description: Internal Server Error - Failed to confirm password reset
           schema:
             $ref: '#/definitions/Error'
-
   /auth/logout:
     post:
       security:
@@ -616,7 +613,9 @@ paths:
           schema:
             $ref: '#/definitions/Error'
         '500':
-          description: Internal Server Error - Failed to generate confirmation token or send confirmation email
+          description: >-
+            Internal Server Error - Failed to generate confirmation token or
+            send confirmation email
           schema:
             $ref: '#/definitions/Error'
   /auth/confirm-email:
@@ -721,7 +720,7 @@ paths:
               message:
                 type: string
               profile:
-                  $ref: '#/definitions/profile.UserProfile'
+                $ref: '#/definitions/profile.UserProfile'
         '401':
           description: Unauthorized - User not authenticated
           schema:
@@ -742,7 +741,7 @@ paths:
         - application/json
       produces:
         - application/json
-      parameters: 
+      parameters:
         - name: body
           in: body
           description: Request body containing the new name
@@ -759,12 +758,12 @@ paths:
           schema:
             type: object
             properties:
-                message:
-                  type: string
-                  description: Message indicating successful update
-                status_code:
-                  type: integer
-                  description: HTTP status code (200 OK)
+              message:
+                type: string
+                description: Message indicating successful update
+              status_code:
+                type: integer
+                description: HTTP status code (200 OK)
         '400':
           description: Bad Request - Invalid input or content type
           schema:
@@ -776,7 +775,7 @@ paths:
         '500':
           description: Internal Server Error - Failed to update profile
           schema:
-              $ref: '#/definitions/Error'
+            $ref: '#/definitions/Error'
   /settings/subscription:
     post:
       security:
