@@ -2,3 +2,4 @@
 .crt
 .csr
 .key
+Dockerfile

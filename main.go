@@ -37,11 +37,11 @@ type UserProfile struct {
 }
 
 var (
-	databaseURL        string = "postgres://postgres:@:5432/backendapi?sslmode=disable"
-	db                 *mydb.Database
-	privateKeyPassword string = "CashAdvisor"
-	certFile           string = "ok_server.crt"
-	keyFile            string = "ok_server.key"
+	databaseURL string = "postgres://postgres:PASSWORD@IP_ADRESS:5432/backendapi?sslmode=disable"
+	db          *mydb.Database
+	//privateKeyPassword string = "CashAdvisor"
+	certFile string = "ok_server.crt"
+	keyFile  string = "ok_server.key"
 )
 
 func main() {
