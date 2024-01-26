@@ -50,8 +50,10 @@ func GenerateRegisterJWTToken(email, password string) (string, error) {
 
 func GenerateResetJWTToken(email string) (string, error) {
 	claims := jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Minute * tokenExpirationMinutes).Unix(),
+		"email":     email,
+		"exp":       time.Now().Add(time.Minute * tokenExpirationMinutes).Unix(),
+		"code_used": false,
+		"confirmed": false,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -116,4 +118,20 @@ func VerifyResetJWTToken(tokenString string) (UserAuthenticationRequest, error) 
 			Email: email,
 		},
 		nil
+}
+
+func ParseResetToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return enc.SecretKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("Invalid token")
 }

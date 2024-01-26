@@ -506,7 +506,7 @@ paths:
           description: Internal Server Error - Failed to generate token
           schema:
             $ref: '#/definitions/Error'
-  /auth/reset/password/confirm:
+  /auth/login/reset/password/confirm:
     post:
       summary: Confirm Password Reset
       tags:

@@ -19,7 +19,7 @@ import (
 )
 
 type UserProfile struct {
-	Username  string               `json:"username"`
+	Surname   string               `json:"surname"` //*changed
 	Name      string               `json:"name"`
 	Analytics categories.Analytics `json:"analytics"`
 	Tracker   categories.Tracker   `json:"tracker"`
@@ -32,6 +32,10 @@ var userProfiles = make(map[string]UserProfile)
 func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/profile/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
 	router.HandleFunc("/profile/update-name", auth.AuthMiddleware(UpdateName)).Methods("PUT")
+	router.HandleFunc("/profile/operation-archive/get", auth.AuthMiddleware(GetOperationArchive)).Methods("GET")
+
+	router.HandleFunc("/profile/image/put", auth.AuthMiddleware(UploadAvatarHandler)).Methods("PUT")
+	router.HandleFunc("/profile/image/get", auth.AuthMiddleware(GetAvatarHandler)).Methods("GET")
 }
 
 // @Summary Get user profile
@@ -50,6 +54,8 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currencyCode := r.Header.Get("X-Currency")
+
 	var userProfile UserProfile
 
 	userProfile.Analytics = categories.Analytics{
@@ -58,17 +64,17 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		WealthFund: make([]models.WealthFund, 0),
 	}
 
-	analytics, err := categories.GetAnalyticsFromDB(userID)
+	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode)
 	if err != nil {
 		http.Error(w, "Failed to get analytics data: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	tracker, err_trk := categories.GetTrackerFromDB(userID, analytics)
+	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode, analytics)
 	if err_trk != nil {
 		http.Error(w, "Failed to get tracker data: "+err_trk.Error(), http.StatusInternalServerError)
 		return
 	}
-	userName, name, err := categories.GetUserInfoFromDB(userID)
+	surname, name, err := categories.GetUserInfoFromDB(userID)
 	if err != nil {
 		http.Error(w, "Failed to get user data: "+err_trk.Error(), http.StatusInternalServerError)
 		return
@@ -80,7 +86,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userProfile.UserID = userID
-	userProfile.Username = userName
+	userProfile.Surname = surname
 	userProfile.Name = name
 	userProfile.Analytics = *analytics
 	userProfile.Tracker = *tracker
@@ -97,6 +103,37 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	if limitStr == "" || offsetStr == "" {
+		limitStr = "20"
+		offsetStr = "0"
+	}
+
+	operations, err := categories.GetOperationArchiveFromDB(userID, limitStr, offsetStr)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"message":           "Successfully got an archive",
+		"status_code":       http.StatusOK,
+		"operation_archive": operations,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// * Добавлены поля для имени и фамилии
 // @Summary Update user profile with name
 // @Description Update the user profile for the authenticated user with a new name.
 // @Tags Profile
@@ -115,7 +152,8 @@ func UpdateName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var request struct {
-		Name string `json:"name"`
+		Name    string `json:"name"`
+		Surname string `json:"surname"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -124,7 +162,7 @@ func UpdateName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := UpdateUserNameInDB(userID, request.Name)
+	err := UpdateUserNameInDB(userID, request.Name, request.Surname)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error updating name in the database: "+err.Error()), http.StatusInternalServerError)
 		return
@@ -137,7 +175,7 @@ func UpdateName(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdateUserNameInDB(userID string, newName string) error {
-	_, err := mydb.GlobalDB.Exec("UPDATE users SET name = $1 WHERE id = $2", newName, userID)
+func UpdateUserNameInDB(userID, newName, newSurname string) error {
+	_, err := mydb.GlobalDB.Exec("UPDATE users SET name = $1, surname = $3 WHERE id = $2", newName, userID, newSurname)
 	return err
 }

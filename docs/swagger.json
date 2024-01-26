@@ -768,7 +768,7 @@
         }
       }
     },
-    "/auth/reset/password/confirm": {
+    "/auth/login/reset/password/confirm": {
       "post": {
         "summary": "Confirm Password Reset",
         "tags": [

@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	SecretKey = []byte("61501ebfe5eec2610a486da6da176bb8")
+	SecretKey        = []byte("")
+	SecretRefreshKey = []byte("")
 )
 
 func EncryptToken(tokenString string) (string, error) {

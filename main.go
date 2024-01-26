@@ -22,8 +22,8 @@ import (
 	logger "backEndAPI/_logger"
 	mydb "backEndAPI/_mydatabase"
 	initialisation "backEndAPI/initialisation"
-	"log"
 
+	"log"
 	"os"
 
 	//"encoding/json"
@@ -37,7 +37,7 @@ type UserProfile struct {
 }
 
 var (
-	databaseURL        string = "postgres://postgres:@:5432/backendapi?sslmode=disable"
+	databaseURL        string = "postgres://:@localhost:5432/backendapi?sslmode=disable"
 	db                 *mydb.Database
 	privateKeyPassword string = "CashAdvisor"
 	certFile           string = "ok_server.crt"

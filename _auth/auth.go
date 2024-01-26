@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sync"
 
+	email_conf "backEndAPI/_email"
 	enc "backEndAPI/_encryption"
 	jsonresponse "backEndAPI/_json_response"
 	user "backEndAPI/_user"
@@ -26,7 +27,7 @@ type UserAuthenticationRequest struct {
 }
 
 var (
-	//secretAPIKey          string = "61501ebfe5eec2610a486da6da176bb810bbac93d7e5fb928545a4a695c7532d" //! ;< bro died вiд кринжу
+	//secretAPIKey          string = "" //! ;< bro died вiд кринжу
 	sessionMutex sync.Mutex
 )
 
@@ -49,6 +50,10 @@ func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/login/reset/password/confirm", ResetPasswordConfirmHandler).Methods("POST")
 	router.HandleFunc("/auth/login/reset/password", ResetPasswordHandler).Methods("POST")
 	router.HandleFunc("/auth/login/reset/password/put", ChangePasswordForRecoverHandler).Methods("PUT")
+	//*Fixed
+	router.HandleFunc("/auth/refresh", AuthMiddleware(RefreshTokenHandler)).Methods("GET")
+
+	router.HandleFunc("/dev/confirmation-code/get", email_conf.GetConfirmationCodeTestHandler).Methods("GET")
 }
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -64,9 +69,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(enc.SecretKey), nil
 		})
-
 		if err != nil {
-			err := errors.New("Error in parsing")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
@@ -104,6 +107,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		r = r.WithContext(setUserIDInContext(r.Context(), userID))
+		updateLastActivity(userID)
 
 		next.ServeHTTP(w, r)
 	}

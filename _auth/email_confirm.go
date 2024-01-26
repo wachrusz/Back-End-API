@@ -24,16 +24,7 @@ type ConfirmEmailRequest struct {
 	EnteredCode string `json:"code"`
 }
 
-// @Summary Confirm user email
-// @Description Confirm the user's email using the provided token and confirmation code.
-// @Tags Auth
-// @Produce json
-// @Param confirmEmailRequest body ConfirmEmailRequest true "Confirm Email Request"
-// @Success 200 {string} string "Email confirmed successfully"
-// @Failure 400 {string} string "Invalid request payload or Content-Type"
-// @Failure 401 {string} string "Invalid or expired token"
-// @Failure 500 {string} string "Error confirming email or registering user"
-// @Router /auth/register/confirm-email [post]
+// ! Доделать
 func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
@@ -58,13 +49,13 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 	var registerRequest utility.UserAuthenticationRequest
 	registerRequest, err := utility.VerifyRegisterJWTToken(token)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusUnauthorized)
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	if !email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode) {
-		err := errors.New("Error in CheckConfirmationCode")
-		jsonresponse.SendErrorResponse(w, errors.New("Wrong confiramtion code: "+err.Error()), http.StatusInternalServerError)
+	codeCheckResponse := email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode)
+	if codeCheckResponse.Err != nil {
+		json.NewEncoder(w).Encode(codeCheckResponse)
 		return
 	}
 
@@ -118,16 +109,22 @@ func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	claims, err := utility.ParseResetToken(token)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Error in parsing token: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+
 	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err := utility.VerifyResetJWTToken(token)
+	registerRequest, err = utility.VerifyResetJWTToken(token)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusUnauthorized)
 		return
 	}
 
-	if !email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode) {
-		err := errors.New("Error in CheckConfirmationCode")
-		jsonresponse.SendErrorResponse(w, errors.New("Wrong confiramtion code: "+err.Error()), http.StatusInternalServerError)
+	codeCheckResponse := email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.EnteredCode)
+	if codeCheckResponse.Err != nil {
+		json.NewEncoder(w).Encode(codeCheckResponse)
 		return
 	}
 
@@ -136,6 +133,7 @@ func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
+	claims["confirmed"] = true
 
 	response := map[string]interface{}{
 		"message":     "Successfully confirmed email",
