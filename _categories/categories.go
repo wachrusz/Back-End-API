@@ -10,6 +10,7 @@ import (
 	logger "backEndAPI/_logger"
 	models "backEndAPI/_models"
 	mydb "backEndAPI/_mydatabase"
+
 	"log"
 )
 
@@ -33,8 +34,18 @@ type More struct {
 	Settings models.Settings
 }
 
-func GetAnalyticsFromDB(userID string) (*Analytics, error) {
+func convertCurrency(amount float64, currencyCode string) float64 {
+	switch currencyCode {
+	case "USD":
+		return amount * 0.011
+	case "EUR":
+		return amount * 0.01
+	default:
+		return amount
+	}
+}
 
+func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	queryIncome := "SELECT id, amount, date, planned FROM income WHERE user_id = $1"
 	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID)
 	if err != nil {
@@ -49,6 +60,7 @@ func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 			return nil, err
 		}
 		income.UserID = userID
+		income.Amount = convertCurrency(income.Amount, currencyCode)
 		incomeList = append(incomeList, income)
 	}
 
@@ -66,6 +78,7 @@ func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 			return nil, err
 		}
 		expense.UserID = userID
+		expense.Amount = convertCurrency(expense.Amount, currencyCode)
 		expenseList = append(expenseList, expense)
 	}
 
@@ -82,6 +95,7 @@ func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date); err != nil {
 			return nil, err
 		}
+		wealthFund.Amount = convertCurrency(wealthFund.Amount, currencyCode)
 		wealthFundList = append(wealthFundList, wealthFund)
 	}
 
@@ -94,7 +108,7 @@ func GetAnalyticsFromDB(userID string) (*Analytics, error) {
 	return analytics, nil
 }
 
-func GetTrackerFromDB(userID string, analytics *Analytics) (*Tracker, error) {
+func GetTrackerFromDB(userID string, currencyCode string, analytics *Analytics) (*Tracker, error) {
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1"
 	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID)
 	if err != nil {
@@ -110,6 +124,7 @@ func GetTrackerFromDB(userID string, analytics *Analytics) (*Tracker, error) {
 			return nil, err
 		}
 		goal.UserID = userID
+		goal.Need = convertCurrency(goal.Need, currencyCode)
 		goalList = append(goalList, goal)
 	}
 	trackingState := &models.TrackingState{
@@ -137,17 +152,17 @@ func getTotalState(analytics *Analytics) float64 {
 }
 
 func GetUserInfoFromDB(userID string) (string, string, error) {
-	query := "SELECT email, name FROM users WHERE id = $1"
-	var email, name string
+	query := "SELECT surname, name FROM users WHERE id = $1"
+	var surname, name string
 
 	row := mydb.GlobalDB.QueryRow(query, userID)
-	err := row.Scan(&email, &name)
+	err := row.Scan(&surname, &name)
 	if err != nil {
 		logger.ErrorLogger.Print("Error getting user information from DB: ", err)
 		return "", "", err
 	}
 
-	return email, name, nil
+	return surname, name, nil
 }
 
 func GetMoreFromDB(userID string) (*More, error) {
@@ -185,15 +200,10 @@ func GetAppFromDB(userID string) (*models.App, error) {
 		return nil, err
 	}
 
-	operationArchive, err := GetOperationArchiveFromDB(userID)
-	if err != nil {
-		return nil, err
-	}
-
 	app := &models.App{
 		ConnectedAccounts: connectedAccounts,
 		CategorySettings:  *categorySettings,
-		OperationArchive:  operationArchive,
+		//OperationArchive:  operationArchive,
 	}
 
 	return app, nil
@@ -207,7 +217,6 @@ func GetSubscriptionFromDB(userID string) (*models.Subscription, error) {
 
 	err := row.Scan(&subscription.ID, &subscription.UserID, &subscription.StartDate, &subscription.EndDate, &subscription.IsActive)
 	if err != nil {
-		log.Println("Error getting subscription information from DB:", err)
 		return &models.Subscription{}, nil
 	}
 
@@ -320,16 +329,17 @@ func GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error) 
 	return &categorySettings, nil
 }
 
-func GetOperationArchiveFromDB(userID string) ([]models.Operation, error) {
+func GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation, error) {
 	var operations []models.Operation
 
 	query := `
 		SELECT id, description, amount, date, category, operation_type
 		FROM operations
-		WHERE user_id = $1;
+		WHERE user_id = $1
+		LIMIT $2 OFFSET $3;
 	`
 
-	rows, err := mydb.GlobalDB.Query(query, userID)
+	rows, err := mydb.GlobalDB.Query(query, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

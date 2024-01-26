@@ -25,7 +25,7 @@ func registerHandlers(router *mux.Router) {
 	router.HandleFunc("/app/report", auth.AuthMiddleware(report.ExportHandler)).Methods("GET")
 
 	router.HandleFunc("/analytics/income", auth.AuthMiddleware(handlers.CreateIncomeHandler)).Methods("POST")
-	router.HandleFunc("/analytics/expence", auth.AuthMiddleware(handlers.CreateExpenseHandler)).Methods("POST")
+	router.HandleFunc("/analytics/expense", auth.AuthMiddleware(handlers.CreateExpenseHandler)).Methods("POST")
 	router.HandleFunc("/analytics/wealth_fund", auth.AuthMiddleware(handlers.CreateWealthFundHandler)).Methods("POST")
 
 	router.HandleFunc("/tracker/goal", auth.AuthMiddleware(handlers.CreateGoalHandler)).Methods("POST")

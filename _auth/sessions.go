@@ -44,7 +44,7 @@ func InitActiveUsers() {
 
 		decryptedToken, err := enc.DecryptToken(token)
 		if err != nil {
-			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID)
+			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID, ", token: %v", decryptedToken)
 		}
 
 		activeUser := ActiveUser{
@@ -56,7 +56,6 @@ func InitActiveUsers() {
 
 		ActiveUsers[userID] = activeUser
 	}
-	logger.InfoLogger.Printf("Active Users: \n%v", ActiveUsers)
 }
 
 func getActiveUser(userID string) ActiveUser {
@@ -79,7 +78,6 @@ func AddActiveUser(userID, email, deviceID, token string) {
 	defer activeMu.Unlock()
 
 	ActiveUsers[userID] = ActiveUser{userID, email, deviceID, token}
-	logger.InfoLogger.Printf("List of active users: %v", ActiveUsers)
 }
 
 func RemoveActiveUser(userID string) {
@@ -89,17 +87,23 @@ func RemoveActiveUser(userID string) {
 	delete(ActiveUsers, userID)
 }
 
-/*
-func SetDeviceIDInSession(r *http.Request, w http.ResponseWriter, deviceID string) {
-	defer sessionMutex.Unlock()
-	sessionMutex.Lock()
+// *NEW
+func SetAccessToken(userID, newAccessToken string) {
+	activeMu.Lock()
+	defer activeMu.Unlock()
 
-	//! TODO СЕССИОНИРОВАНИЕ СРОЧНО
-	if err != nil {
-		logger.ErrorLogger.Printf("Error saving session: %v", err)
-		return
+	if ActiveUsers == nil {
+		ActiveUsers = make(map[string]ActiveUser)
 	}
-}*/
+
+	user, exists := ActiveUsers[userID]
+	if !exists {
+		user = ActiveUser{}
+		ActiveUsers[userID] = user
+	}
+
+	user.DecryptedToken = newAccessToken
+}
 
 // DATABASE OPERATIONS
 func saveSessionToDatabase(email, deviceID, user_id, token string) error {
@@ -113,6 +117,18 @@ func saveSessionToDatabase(email, deviceID, user_id, token string) error {
         INSERT INTO sessions (email, device_id, created_at, last_activity, user_id, token)
         VALUES ($1, $2, NOW(), NOW(), $3, $4)`,
 		email, deviceID, user_id, encryptedToken)
+	return err
+}
+
+// *NEW
+func updateLastActivity(userID string) error {
+	query := `
+	UPDATE sessions
+	SET last_activity = NOW()
+	WHERE user_id = $1;
+	`
+
+	_, err := mydb.GlobalDB.Exec(query, userID)
 	return err
 }
 

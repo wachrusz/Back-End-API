@@ -13,7 +13,7 @@ import (
 type App struct {
 	ConnectedAccounts []ConnectedAccount `json:"connected_accounts"`
 	CategorySettings  CategorySettings   `json:"category_settings"`
-	OperationArchive  []Operation        `json:"operation_archive"`
+	//OperationArchive  []Operation        `json:"operation_archive"` //*Deleted from APP
 }
 
 // CategorySettings представляет собой настройки категорий.

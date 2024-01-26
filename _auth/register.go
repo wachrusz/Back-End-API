@@ -3,7 +3,9 @@ package auth
 import (
 	email_conf "backEndAPI/_email"
 	jsonresponse "backEndAPI/_json_response"
+	mydb "backEndAPI/_mydatabase"
 	"errors"
+	"fmt"
 
 	//user "backEndAPI/_user"
 	utility "backEndAPI/_utility"
@@ -45,6 +47,16 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	password := registrationRequest.Password
 	if !isValidEmail(email) {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		return
+	}
+
+	err, used := isEmailUsed(email)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+	if used {
+		jsonresponse.SendErrorResponse(w, errors.New("Email already exists: "), http.StatusBadRequest)
 		return
 	}
 
@@ -125,22 +137,29 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
-	var registrationRequest UserAuthenticationRequest
 
-	err := json.NewDecoder(r.Body).Decode(&registrationRequest)
+	type UserPasswordReset struct {
+		Email      string `json:"email"`
+		Password   string `json:"password"`
+		ResetToken string `json:"reset_token"`
+	}
+
+	var resetRequest UserPasswordReset
+
+	err := json.NewDecoder(r.Body).Decode(&resetRequest)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	email := registrationRequest.Email
-	password := registrationRequest.Password
+	email := resetRequest.Email
+	password := resetRequest.Password
+	resetToken := resetRequest.ResetToken
 	if !isValidEmail(email) {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
 		return
 	}
 
-	resetToken := r.Header.Get("Authorization")
 	if resetToken == "" {
 		jsonresponse.SendErrorResponse(w, errors.New("Reset token is required"), http.StatusBadRequest)
 		return
@@ -149,6 +168,13 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired reset token: "+err.Error()), http.StatusUnauthorized)
 		return
+	}
+	claims, err := utility.ParseResetToken(resetToken)
+	if claims["code_used"].(bool) {
+		jsonresponse.SendErrorResponse(w, errors.New("Token has already been used: "+err.Error()), http.StatusUnauthorized)
+		return
+	} else {
+		claims["code_used"] = true
 	}
 
 	err = ResetPassword(email, password)
@@ -164,10 +190,25 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
-	Login(w, r)
+	w.Header().Set("Location", "/auth/login")
+	w.WriteHeader(http.StatusFound)
 }
 
 func isValidEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
+}
+
+// *NEW
+func isEmailUsed(email string) (error, bool) {
+
+	query := "SELECT COUNT(*) FROM users WHERE email = $1"
+
+	var count int
+	err := mydb.GlobalDB.QueryRow(query, email).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("error getting email: %v", err), false
+	}
+
+	return nil, count > 0
 }
