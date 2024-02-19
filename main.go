@@ -19,9 +19,11 @@
 package main
 
 import (
-	logger "backEndAPI/_logger"
-	mydb "backEndAPI/_mydatabase"
-	initialisation "backEndAPI/initialisation"
+	initialisation "main/initialisation"
+	logger "main/packages/_logger"
+	mydb "main/packages/_mydatabase"
+	secret "main/secret"
+	"main/server"
 
 	"log"
 	"os"
@@ -31,22 +33,13 @@ import (
 	"net/http"
 )
 
-type UserProfile struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-}
-
 var (
-	databaseURL        string = "postgres://:@localhost:5432/backendapi?sslmode=disable"
-	db                 *mydb.Database
-	privateKeyPassword string = "CashAdvisor"
-	certFile           string = "ok_server.crt"
-	keyFile            string = "ok_server.key"
+	db *mydb.Database
 )
 
 func main() {
 
-	db, err := mydb.Init(databaseURL)
+	db, err := mydb.Init(secret.Secret.DBURL)
 	if err != nil {
 		panic(err)
 	}
@@ -60,12 +53,12 @@ func main() {
 		logger.ErrorLogger.Fatal(errR)
 	}
 
-	http.Handle("/", router)
+	http.Handle("/", server.ContentTypeMiddleware(router))
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 
 	//changed tls hosting now everything works
-	err = http.ListenAndServeTLS(":8080", certFile, keyFile, nil)
+	err = http.ListenAndServeTLS(":8080", secret.Secret.CrtPath, secret.Secret.KeyPath, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
