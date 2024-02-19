@@ -1,11 +1,11 @@
 package initialisation
 
 import (
-	auth "backEndAPI/_auth"
-	handlers "backEndAPI/_handlers"
-	history "backEndAPI/_history"
-	profile "backEndAPI/_profile"
-	report "backEndAPI/_report"
+	auth "main/packages/_auth"
+	handlers "main/packages/_handlers"
+	history "main/packages/_history"
+	profile "main/packages/_profile"
+	report "main/packages/_report"
 
 	//"encoding/json"
 

@@ -15,6 +15,249 @@
   "host": "212.233.78.3:8080",
   "basePath": "/v1",
   "paths": {
+    "/dev/confirmation-code/get": {
+      "get": {
+        "tags": [
+          "Dev"
+        ],
+        "description": "Retrieve confirmation code for a given email.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Request body containing email",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved confirmation code.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Message indicating successful retrieval of confirmation code."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "Retrieved confirmation code."
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code (200 OK)"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input or content type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Email Not Found.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/auth/tokens/delete": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Request body containing email",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "deviceID",
+            "in": "query",
+            "description": "Request body containing email",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfuly deleted tokens",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "status_code": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/auth/tokens/ammount": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "description": "Request body containing email",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfuly obtained",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                },
+                "ammount": {
+                  "type": "integer"
+                },
+                "status_code": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Server Error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "tags": [
+          "Auth"
+        ],
+        "description": "Refreshes the access token using the provided refresh token.\n",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Request body containing the refresh token",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RefreshTokenRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully refreshed access token",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "access_token": {
+                  "type": "string",
+                  "description": "Refreshed access token"
+                },
+                "refresh_token": {
+                  "type": "string",
+                  "description": "Refresh token"
+                },
+                "access_token_life_time": {
+                  "type": "integer"
+                },
+                "refresh_token_life_time": {
+                  "type": "integer"
+                },
+                "code": {
+                  "type": "integer",
+                  "description": "HTTP status code (200 OK)"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input or content type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired refresh token",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to refresh token",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/auth/login/reset/password/put": {
       "put": {
         "summary": "Reset Password for Recovery",
@@ -35,14 +278,8 @@
             "description": "Request body containing email and password for password reset",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/UserAuthenticationRequest"
+              "$ref": "#/definitions/UserResetRequest"
             }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "type": "string",
-            "description": "JWT reset token"
           }
         ],
         "responses": {
@@ -724,25 +961,21 @@
         ],
         "responses": {
           "200": {
-            "description": "Login successful",
+            "description": "Password reset initiated successfully",
             "schema": {
               "type": "object",
               "properties": {
                 "message": {
                   "type": "string",
-                  "description": "Message indicating successful login"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
+                  "description": "Message indicating the user to confirm their email"
                 },
                 "token": {
                   "type": "string",
-                  "description": "Access token for the user"
+                  "description": "Reset token for the user"
                 },
-                "refresh_token": {
+                "status_code": {
                   "type": "string",
-                  "description": "Temporary placeholder for refresh token"
+                  "description": "HTTP status code (200 OK)"
                 }
               }
             }
@@ -761,6 +994,58 @@
           },
           "500": {
             "description": "Internal Server Error - Failed to generate token",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/auth/login/confirm": {
+      "post": {
+        "summary": "Confirm Login",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Confirming email code to log in\n",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Request containing",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginConf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "schema": {
+              "$ref": "#/definitions/LoginResponse"
+            }
+          },
+          "400": {
+            "description": "Invalid Request Payload",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Wrong confirmation code",
+            "schema": {
+              "$ref": "#/definitions/CheckResult"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to login",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -816,9 +1101,9 @@
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or expired token",
+            "description": "Unauthorized - Wrong confirmation code",
             "schema": {
-              "$ref": "#/definitions/Error"
+              "$ref": "#/definitions/CheckResult"
             }
           },
           "500": {
@@ -937,7 +1222,7 @@
         }
       }
     },
-    "/auth/confirm-email": {
+    "/auth/register/confirm-email": {
       "post": {
         "summary": "Confirm Email",
         "tags": [
@@ -963,19 +1248,9 @@
         ],
         "responses": {
           "200": {
-            "description": "Successfully confirmed email",
+            "description": "Confirmed Successfuly",
             "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful email confirmation"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
+              "$ref": "#/definitions/LoginResponse"
             }
           },
           "400": {
@@ -985,9 +1260,9 @@
             }
           },
           "401": {
-            "description": "Unauthorized - Invalid or expired token",
+            "description": "Unauthorized - Wrong confirmation code",
             "schema": {
-              "$ref": "#/definitions/Error"
+              "$ref": "#/definitions/CheckResult"
             }
           },
           "500": {
@@ -1076,6 +1351,15 @@
           "Profile"
         ],
         "description": "Retrieve the user profile including analytics, tracker, and more.",
+        "parameters": [
+          {
+            "name": "X-Currency",
+            "type": "string",
+            "in": "header",
+            "description": "Header to point in which currency we need to convert money. If empty all in RUB. There are 3 currencies(EUR,USD,RUB)",
+            "required": false
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successfully retrieved the user profile",
@@ -1130,22 +1414,16 @@
           {
             "name": "body",
             "in": "body",
-            "description": "Request body containing the new name",
+            "description": "Request body containing updated name and surname",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "New name for the user"
-                }
-              }
+              "$ref": "#/definitions/UpdateNameRequest"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Profile updated successfully",
+            "description": "Successfully updated profile",
             "schema": {
               "type": "object",
               "properties": {
@@ -1176,6 +1454,158 @@
             "description": "Internal Server Error - Failed to update profile",
             "schema": {
               "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/profile/image/put": {
+      "put": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Upload user image",
+        "description": "Uploads a new image for the authenticated user",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for user authentication",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "image",
+            "in": "formData",
+            "description": "The image file to upload",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful upload",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Successful upload message"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 201
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsuccessful upload",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Unsuccessful upload"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 400
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Unsuccessful upload"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/image/get": {
+      "get": {
+        "tags": [
+          "Profile"
+        ],
+        "summary": "Get user avatar",
+        "description": "Retrieves the avatar for the authenticated user",
+        "produces": [
+          "application/json",
+          "image/jpeg"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for user authentication",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Successful retrieval message"
+                },
+                "image_bytes": {
+                  "type": "string",
+                  "format": "byte",
+                  "description": "Image bytes in base64 encoding"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 200
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unsuccessful retrieval",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Unsuccessful retrieval message"
+                },
+                "image_bytes": {
+                  "type": "string",
+                  "format": "byte",
+                  "description": "Image bytes in base64 encoding"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 500
+                }
+              }
             }
           }
         }
@@ -1432,9 +1862,141 @@
           }
         }
       }
+    },
+    "/profile/operation-archive/get": {
+      "get": {
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "tags": [
+          "Profile"
+        ],
+        "description": "Gets the operation archive for the authenticated user.\n",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of operations to retrieve (default is 20)",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of operations to skip (default is 0)",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved operation archive",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Message indicating successful retrieval"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code (200 OK)"
+                },
+                "operation_archive": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Operation"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - User not authenticated",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Failed to retrieve operation archive",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
+    "LoginResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "status_code": {
+          "type": "integer"
+        },
+        "access_token_life_time": {
+          "type": "integer",
+          "description": "Long"
+        },
+        "refresh_token_life_time": {
+          "type": "integer",
+          "description": "Long"
+        },
+        "token_details": {
+          "$ref": "#/definitions/TokenDetails"
+        }
+      }
+    },
+    "TokenDetails": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string"
+        },
+        "refresh_token": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "integer"
+        }
+      }
+    },
+    "LoginConf": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "code": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateNameRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Updated name"
+        },
+        "surname": {
+          "type": "string",
+          "description": "Updated surname"
+        }
+      }
+    },
     "ResetPasswordRequest": {
       "type": "object",
       "properties": {
@@ -1459,12 +2021,100 @@
         }
       }
     },
+    "UserResetRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "User's email address"
+        },
+        "password": {
+          "type": "string",
+          "description": "User's new password"
+        },
+        "reset_token": {
+          "type": "string",
+          "description": "User's reset token"
+        }
+      }
+    },
+    "CheckResult": {
+      "type": "object",
+      "properties": {
+        "remaining_attempts": {
+          "type": "integer"
+        },
+        "lock_duration": {
+          "type": "integer"
+        },
+        "error": {
+          "type": "string"
+        },
+        "status_code": {
+          "type": "integer"
+        }
+      }
+    },
     "Error": {
       "type": "object",
       "properties": {
         "error": {
           "type": "string",
-          "description": "Error message"
+          "enum": [
+            "Message1",
+            "Message2",
+            "Message3",
+            "Message4",
+            "Message5",
+            "Message6",
+            "Message7",
+            "Message8",
+            "Message9",
+            "Message10",
+            "Message11",
+            "Message12",
+            "Message13",
+            "Message14",
+            "Message15",
+            "Message16",
+            "Message17",
+            "Message18",
+            "Message19",
+            "Message20",
+            "Message21",
+            "Message22",
+            "Message23",
+            "Message24",
+            "Message25",
+            "Message26",
+            "Message27",
+            "Message28",
+            "Message29",
+            "Message30",
+            "Message31",
+            "Message32",
+            "Message33",
+            "Message34",
+            "Message35",
+            "Message36",
+            "Message37",
+            "Message38",
+            "Message39",
+            "Message40",
+            "Message41",
+            "Message42",
+            "Message43",
+            "Message44",
+            "Message45",
+            "Message46",
+            "Message47",
+            "Message48",
+            "Message49",
+            "Message50",
+            "Message51"
+          ],
+          "description": "error:\n  * Already logged in\n  * Error appeared in token_ivalidation\n  * Error confirming email: |Error from Server|\n  * Error confirming email: |Error from Server|\n  * Error creating expense category: |Error from Server|\n  * Error creating expense: |Error from Server|\n  * Error creating goal: |Error from Server|\n  * Error creating income category: |Error from Server|\n  * Error creating income: |Error from Server|\n  * Error creating investment category: |Error from Server|\n  * Error creating investment: |Error from Server|\n  * Error creating subscription: |Error from Server|\n  * Error creating wealthFund: |Error from Server|\n  * Error decoding JSON:\n  * Error deleting connected account: |Error From Server|\n  * Error generating confirmation token: |Error from Server|\n  * Error getting avatar info\n  * Error getting email: |Error from Server|\n  * Error getting session: |UserID|\n  * Error getting userID\n  * Error in parsing token: |Error from Server|\n  * Error reading the file\n  * Error registring user: |Error from Server|\n  * Error removing session from the database: |Error from Server|\n  * Error resetting password: |Error from Server|\n  * Error retrieving the file\n  * Error saving avatar info\n  * Error sending confirm email: |Error from Server|\n  * Error sending support request: |Error from Server|\n  * Error updating name in the database:\n  * Failed to fetch data from database\n  * Failed to generate Excel report\n  * Failed to generate PDF report\n  * Failed to get analytics data: |Error from Server|\n  * Failed to get More data:\n  * Failed to get tracker data: |Error from Server|\n  * Failed to get user data:\n  * Failed to refresh token: |Error from Server|\n  * Failed to save Excel report\n  * Failed to update token in DB: |Error from Server|\n  * Internal Server Error: |Error from Server|\n  * Invalid Content-Type, expected application/json: Empty 'Content-Type' HEADER\n  * Invalid email: |Error from Server|\n  * Invalid or expired reset token: |Error from Server|\n  * Invalid or expired token: |Error from Server|\n  * Invalid request payload: |Error from Server|\n  * Reset token is required\n  * Token has already been used: |Error from Server|\n  * Token is required: Empty token\n  * Unauthorized: |Error from Server|\n  * User not authenticated: |Error from Server|\n  * Error while counting sessions: |Error from Server|\n  * Blank fields and two methods are not allowed\n  * Error while deleting tokens: |Error from server|\n"
         },
         "status_code": {
           "type": "integer",
@@ -1830,12 +2480,6 @@
         },
         "categorySettings": {
           "$ref": "#/definitions/CategorySettings"
-        },
-        "operationArchive": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Operation"
-          }
         }
       }
     },
@@ -1922,6 +2566,15 @@
         },
         "user_id": {
           "type": "string"
+        }
+      }
+    },
+    "RefreshTokenRequest": {
+      "type": "object",
+      "properties": {
+        "refresh_token": {
+          "type": "string",
+          "description": "Refresh token"
         }
       }
     },

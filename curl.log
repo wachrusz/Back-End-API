@@ -1,7 +1,0 @@
-curl -X POST -d "username=newuser&password=newpassword" http://localhost:8080/user/register
-curl -X POST -d "{\"amount\": 2000, \"date\": \"2023-11-21\", \"planned\": false}" http://localhost:8080/analytics/income
-curl -X POST -d "{\"amount\": 4000, \"date\": \"2023-11-21\", \"planned\": false}" http://localhost:8080/analytics/expence
-curl -X POST -d "{ \"user_id\": \"6\", \"start_date\": \"2023-11-22\", \"end_date\": \"2023-12-22\", \"is_active\": true }" http://localhost:8080/settings/subscription
-curl -X POST -d "{\"name\": \"cat1\", \"icon\": \"icon1\", \"is_constant\": false, \"user_id\": \"6\"}" http://localhost:8080/app/category/income
-curl -X POST -d "{\"name\": \"cat1\", \"icon\": \"icon1\", \"is_constant\": false, \"user_id\": \"6\"}" http://localhost:8080/app/category/investment
-curl -X 'POST' 'http://localhost:8080/v1/auth/login' -H 'accept: application/json' -H 'Content-Type: application/json' -d 'username=newuser&password=newpassword'

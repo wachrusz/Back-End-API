@@ -1,8 +1,8 @@
 package initialisation
 
 import (
-	auth "backEndAPI/_auth"
 	"log"
+	service "main/packages/_auth/service"
 
 	"fmt"
 
@@ -41,7 +41,7 @@ func InitRouters() (*mux.Router, *mux.Router, error) {
 		httpSwagger.URL("/docs/swagger.json"),
 	))
 
-	auth.InitActiveUsers()
+	service.InitActiveUsers()
 
 	baseURL := getBaseURL()
 
