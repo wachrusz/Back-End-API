@@ -166,10 +166,11 @@ func checkLoginConds(email, password string, w http.ResponseWriter, r *http.Requ
 	return true
 }
 
-func generateToken(userID string, duration time.Duration) (*TokenDetails, error) {
+func generateToken(userID string, device_id string, duration time.Duration) (*TokenDetails, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": userID,
-		"exp": time.Now().Add(duration).Unix(),
+		"sub":       userID,
+		"exp":       time.Now().Add(duration).Unix(),
+		"device_id": device_id,
 	})
 
 	accessTokenString, err := accessToken.SignedString([]byte(enc.SecretKey))
@@ -178,7 +179,8 @@ func generateToken(userID string, duration time.Duration) (*TokenDetails, error)
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": userID,
+		"sub":       userID,
+		"device_id": device_id,
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte(enc.SecretKey))
 	if err != nil {
@@ -219,6 +221,10 @@ func refreshToken(refreshTokenString string) (*TokenDetails, error) {
 	if !ok {
 		return nil, fmt.Errorf("Failed to get user ID from refresh token")
 	}
+	deviceID, ok := claims["device_id"].(string)
+	if !ok {
+		return nil, fmt.Errorf("Failed to get device ID from refresh token")
+	}
 
-	return generateToken(userID, time.Minute*15)
+	return generateToken(userID, deviceID, time.Minute*15)
 }

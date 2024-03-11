@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	json "encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,11 +19,11 @@ import (
 )
 
 var (
-	corpEmail         string        = ""
-	corpEmailPassword string        = ""
-	webURL            string        = ""
-	maxAttempts       int           = 3
-	lockDuration      time.Duration = time.Minute * 5
+	//corpEmail         string        = ""
+	//corpEmailPassword string        = ""
+	//webURL            string        = ""
+	maxAttempts int = 3
+	//lockDuration      time.Duration = time.Minute * 5
 )
 
 type CheckResult struct {
@@ -158,6 +159,7 @@ func CheckConfirmationCode(email, token, enteredCode string) CheckResult {
 
 	err := checkToken(token, email)
 	if err != nil {
+		fmt.Println(err)
 		result.Err = errors.New("Invalid token for the last code").Error()
 		result.StatusCode = http.StatusUnauthorized
 		return result
@@ -241,7 +243,7 @@ func CheckConfirmationCode(email, token, enteredCode string) CheckResult {
 
 func checkToken(token, email string) error {
 	var encToken string
-	err := mydb.GlobalDB.QueryRow(`SELECT token FROM confirmation_codes WHERE email = $1 
+	err := mydb.GlobalDB.QueryRow(`SELECT token FROM confirmation_codes WHERE email = $1
 	ORDER BY expiration_time DESC LIMIT 1`, email).Scan(&encToken)
 	if err == sql.ErrNoRows {
 		return err

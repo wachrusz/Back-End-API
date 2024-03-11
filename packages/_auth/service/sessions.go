@@ -6,15 +6,14 @@ package service
 
 import (
 	enc "main/packages/_encryption"
-
 	logger "main/packages/_logger"
 	mydb "main/packages/_mydatabase"
-
-	"net"
 
 	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type ActiveUser struct {
@@ -170,14 +169,12 @@ func IsDeviceIDAlreadyUsed(db *mydb.Database, email, deviceID string) (error, bo
 }
 
 // !FIX
-func GetDeviceIDFromRequest(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+func GetDeviceIDFromRequest(r *http.Request) (string, error) {
+	id, err := uuid.NewRandom()
 	if err != nil {
-		return ""
+		return uuid.Nil.String(), err
 	}
-	deviceID := fmt.Sprintf("%s_%s", ip, r.UserAgent())
-
-	return deviceID
+	return id.String(), nil
 }
 
 func GetUserIDFromUsersDatabase(usernameOrDeviceID string) (string, error) {

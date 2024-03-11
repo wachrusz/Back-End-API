@@ -22,7 +22,6 @@ import (
 	user "main/packages/_user"
 )
 
-// ConfirmEmailRequest структура представляет запрос на подтверждение электронной почты.
 type ConfirmEmailRequest struct {
 	Token       string `json:"token"`
 	EnteredCode string `json:"code"`
@@ -57,7 +56,12 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err := utility.VerifyRegisterJWTToken(token)
+	registerRequest, err := utility.GetAuthFromJWT(token)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
 		return
@@ -89,13 +93,16 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 	}
 
-	token_details, err := generateToken(userID, time.Minute*15)
+	deviceID, err := service.GetDeviceIDFromRequest(r)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-
-	deviceID := service.GetDeviceIDFromRequest(r)
+	token_details, err := generateToken(userID, deviceID, time.Minute*15)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
 
 	if service.IsUserActive(userID) {
 		currentUser := service.ActiveUsers[userID]
@@ -110,15 +117,16 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 
 	service.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, token_details.AccessToken)
 
+	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
 		"message":                 "Successfuly confirmed email",
 		"token_details":           token_details,
 		"access_token_life_time":  time.Minute * 15,
 		"refresh_token_life_time": 30 * 24 * time.Hour,
 		"status_code":             http.StatusOK,
+		"device_id":               deviceID,
 	}
 	json.NewEncoder(w).Encode(response)
-	w.WriteHeader(http.StatusOK)
 }
 
 func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +151,12 @@ func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err := utility.VerifyRegisterJWTToken(token)
+	registerRequest, err := utility.GetAuthFromJWT(token)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
 		return
@@ -170,13 +183,16 @@ func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 	}
 
-	token_details, err := generateToken(userID, time.Minute*15)
+	deviceID, err := service.GetDeviceIDFromRequest(r)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-
-	deviceID := service.GetDeviceIDFromRequest(r)
+	token_details, err := generateToken(userID, deviceID, time.Minute*15)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
 
 	if service.IsUserActive(userID) {
 		currentUser := service.ActiveUsers[userID]
@@ -191,27 +207,18 @@ func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	service.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, token_details.AccessToken)
 
+	w.WriteHeader(http.StatusOK)
 	response := map[string]interface{}{
 		"message":                 "Successfuly logged in",
 		"token_details":           token_details,
 		"access_token_life_time":  time.Minute * 15,
 		"refresh_token_life_time": 30 * 24 * time.Hour,
 		"status_code":             http.StatusOK,
+		"device_id":               deviceID,
 	}
 	json.NewEncoder(w).Encode(response)
-	w.WriteHeader(http.StatusOK)
 }
 
-// @Summary Confirm user email for password reset
-// @Description Confirm the user's email using the provided token and confirmation code.
-// @Tags Auth
-// @Produce json
-// @Param confirmEmailRequest body ConfirmEmailRequest true "Confirm Email Request"
-// @Success 200 {string} string "Email confirmed successfully"
-// @Failure 400 {string} string "Invalid request payload or Content-Type"
-// @Failure 401 {string} string "Invalid or expired token"
-// @Failure 500 {string} string "Error confirming email or reseting password"
-// @Router /auth/login/reset-confirm [post]
 func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
