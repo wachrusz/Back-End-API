@@ -39,6 +39,9 @@ const (
 func setUserIDInContext(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, "userID", userID)
 }
+func setDeviceIDInContext(ctx context.Context, deviceID string) context.Context {
+	return context.WithValue(ctx, "device_id", deviceID)
+}
 
 func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/login", Login).Methods("POST")
@@ -106,6 +109,13 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		deviceID, ok := claims["device_id"].(string)
+		if !ok {
+			err := errors.New("Failed to convert 'sub' claim to string")
+			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			return
+		}
+
 		if !service.IsUserActive(userID) {
 			err := errors.New("Inactive user")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
@@ -113,6 +123,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		r = r.WithContext(setUserIDInContext(r.Context(), userID))
+		r = r.WithContext(setDeviceIDInContext(r.Context(), deviceID))
 		service.UpdateLastActivity(userID)
 
 		next.ServeHTTP(w, r)
@@ -138,4 +149,9 @@ func comparePasswords(hashedPassword, password string) bool {
 func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value("userID").(string)
 	return userID, ok
+}
+
+func GetDeviceIDFromContext(ctx context.Context) (string, bool) {
+	deviceID, ok := ctx.Value("device_id").(string)
+	return deviceID, ok
 }

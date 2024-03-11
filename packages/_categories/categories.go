@@ -108,7 +108,7 @@ func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	return analytics, nil
 }
 
-func GetTrackerFromDB(userID string, currencyCode string, analytics *Analytics) (*Tracker, error) {
+func GetTrackerFromDB(userID string, currencyCode string) (*Tracker, error) {
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1"
 	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID)
 	if err != nil {
@@ -128,7 +128,7 @@ func GetTrackerFromDB(userID string, currencyCode string, analytics *Analytics) 
 		goalList = append(goalList, goal)
 	}
 	trackingState := &models.TrackingState{
-		State:  getTotalState(analytics),
+		State:  getTotalState(userID),
 		UserID: userID,
 	}
 
@@ -140,15 +140,18 @@ func GetTrackerFromDB(userID string, currencyCode string, analytics *Analytics) 
 	return tracker, nil
 }
 
-func getTotalState(analytics *Analytics) float64 {
-	var Sum float64
-	for _, income := range analytics.Income {
-		Sum += income.Amount
+func getTotalState(userID string) float64 {
+	var state float64
+	query := `
+	SELECT (SUM(income.amount) - SUM(expense.amount)) AS difference
+	FROM income
+	JOIN expense ON income.user_id = expense.user_id
+	WHERE income.user_id = $1 AND expense.user_id = $1;`
+	err := mydb.GlobalDB.QueryRow(query, userID).Scan(&state)
+	if err != nil {
+		return 0
 	}
-	for _, expense := range analytics.Expense {
-		Sum -= expense.Amount
-	}
-	return Sum
+	return state
 }
 
 func GetUserInfoFromDB(userID string) (string, string, error) {

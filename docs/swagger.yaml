@@ -7,7 +7,7 @@ info:
   contact:
     name: Mikhail Vakhrushin
     email: lstwrd@yandex.com
-  version: '1.0'
+  version: '0.9.6'
 host: 212.233.78.3:8080
 basePath: /v1
 paths:
@@ -641,7 +641,7 @@ paths:
               token:
                 type: string
                 description: Reset token for the user
-              status_code:  
+              status_code:
                 type: string
                 description: HTTP status code (200 OK)
         '400':
@@ -882,7 +882,34 @@ paths:
             type: array
             items:
               type: string
-  /profile/get:
+  /profile/info/get:
+    get:
+      security:
+        - JWT: []
+      tags:
+        - Profile
+      description: Retrieve the user profile including analytics, tracker, and more.
+      responses:
+        '200':
+          description: Successfully retrieved the user profile
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+              message:
+                type: string
+              profile:
+                $ref: '#/definitions/profile.UserProfile'
+        '401':
+          description: Unauthorized - User not authenticated
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to retrieve user profile
+          schema:
+            $ref: '#/definitions/Error'
+  /profile/analytics/get:
     get:
       security:
         - JWT: []
@@ -908,7 +935,7 @@ paths:
               message:
                 type: string
               profile:
-                $ref: '#/definitions/profile.UserProfile'
+                $ref: '#/definitions/Analytics'
         '401':
           description: Unauthorized - User not authenticated
           schema:
@@ -917,7 +944,69 @@ paths:
           description: Internal Server Error - Failed to retrieve user profile
           schema:
             $ref: '#/definitions/Error'
-  /profile/update-name:
+  /profile/tracker/get:
+    get:
+      security:
+        - JWT: []
+      tags:
+        - Profile
+      description: Retrieve the user profile including analytics, tracker, and more.
+      parameters:
+        - name: X-Currency
+          type: string
+          in: header
+          description: >-
+            Header to point in which currency we need to convert money. If empty
+            all in RUB. There are 3 currencies(EUR,USD,RUB)
+          required: false
+      responses:
+        '200':
+          description: Successfully retrieved the user profile
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+              message:
+                type: string
+              profile:
+                $ref: '#/definitions/Tracker'
+        '401':
+          description: Unauthorized - User not authenticated
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to retrieve user profile
+          schema:
+            $ref: '#/definitions/Error'
+  /profile/more/get:
+    get:
+      security:
+        - JWT: []
+      tags:
+        - Profile
+      description: Retrieve the user profile including analytics, tracker, and more.
+      responses:
+        '200':
+          description: Successfully retrieved the user profile
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+              message:
+                type: string
+              profile:
+                $ref: '#/definitions/More'
+        '401':
+          description: Unauthorized - User not authenticated
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: Internal Server Error - Failed to retrieve user profile
+          schema:
+            $ref: '#/definitions/Error'
+  /profile/name/put:
     put:
       security:
         - JWT: []
@@ -994,6 +1083,9 @@ paths:
                 type: integer
                 description: HTTP status code
                 example: 201
+              avatar_url:
+                type: string
+                example: https://{BaseURL}/v1/profile/image/get/{encryptedID}
         '400':
           description: Unsuccessful upload
           schema:
@@ -1018,54 +1110,27 @@ paths:
                 type: integer
                 description: HTTP status code
                 example: 500
-  /profile/image/get:
+  /profile/image/get/{id}:
     get:
-      tags:
+      tags: 
         - Profile
-      summary: Get user avatar
-      description: Retrieves the avatar for the authenticated user
-      produces:
-        - application/json
-        - image/jpeg
+      summary: Получить изображение по идентификатору
       parameters:
-        - name: Authorization
-          in: header
-          description: Bearer token for user authentication
+        - name: id
+          in: path
           required: true
           type: string
       responses:
         '200':
-          description: Successful retrieval
+          description: OK
+        '400':
+          description: Bad Request - Invalid input or content type
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Successful retrieval message
-              image_bytes:
-                type: string
-                format: byte
-                description: Image bytes in base64 encoding
-              status_code:
-                type: integer
-                description: HTTP status code
-                example: 200
+            $ref: '#/definitions/Error'
         '500':
-          description: Unsuccessful retrieval
+          description: Bad Request - Invalid input or content type
           schema:
-            type: object
-            properties:
-              message:
-                type: string
-                description: Unsuccessful retrieval message
-              image_bytes:
-                type: string
-                format: byte
-                description: Image bytes in base64 encoding
-              status_code:
-                type: integer
-                description: HTTP status code
-                example: 500
+            $ref: '#/definitions/Error'
   /settings/subscription:
     post:
       security:
@@ -1285,10 +1350,13 @@ definitions:
         type: integer
       access_token_life_time:
         type: integer
-        description: "Long"
+        description: Long
       refresh_token_life_time:
         type: integer
-        description: "Long"
+        description: Long
+      device_id:
+        type: string
+        description: UUID 25 dig long
       token_details:
         $ref: '#/definitions/TokenDetails'
   TokenDetails:
@@ -1658,13 +1726,9 @@ definitions:
         type: string
       name:
         type: string
-      analytics:
-        $ref: '#/definitions/Analytics'
-      tracker:
-        $ref: '#/definitions/Tracker'
-      more:
-        $ref: '#/definitions/More'
       userID:
+        type: string
+      avatar_url:
         type: string
   Analytics:
     type: object
@@ -1677,7 +1741,7 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/models.Expense'
-      wealthFund:
+      wealth_fund:
         type: array
         items:
           $ref: '#/definitions/models.WealthFund'
@@ -1706,24 +1770,24 @@ definitions:
   App:
     type: object
     properties:
-      connectedAccounts:
+      connected_accounts:
         type: array
         items:
           $ref: '#/definitions/ConnectedAccount'
-      categorySettings:
+      category_settings:
         $ref: '#/definitions/CategorySettings'
   CategorySettings:
     type: object
     properties:
-      expenseCategories:
+      expense_categories:
         type: array
         items:
           $ref: '#/definitions/ExpenseCategory'
-      incomeCategories:
+      income_categories:
         type: array
         items:
           $ref: '#/definitions/IncomeCategory'
-      investmentCategories:
+      investment_categories:
         type: array
         items:
           $ref: '#/definitions/InvestmentCategory'
@@ -1803,13 +1867,13 @@ definitions:
   Tracker:
     type: object
     properties:
-      trackingState:
+      tracking_state:
         $ref: '#/definitions/TrackingState'
-      models.goal:
+      goal:
         type: array
         items:
           $ref: '#/definitions/models.Goal'
-      finHealth:
+      fin_health:
         $ref: '#/definitions/models.FinHealth'
   More:
     type: object

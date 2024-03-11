@@ -22,7 +22,11 @@ import (
 // @Security JWT
 // @Router /auth/logout [post]
 func Logout(w http.ResponseWriter, r *http.Request) {
-	currentDeviceID := service.GetDeviceIDFromRequest(r)
+	currentDeviceID, ok := GetDeviceIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		return
+	}
 
 	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {

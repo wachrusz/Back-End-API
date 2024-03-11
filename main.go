@@ -33,10 +33,6 @@ import (
 	"net/http"
 )
 
-var (
-	db *mydb.Database
-)
-
 func main() {
 
 	db, err := mydb.Init(secret.Secret.DBURL)

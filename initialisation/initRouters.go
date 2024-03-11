@@ -3,6 +3,7 @@ package initialisation
 import (
 	"log"
 	service "main/packages/_auth/service"
+	profile "main/packages/_profile"
 
 	"fmt"
 
@@ -18,6 +19,11 @@ func InitRouters() (*mux.Router, *mux.Router, error) {
 	mainRouter := mux.NewRouter().PathPrefix("/v1").Subrouter()
 	docRouter := mux.NewRouter()
 	registerHandlers(mainRouter)
+
+	imageGroup := mainRouter.PathPrefix("/profile/image").Subrouter()
+	{
+		imageGroup.Methods(http.MethodGet).Path("/get/{id}").HandlerFunc(profile.GetAvatarHandler)
+	}
 
 	//auth.SetAPIKey()
 
@@ -51,15 +57,12 @@ func InitRouters() (*mux.Router, *mux.Router, error) {
 }
 
 func getBaseURL() string {
-	// Используем стандартный пакет net/http для определения базовой ссылки
 	request, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		panic(err)
 	}
 
-	// Запрос URL из запроса
 	baseURL := request.URL.String()
 
-	// Получаем строковое представление базовой ссылки
 	return baseURL
 }

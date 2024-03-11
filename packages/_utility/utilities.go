@@ -65,7 +65,39 @@ func GenerateResetJWTToken(email string) (string, error) {
 	return signedToken, nil
 }
 
-func VerifyRegisterJWTToken(tokenString string) (UserAuthenticationRequest, error) {
+func VerifyRegisterJWTToken(tokenString, enteredEmail, enteredPassword string) error {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(enc.SecretKey), nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return errors.New("Invalid token")
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok {
+		return errors.New("Email not found in token claims")
+	}
+	if enteredEmail != email {
+		return errors.New("Email doesn't match")
+	}
+	password, ok := claims["password"].(string)
+	if !ok {
+		return errors.New("Password not found in token claims")
+	}
+	if enteredPassword != password {
+		return errors.New("Password doesn't match")
+	}
+
+	return nil
+}
+
+func GetAuthFromJWT(tokenString string) (UserAuthenticationRequest, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(enc.SecretKey), nil
 	})
@@ -134,4 +166,25 @@ func ParseResetToken(tokenString string) (jwt.MapClaims, error) {
 	}
 
 	return nil, errors.New("Invalid token")
+}
+
+func GetDeviceIDFromJWT(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return []byte(enc.SecretKey), nil
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return "", errors.New("Invalid token")
+	}
+
+	deviceID, ok := claims["device_id"].(string)
+	if !ok {
+		return "", errors.New("Invalid token")
+	}
+	return deviceID, nil
 }

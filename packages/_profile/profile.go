@@ -12,30 +12,27 @@ import (
 	auth "main/packages/_auth"
 	categories "main/packages/_categories"
 	jsonresponse "main/packages/_json_response"
-	models "main/packages/_models"
 	mydb "main/packages/_mydatabase"
 
 	"github.com/gorilla/mux"
 )
 
 type UserProfile struct {
-	Surname   string               `json:"surname"` //*changed
-	Name      string               `json:"name"`
-	Analytics categories.Analytics `json:"analytics"`
-	Tracker   categories.Tracker   `json:"tracker"`
-	More      categories.More      `json:"more"`
-	UserID    string               `json:"user_id"`
+	Surname   string `json:"surname"` //*changed
+	Name      string `json:"name"`
+	UserID    string `json:"user_id"`
+	AvatarURL string `json:"avatar_url"`
 }
 
-var userProfiles = make(map[string]UserProfile)
-
 func RegisterHandlers(router *mux.Router) {
-	router.HandleFunc("/profile/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
-	router.HandleFunc("/profile/update-name", auth.AuthMiddleware(UpdateName)).Methods("PUT")
+	router.HandleFunc("/profile/info/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
+	router.HandleFunc("/profile/analytics/get", auth.AuthMiddleware(GetProfileAnalytics)).Methods("GET")
+	router.HandleFunc("/profile/tracker/get", auth.AuthMiddleware(GetProfileTracker)).Methods("GET")
+	router.HandleFunc("/profile/more/get", auth.AuthMiddleware(GetProfileMore)).Methods("GET")
+	router.HandleFunc("/profile/name/put", auth.AuthMiddleware(UpdateName)).Methods("PUT")
 	router.HandleFunc("/profile/operation-archive/get", auth.AuthMiddleware(GetOperationArchive)).Methods("GET")
 
 	router.HandleFunc("/profile/image/put", auth.AuthMiddleware(UploadAvatarHandler)).Methods("PUT")
-	router.HandleFunc("/profile/image/get", auth.AuthMiddleware(GetAvatarHandler)).Methods("GET")
 }
 
 // @Summary Get user profile
@@ -53,46 +50,21 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
-
-	currencyCode := r.Header.Get("X-Currency")
-
 	var userProfile UserProfile
-
-	userProfile.Analytics = categories.Analytics{
-		Income:     make([]models.Income, 0),
-		Expense:    make([]models.Expense, 0),
-		WealthFund: make([]models.WealthFund, 0),
-	}
-
-	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode)
-	if err != nil {
-		http.Error(w, "Failed to get analytics data: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode, analytics)
-	if err_trk != nil {
-		http.Error(w, "Failed to get tracker data: "+err_trk.Error(), http.StatusInternalServerError)
-		return
-	}
 	surname, name, err := categories.GetUserInfoFromDB(userID)
 	if err != nil {
-		http.Error(w, "Failed to get user data: "+err_trk.Error(), http.StatusInternalServerError)
+		jsonresponse.SendErrorResponse(w, errors.New("Failed to get tracker data: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-	more, err := categories.GetMoreFromDB(userID)
+	avatarURL, err := GetAvatarInfo(userID)
 	if err != nil {
-		http.Error(w, "Failed to get More data: "+err_trk.Error(), http.StatusInternalServerError)
-		return
+		userProfile.AvatarURL = "null"
 	}
 
 	userProfile.UserID = userID
 	userProfile.Surname = surname
 	userProfile.Name = name
-	userProfile.Analytics = *analytics
-	userProfile.Tracker = *tracker
-	userProfile.More = *more
-
-	userProfiles[userID] = userProfile
+	userProfile.AvatarURL = avatarURL
 
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
@@ -102,6 +74,74 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(response)
 }
+
+func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		return
+	}
+
+	currencyCode := r.Header.Get("X-Currency")
+
+	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Failed to get analytics data: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"message":     "Successfully got analytics",
+		"status_code": http.StatusOK,
+		"analytics":   analytics,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		return
+	}
+
+	currencyCode := r.Header.Get("X-Currency")
+
+	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode)
+	if err_trk != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Failed to get tracker data: "+err_trk.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"message":     "Successfully got tracker",
+		"status_code": http.StatusOK,
+		"analytics":   tracker,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func GetProfileMore(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		return
+	}
+	more, err := categories.GetMoreFromDB(userID)
+	if err != nil {
+		jsonresponse.SendErrorResponse(w, errors.New("Failed to get more data: "+err.Error()), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]interface{}{
+		"message":     "Successfully got more",
+		"status_code": http.StatusOK,
+		"analytics":   more,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+// TODO РАЗБИТЬ НА ЧАСТИ ПРОФИЛЬ
 
 func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())
