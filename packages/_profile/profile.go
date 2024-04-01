@@ -33,6 +33,8 @@ func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/profile/operation-archive/get", auth.AuthMiddleware(GetOperationArchive)).Methods("GET")
 
 	router.HandleFunc("/profile/image/put", auth.AuthMiddleware(UploadAvatarHandler)).Methods("PUT")
+	router.HandleFunc("/api/emojis/put", UploadIconHandler).Methods("PUT")
+	router.HandleFunc("/api/emojis/get/list", GetIconsURLs).Methods("GET")
 }
 
 // @Summary Get user profile
@@ -83,17 +85,27 @@ func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currencyCode := r.Header.Get("X-Currency")
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+	startDateStr := r.URL.Query().Get("start_date")
+	endDateStr := r.URL.Query().Get("end_date")
 
-	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode)
+	if limitStr == "" && offsetStr == "" {
+		limitStr = "20"
+		offsetStr = "0"
+	}
+
+	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Failed to get analytics data: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
-		"message":     "Successfully got analytics",
-		"status_code": http.StatusOK,
-		"analytics":   analytics,
+		"message":           "Successfully got analytics",
+		"status_code":       http.StatusOK,
+		"analytics":         analytics,
+		"response_currency": currencyCode,
 	}
 	json.NewEncoder(w).Encode(response)
 }
@@ -106,17 +118,25 @@ func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currencyCode := r.Header.Get("X-Currency")
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
 
-	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode)
+	if limitStr == "" || offsetStr == "" {
+		limitStr = "20"
+		offsetStr = "0"
+	}
+
+	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr)
 	if err_trk != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Failed to get tracker data: "+err_trk.Error()), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
-		"message":     "Successfully got tracker",
-		"status_code": http.StatusOK,
-		"analytics":   tracker,
+		"message":           "Successfully got tracker",
+		"status_code":       http.StatusOK,
+		"tracker":           tracker,
+		"response_currency": currencyCode,
 	}
 	json.NewEncoder(w).Encode(response)
 }
@@ -136,12 +156,10 @@ func GetProfileMore(w http.ResponseWriter, r *http.Request) {
 	response := map[string]interface{}{
 		"message":     "Successfully got more",
 		"status_code": http.StatusOK,
-		"analytics":   more,
+		"more":        more,
 	}
 	json.NewEncoder(w).Encode(response)
 }
-
-// TODO РАЗБИТЬ НА ЧАСТИ ПРОФИЛЬ
 
 func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
 	userID, ok := auth.GetUserIDFromContext(r.Context())

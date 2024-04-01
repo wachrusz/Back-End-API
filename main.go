@@ -1,25 +1,8 @@
-// @title Cash Advisor API
-// @version 1.0
-// @description Backend API for managing user profiles, authentication, analytics, and more.
-// @host localhost:8080
-// @BasePath /v1
-// @schemes https
-// @produces json
-// @consumes json
-// @license MIT
-// @contact.email lstwrd@yandex.com
-// @contact.name Mikhail Vakhrushin
-// @contact.url
-// @Security JWT
-// @securityDefinitions.JWT.type apiKey
-// @securityDefinitions.JWT.name Authorization
-// @securityDefinitions.JWT.in header
-// @Server https://localhost:8080
-
 package main
 
 import (
 	initialisation "main/initialisation"
+	currency "main/packages/_currency"
 	logger "main/packages/_logger"
 	mydb "main/packages/_mydatabase"
 	secret "main/secret"
@@ -34,7 +17,6 @@ import (
 )
 
 func main() {
-
 	db, err := mydb.Init(secret.Secret.DBURL)
 	if err != nil {
 		panic(err)
@@ -52,6 +34,8 @@ func main() {
 	http.Handle("/", server.ContentTypeMiddleware(router))
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
+
+	go currency.ScheduleCurrencyUpdates()
 
 	//changed tls hosting now everything works
 	err = http.ListenAndServeTLS(":8080", secret.Secret.CrtPath, secret.Secret.KeyPath, nil)

@@ -19,11 +19,14 @@ const (
 )
 
 type WealthFund struct {
-	ID            string      `json:"id"`
-	Amount        float64     `json:"amount"`
-	Date          string      `json:"date"`
-	PlannedStatus WelfareFund `json:"planned"`
-	UserID        string      `json:"user_id"`
+	ID               string      `json:"id"`
+	Amount           float64     `json:"amount"`
+	Date             string      `json:"date"`
+	PlannedStatus    WelfareFund `json:"planned"`
+	Currency         string      `json:"currency"`
+	ConnectedAccount string      `json:"bank_account"`
+	CategoryID       string      `json:"category_id"`
+	UserID           string      `json:"user_id"`
 }
 
 func CreateWealthFund(wealthFund *WealthFund) error {
@@ -33,8 +36,8 @@ func CreateWealthFund(wealthFund *WealthFund) error {
 		return err
 	}
 
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO wealth_fund (amount, date, planned, user_id) VALUES ($1, $2, $3, $4)",
-		wealthFund.Amount, parsedDate, wealthFund.PlannedStatus, wealthFund.UserID)
+	_, err1 := mydb.GlobalDB.Exec("INSERT INTO wealth_fund (amount, date, planned, user_id, currency_code, connected_account, category_id) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+		wealthFund.Amount, parsedDate, wealthFund.PlannedStatus, wealthFund.UserID, wealthFund.Currency, wealthFund.ConnectedAccount, wealthFund.CategoryID)
 	if err1 != nil {
 		log.Println("Error creating wealthFund:", err)
 		return err1
@@ -43,7 +46,7 @@ func CreateWealthFund(wealthFund *WealthFund) error {
 }
 
 func GetWealthFundsByUserID(userID string) ([]WealthFund, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date FROM wealthFund WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, currency_code, connected_account FROM wealth_fund WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying wealthFunds:", err)
 		return nil, err

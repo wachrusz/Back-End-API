@@ -14,12 +14,15 @@ import (
 )
 
 type Expense struct {
-	ID         string  `json:"id"`
-	Amount     float64 `json:"amount"`
-	Date       string  `json:"date"`
-	Planned    bool    `json:"planned"`
-	UserID     string  `json:"user_id"`
-	CategoryID string  `json:"category_id"`
+	ID          string  `json:"id"`
+	Amount      float64 `json:"amount"`
+	Date        string  `json:"date"`
+	Planned     bool    `json:"planned"`
+	UserID      string  `json:"user_id"`
+	CategoryID  string  `json:"category_id"`
+	SentTo      string  `json:"sent_to"`
+	BankAccount string  `json:"bank_account"`
+	Currency    string  `json:"currency"`
 }
 
 func CreateExpense(expense *Expense) error {
@@ -28,8 +31,8 @@ func CreateExpense(expense *Expense) error {
 		log.Println("Error parsing date:", err)
 		return err
 	}
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO expense (amount, date, planned, user_id, category) VALUES ($1, $2, $3, $4, $5)",
-		expense.Amount, parsedDate, expense.Planned, expense.UserID, expense.CategoryID)
+	_, err1 := mydb.GlobalDB.Exec("INSERT INTO expense (amount, date, planned, user_id, category, sent_to, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		expense.Amount, parsedDate, expense.Planned, expense.UserID, expense.CategoryID, expense.SentTo, expense.BankAccount, expense.Currency)
 	if err1 != nil {
 		log.Println("Error creating expense:", err)
 		return err1
@@ -44,7 +47,7 @@ func CreateExpense(expense *Expense) error {
 }
 
 func GetExpensesByUserID(userID string) ([]Expense, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category FROM expense WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying expenses:", err)
 		return nil, err
@@ -54,7 +57,7 @@ func GetExpensesByUserID(userID string) ([]Expense, error) {
 	var expenses []Expense
 	for rows.Next() {
 		var expense Expense
-		if err := rows.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID); err != nil {
+		if err := rows.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
 			log.Println("Error scanning expense row:", err)
 			return nil, err
 		}

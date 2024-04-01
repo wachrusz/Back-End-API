@@ -33,6 +33,13 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, ok := auth.GetUserIDFromContext(r.Context())
+	if !ok {
+		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		return
+	}
+	account.UserID = userID
+
 	err := models.AddConnectedAccount(&account)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error adding connected account: "+err.Error()), http.StatusInternalServerError)

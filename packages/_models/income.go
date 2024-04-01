@@ -14,12 +14,15 @@ import (
 )
 
 type Income struct {
-	ID         string  `json:"id"`
-	Amount     float64 `json:"amount"`
-	Date       string  `json:"date"`
-	Planned    bool    `json:"planned"`
-	UserID     string  `json:"user_id"`
-	CategoryID string  `json:"category_id"`
+	ID          string  `json:"id"`
+	Amount      float64 `json:"amount"`
+	Date        string  `json:"date"`
+	Planned     bool    `json:"planned"`
+	UserID      string  `json:"user_id"`
+	CategoryID  string  `json:"category_id"`
+	Sender      string  `json:"sender"`
+	BankAccount string  `json:"bank_account"`
+	Currency    string  `json:"currency"`
 }
 
 func CreateIncome(income *Income) error {
@@ -28,8 +31,8 @@ func CreateIncome(income *Income) error {
 		log.Println("Error parsing date:", err)
 		return err
 	}
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO income (amount, date, planned, user_id, category) VALUES ($1, $2, $3, $4, $5)",
-		income.Amount, parsedDate, income.Planned, income.UserID, income.CategoryID)
+	_, err1 := mydb.GlobalDB.Exec("INSERT INTO income (amount, date, planned, user_id, category, sender, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		income.Amount, parsedDate, income.Planned, income.UserID, income.CategoryID, income.Sender, income.BankAccount, income.Currency)
 	if err1 != nil {
 		log.Println("Error creating income:", err1)
 		return err1
@@ -44,7 +47,7 @@ func CreateIncome(income *Income) error {
 }
 
 func GetIncomesByUserID(userID string) ([]Income, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category FROM income WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying incomes:", err)
 		return nil, err
@@ -54,7 +57,7 @@ func GetIncomesByUserID(userID string) ([]Income, error) {
 	var incomes []Income
 	for rows.Next() {
 		var income Income
-		if err := rows.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID); err != nil {
+		if err := rows.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
 			log.Println("Error scanning income row:", err)
 			return nil, err
 		}
