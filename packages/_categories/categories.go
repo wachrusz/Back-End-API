@@ -7,9 +7,12 @@ package categories
 import (
 	//"encoding/json"
 
+	currency "main/packages/_currency"
 	logger "main/packages/_logger"
 	models "main/packages/_models"
 	mydb "main/packages/_mydatabase"
+	"math"
+	"time"
 
 	"log"
 )
@@ -34,20 +37,68 @@ type More struct {
 	Settings models.Settings `json:"settings"`
 }
 
-func convertCurrency(amount float64, currencyCode string) float64 {
-	switch currencyCode {
-	case "USD":
-		return amount * 0.011
-	case "EUR":
-		return amount * 0.01
-	default:
-		return amount
-	}
+var exchangeRates = currency.CurrentCurrencyData.Valute
+
+func round(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return math.Round(num*output) / output
 }
 
-func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
-	queryIncome := "SELECT id, amount, date, planned FROM income WHERE user_id = $1"
-	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID)
+func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
+	if fromCurrencyCode == "" || toCurrencyCode == "" {
+		return round(amount, 2)
+	}
+	if fromCurrencyCode == toCurrencyCode {
+		return round(amount, 2)
+	}
+	if len(exchangeRates) == 0 {
+		exchangeRates = currency.CurrentCurrencyData.Valute
+	}
+
+	if fromCurrencyCode == "RUB" {
+		rate, ok := exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round(amount/(rate.Value/float64(rate.Nominal)), 2)
+	} else {
+		rubleRateFrom, ok := exchangeRates[fromCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		rubleRateTo, ok := exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round((amount*(rubleRateFrom.Value/float64(rubleRateFrom.Nominal)))/(rubleRateTo.Value/float64(rubleRateTo.Nominal)), 2)
+	}
+
+	if toCurrencyCode == "RUB" {
+		rate, ok := exchangeRates[fromCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round(amount*(rate.Value/float64(rate.Nominal)), 2)
+	}
+
+	return round(amount, 2)
+}
+
+func GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error) {
+	if startDateStr == "" {
+		startDateStr = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+	}
+	if endDateStr == "" {
+		endDateStr = time.Now().Format("2006-01-02")
+	}
+
+	queryIncome := "SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -56,16 +107,18 @@ func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	var incomeList []models.Income
 	for rowsIncome.Next() {
 		var income models.Income
-		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned); err != nil {
+		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
 			return nil, err
 		}
 		income.UserID = userID
-		income.Amount = convertCurrency(income.Amount, currencyCode)
+		if income.Currency != currencyCode && currencyCode != "" {
+			income.Amount = convertCurrency(income.Amount, income.Currency, currencyCode)
+		}
 		incomeList = append(incomeList, income)
 	}
 
-	queryExpense := "SELECT id, amount, date, planned FROM expense WHERE user_id = $1"
-	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID)
+	queryExpense := "SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -74,16 +127,18 @@ func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	var expenseList []models.Expense
 	for rowsExpense.Next() {
 		var expense models.Expense
-		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned); err != nil {
+		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
 			return nil, err
 		}
 		expense.UserID = userID
-		expense.Amount = convertCurrency(expense.Amount, currencyCode)
+		if expense.Currency != currencyCode && currencyCode != "" {
+			expense.Amount = convertCurrency(expense.Amount, expense.Currency, currencyCode)
+		}
 		expenseList = append(expenseList, expense)
 	}
 
-	queryWealthFund := "SELECT id, amount, date FROM wealth_fund WHERE user_id = $1"
-	rowsWealthFund, err := mydb.GlobalDB.Query(queryWealthFund, userID)
+	queryWealthFund := "SELECT id, amount, date, planned, currency_code, connected_account, user_id, category_id FROM wealth_fund WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsWealthFund, err := mydb.GlobalDB.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -92,10 +147,12 @@ func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	var wealthFundList []models.WealthFund
 	for rowsWealthFund.Next() {
 		var wealthFund models.WealthFund
-		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date); err != nil {
+		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
 			return nil, err
 		}
-		wealthFund.Amount = convertCurrency(wealthFund.Amount, currencyCode)
+		if wealthFund.Currency != currencyCode && currencyCode != "" {
+			wealthFund.Amount = convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
+		}
 		wealthFundList = append(wealthFundList, wealthFund)
 	}
 
@@ -108,9 +165,9 @@ func GetAnalyticsFromDB(userID, currencyCode string) (*Analytics, error) {
 	return analytics, nil
 }
 
-func GetTrackerFromDB(userID string, currencyCode string) (*Tracker, error) {
-	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1"
-	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID)
+func GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
+	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
+	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
 		logger.ErrorLogger.Print("Error getting Goal From DB: (userID, error) ", userID, err)
 		return nil, err
@@ -124,11 +181,11 @@ func GetTrackerFromDB(userID string, currencyCode string) (*Tracker, error) {
 			return nil, err
 		}
 		goal.UserID = userID
-		goal.Need = convertCurrency(goal.Need, currencyCode)
+		goal.Need = convertCurrency(goal.Need, "RUB", currencyCode)
 		goalList = append(goalList, goal)
 	}
 	trackingState := &models.TrackingState{
-		State:  getTotalState(userID),
+		State:  getTotalState(userID, currencyCode),
 		UserID: userID,
 	}
 
@@ -140,18 +197,44 @@ func GetTrackerFromDB(userID string, currencyCode string) (*Tracker, error) {
 	return tracker, nil
 }
 
-func getTotalState(userID string) float64 {
+func getTotalState(userID string, convertionCode string) float64 {
 	var state float64
 	query := `
-	SELECT (SUM(income.amount) - SUM(expense.amount)) AS difference
-	FROM income
-	JOIN expense ON income.user_id = expense.user_id
-	WHERE income.user_id = $1 AND expense.user_id = $1;`
+	WITH all_transactions AS (
+		SELECT                                     
+			income.id,
+			CASE                                                    
+				WHEN income.currency_code = 'RUB' THEN income.amount
+				ELSE income.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = income.currency_code), 1)
+			END AS converted_amount
+		FROM
+			income
+		WHERE
+			income.user_id = $1
+		UNION ALL
+		SELECT
+			expense.id,
+			CASE
+				WHEN expense.currency_code = 'RUB' THEN -expense.amount
+				ELSE -expense.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = expense.currency_code), 1)
+			END AS converted_amount                                                                                                      
+		FROM                       
+			expense
+		WHERE
+			expense.user_id = $1
+	)                             
+	SELECT
+		SUM(converted_amount) AS total_balance_in_rubles
+	FROM                                                                                                             
+		all_transactions;
+	
+	`
 	err := mydb.GlobalDB.QueryRow(query, userID).Scan(&state)
 	if err != nil {
+		log.Println(err)
 		return 0
 	}
-	return state
+	return convertCurrency(state, "RUB", convertionCode)
 }
 
 func GetUserInfoFromDB(userID string) (string, string, error) {
@@ -339,6 +422,7 @@ func GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation
 		SELECT id, description, amount, date, category, operation_type
 		FROM operations
 		WHERE user_id = $1
+		ORDER BY date DESC
 		LIMIT $2 OFFSET $3;
 	`
 

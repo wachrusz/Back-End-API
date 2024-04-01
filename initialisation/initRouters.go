@@ -3,6 +3,7 @@ package initialisation
 import (
 	"log"
 	service "main/packages/_auth/service"
+	currency "main/packages/_currency"
 	profile "main/packages/_profile"
 
 	"fmt"
@@ -23,6 +24,16 @@ func InitRouters() (*mux.Router, *mux.Router, error) {
 	imageGroup := mainRouter.PathPrefix("/profile/image").Subrouter()
 	{
 		imageGroup.Methods(http.MethodGet).Path("/get/{id}").HandlerFunc(profile.GetAvatarHandler)
+	}
+
+	iconGroup := mainRouter.PathPrefix("/api/emojis").Subrouter()
+	{
+		iconGroup.Methods(http.MethodGet).Path("/get/{id}").HandlerFunc(profile.GetIconHandler)
+	}
+
+	err := currency.InitCurrentCurrencyData()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	//auth.SetAPIKey()

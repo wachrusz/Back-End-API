@@ -15,6 +15,124 @@
   "host": "212.233.78.3:8080",
   "basePath": "/v1",
   "paths": {
+    "/api/emojis/get/{id}": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Получить изображение по идентификатору",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request - Invalid input or content type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Bad Request - Invalid input or content type",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/api/emojis/put": {
+      "put": {
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
+        "tags": [
+          "API"
+        ],
+        "summary": "Upload  image",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "image",
+            "in": "formData",
+            "description": "The image file to upload",
+            "required": true,
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful upload",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Successful upload message"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 201
+                },
+                "avatar_url": {
+                  "type": "string",
+                  "example": "https://{BaseURL}/v1/api/emojis/get/{encryptedID}"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsuccessful upload",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Unsuccessful upload"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 400
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Unsuccessful upload"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code",
+                  "example": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dev/confirmation-code/get": {
       "get": {
         "tags": [
@@ -634,7 +752,7 @@
             "description": "Expense category creation request payload",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/ExpenseCategory"
+              "$ref": "#/definitions/models.ExpenseCategory"
             }
           }
         ],
@@ -694,7 +812,7 @@
             "description": "Income category creation request payload",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/IncomeCategory"
+              "$ref": "#/definitions/models.IncomeCategory"
             }
           }
         ],
@@ -1402,6 +1520,34 @@
             "in": "header",
             "description": "Header to point in which currency we need to convert money. If empty all in RUB. There are 3 currencies(EUR,USD,RUB)",
             "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of operations to retrieve (default is 20)",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of operations to skip (default is 0)",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "start_date",
+            "in": "query",
+            "description": "Default is 30 days ago",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "end_date",
+            "in": "query",
+            "description": "Default is now",
+            "required": false,
+            "type": "string"
           }
         ],
         "responses": {
@@ -1414,6 +1560,9 @@
                   "type": "integer"
                 },
                 "message": {
+                  "type": "string"
+                },
+                "response_currency": {
                   "type": "string"
                 },
                 "profile": {
@@ -1455,6 +1604,20 @@
             "in": "header",
             "description": "Header to point in which currency we need to convert money. If empty all in RUB. There are 3 currencies(EUR,USD,RUB)",
             "required": false
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of operations to retrieve (default is 20)",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of operations to skip (default is 0)",
+            "required": false,
+            "type": "integer"
           }
         ],
         "responses": {
@@ -1467,6 +1630,9 @@
                   "type": "integer"
                 },
                 "message": {
+                  "type": "string"
+                },
+                "response_currency": {
                   "type": "string"
                 },
                 "profile": {
@@ -1602,6 +1768,11 @@
     },
     "/profile/image/put": {
       "put": {
+        "security": [
+          {
+            "JWT": []
+          }
+        ],
         "tags": [
           "Profile"
         ],
@@ -1614,13 +1785,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for user authentication",
-            "required": true,
-            "type": "string"
-          },
           {
             "name": "image",
             "in": "formData",
@@ -2318,6 +2482,15 @@
         },
         "user_id": {
           "type": "string"
+        },
+        "bank_account": {
+          "type": "string"
+        },
+        "sent_to": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
         }
       }
     },
@@ -2380,6 +2553,15 @@
           "type": "boolean"
         },
         "user_id": {
+          "type": "string"
+        },
+        "bank_account": {
+          "type": "string"
+        },
+        "sender": {
+          "type": "string"
+        },
+        "currency": {
           "type": "string"
         }
       }
@@ -2457,9 +2639,18 @@
           "type": "string"
         },
         "planned": {
-          "$ref": "#/definitions/models.WelfareFund"
+          "type": "boolean"
         },
         "user_id": {
+          "type": "string"
+        },
+        "bank_account": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "category_id": {
           "type": "string"
         }
       }
@@ -2507,13 +2698,13 @@
     "profile.UserProfile": {
       "type": "object",
       "properties": {
-        "username": {
+        "surname": {
           "type": "string"
         },
         "name": {
           "type": "string"
         },
-        "userID": {
+        "user_id": {
           "type": "string"
         },
         "avatar_url": {
