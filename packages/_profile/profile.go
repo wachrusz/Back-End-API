@@ -24,6 +24,11 @@ type UserProfile struct {
 	AvatarURL string `json:"avatar_url"`
 }
 
+var (
+	limitStr  string = "20"
+	offsetStr string = "0"
+)
+
 func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/profile/info/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
 	router.HandleFunc("/profile/analytics/get", auth.AuthMiddleware(GetProfileAnalytics)).Methods("GET")
@@ -85,15 +90,10 @@ func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currencyCode := r.Header.Get("X-Currency")
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
+	limitStr = r.URL.Query().Get("limit")
+	offsetStr = r.URL.Query().Get("offset")
 	startDateStr := r.URL.Query().Get("start_date")
 	endDateStr := r.URL.Query().Get("end_date")
-
-	if limitStr == "" && offsetStr == "" {
-		limitStr = "20"
-		offsetStr = "0"
-	}
 
 	analytics, err := categories.GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr)
 	if err != nil {
@@ -118,13 +118,8 @@ func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currencyCode := r.Header.Get("X-Currency")
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	if limitStr == "" || offsetStr == "" {
-		limitStr = "20"
-		offsetStr = "0"
-	}
+	limitStr = r.URL.Query().Get("limit")
+	offsetStr = r.URL.Query().Get("offset")
 
 	tracker, err_trk := categories.GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr)
 	if err_trk != nil {
@@ -168,13 +163,8 @@ func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	if limitStr == "" || offsetStr == "" {
-		limitStr = "20"
-		offsetStr = "0"
-	}
+	limitStr = r.URL.Query().Get("limit")
+	offsetStr = r.URL.Query().Get("offset")
 
 	operations, err := categories.GetOperationArchiveFromDB(userID, limitStr, offsetStr)
 	if err != nil {
