@@ -222,7 +222,7 @@ func saveAvatarInfo(userID string, imageBytes []byte, encryptedID string) error 
 	if err != nil {
 		return err
 	}
-	_, err = mydb.GlobalDB.Exec("INSERT INTO service_images (id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (profile_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
+	_, err = mydb.GlobalDB.Exec("INSERT INTO service_images (profile_id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (profile_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
 	if err != nil {
 		return err
 	}
