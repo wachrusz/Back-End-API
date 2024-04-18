@@ -79,6 +79,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusOK,
 		"profile":     userProfile,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -107,6 +108,7 @@ func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
 		"analytics":         analytics,
 		"response_currency": currencyCode,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -133,6 +135,7 @@ func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
 		"tracker":           tracker,
 		"response_currency": currencyCode,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -153,6 +156,7 @@ func GetProfileMore(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusOK,
 		"more":        more,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -178,6 +182,7 @@ func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
 		"status_code":       http.StatusOK,
 		"operation_archive": operations,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -220,6 +225,7 @@ func UpdateName(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully updated a profile",
 		"status_code": http.StatusOK,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 

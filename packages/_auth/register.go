@@ -205,7 +205,6 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Location", "/auth/login")
 	w.WriteHeader(http.StatusFound)
 }
 

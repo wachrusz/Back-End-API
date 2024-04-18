@@ -53,6 +53,7 @@ func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully sent a suuport request",
 		"status_code": http.StatusOK,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 

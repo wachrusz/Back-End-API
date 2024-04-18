@@ -51,5 +51,6 @@ func CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully created a wealth fund",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }

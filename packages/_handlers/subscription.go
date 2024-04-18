@@ -41,5 +41,6 @@ func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully created a subscription",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }

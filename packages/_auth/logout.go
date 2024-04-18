@@ -46,5 +46,6 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		"message":     "Logout Successful",
 		"status_code": http.StatusOK,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }

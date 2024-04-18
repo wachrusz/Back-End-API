@@ -68,6 +68,7 @@ func UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusCreated,
 		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/profile/image/get/" + encryptedID,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -133,6 +134,7 @@ func UploadIconHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusCreated,
 		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/api/emojis/get/" + encryptedID,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -180,7 +182,7 @@ func GetIconsURLs(w http.ResponseWriter, r *http.Request) {
 		message:     "Successfully got icons",
 		status_code: "200",
 	}
-
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]interface{}{
 		"response": list,

@@ -51,5 +51,6 @@ func CreateIncomeHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully created an income",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
