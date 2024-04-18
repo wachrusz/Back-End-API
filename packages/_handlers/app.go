@@ -42,6 +42,7 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Expense category created successfully",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -74,6 +75,7 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Income category created successfully",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -106,5 +108,6 @@ func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Investment category created successfully",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }

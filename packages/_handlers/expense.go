@@ -51,6 +51,7 @@ func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully created an expense",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 

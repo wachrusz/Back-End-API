@@ -50,6 +50,7 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Connected account added successfully",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
 }
 
