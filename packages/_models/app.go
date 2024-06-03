@@ -60,33 +60,35 @@ type InvestmentCategory struct {
 	UserID     string `json:"user_id"`
 }
 
-func CreateIncomeCategory(category *IncomeCategory) error {
-	_, err := mydb.GlobalDB.Exec("INSERT INTO income_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
-		category.Name, category.Icon, category.IsConstant, category.UserID)
+func CreateIncomeCategory(category *IncomeCategory) (int64, error) {
+	var incomeCategoryID int64
+	err := mydb.GlobalDB.QueryRow("INSERT INTO income_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		category.Name, category.Icon, category.IsConstant, category.UserID).Scan(&incomeCategoryID)
 	if err != nil {
 		log.Println("Error creating income:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return incomeCategoryID, nil
 }
 
-func CreateExpenseCategory(category *ExpenseCategory) error {
-	log.Println("category: ", category)
-	_, err := mydb.GlobalDB.Exec("INSERT INTO expense_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
-		category.Name, category.Icon, category.IsConstant, category.UserID)
+func CreateExpenseCategory(category *ExpenseCategory) (int64, error) {
+	var expenseCategoryID int64
+	err := mydb.GlobalDB.QueryRow("INSERT INTO expense_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		category.Name, category.Icon, category.IsConstant, category.UserID).Scan(&expenseCategoryID)
 	if err != nil {
 		log.Println("Error creating expense:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return expenseCategoryID, nil
 }
 
-func CreateInvestmentCategory(category *InvestmentCategory) error {
-	_, err := mydb.GlobalDB.Exec("INSERT INTO investment_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4)",
-		category.Name, category.Icon, category.IsConstant, category.UserID)
+func CreateInvestmentCategory(category *InvestmentCategory) (int64, error) {
+	var investmentCategoryID int64
+	err := mydb.GlobalDB.QueryRow("INSERT INTO investment_categories (name, icon, is_fixed, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		category.Name, category.Icon, category.IsConstant, category.UserID).Scan(&investmentCategoryID)
 	if err != nil {
 		log.Println("Error creating investment:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return investmentCategoryID, nil
 }

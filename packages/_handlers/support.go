@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
+	"strconv"
 
 	auth "main/packages/_auth"
 	email "main/packages/_email"
@@ -19,6 +21,7 @@ type SupportRequest struct {
 	Subject string `json:"subject"`
 	Message string `json:"message"`
 	UserID  string `json:"user_id"`
+	RequestID string `json:"request_id"`
 }
 
 // @Summary Send support request
@@ -44,13 +47,21 @@ func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	UserID, err := strconv.Atoi(supportRequest.UserID)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	supportRequest.RequestID = (time.Now().UnixMicro()/1e11)*int64(UserID)
+	
 	if err := sendSupportRequest(supportRequest, userID); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error sending support request: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully sent a suuport request",
+		"message":     "Successfully sent a support request",
+		"created_object_id" supportRequest.RequestID,
 		"status_code": http.StatusOK,
 	}
 	w.WriteHeader(response["status_code"])

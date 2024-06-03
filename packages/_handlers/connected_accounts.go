@@ -40,15 +40,16 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	account.UserID = userID
 
-	err := models.AddConnectedAccount(&account)
+	connectedAccountID, err := models.AddConnectedAccount(&account)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error adding connected account: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Connected account added successfully",
-		"status_code": http.StatusCreated,
+		"message":           "Connected account added successfully",
+		"created_object_id": connectedAccountID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)

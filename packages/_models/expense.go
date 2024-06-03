@@ -25,25 +25,27 @@ type Expense struct {
 	Currency    string  `json:"currency"`
 }
 
-func CreateExpense(expense *Expense) error {
+func CreateExpense(expense *Expense) (int64, error) {
 	parsedDate, err := time.Parse("2006-01-02", expense.Date)
 	if err != nil {
 		log.Println("Error parsing date:", err)
-		return err
+		return 0, err
 	}
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO expense (amount, date, planned, user_id, category, sent_to, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-		expense.Amount, parsedDate, expense.Planned, expense.UserID, expense.CategoryID, expense.SentTo, expense.BankAccount, expense.Currency)
-	if err1 != nil {
+
+	var expenseID int64
+	err = mydb.GlobalDB.QueryRow("INSERT INTO expense (amount, date, planned, user_id, category, sent_to, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+		expense.Amount, parsedDate, expense.Planned, expense.UserID, expense.CategoryID, expense.SentTo, expense.BankAccount, expense.Currency).Scan(&expenseID)
+	if err != nil {
 		log.Println("Error creating expense:", err)
-		return err1
+		return 0, err
 	}
 	_, err = mydb.GlobalDB.Exec("INSERT INTO operations (user_id, description, amount, date, category, operation_type) VALUES ($1, $2, $3, $4, $5, $6)",
 		expense.UserID, "Расход", expense.Amount, parsedDate, expense.CategoryID, expense.CategoryID)
 	if err != nil {
 		log.Println("Error creating expense operation:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return expenseID, nil
 }
 
 func GetExpensesByUserID(userID string) ([]Expense, error) {

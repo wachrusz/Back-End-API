@@ -25,25 +25,27 @@ type Income struct {
 	Currency    string  `json:"currency"`
 }
 
-func CreateIncome(income *Income) error {
+func CreateIncome(income *Income) (int64, error) {
 	parsedDate, err := time.Parse("2006-01-02", income.Date)
 	if err != nil {
 		log.Println("Error parsing date:", err)
-		return err
+		return 0, err
 	}
-	_, err1 := mydb.GlobalDB.Exec("INSERT INTO income (amount, date, planned, user_id, category, sender, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-		income.Amount, parsedDate, income.Planned, income.UserID, income.CategoryID, income.Sender, income.BankAccount, income.Currency)
+
+	var incomeID int64
+	err1 := mydb.GlobalDB.QueryRow("INSERT INTO income (amount, date, planned, user_id, category, sender, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+		income.Amount, parsedDate, income.Planned, income.UserID, income.CategoryID, income.Sender, income.BankAccount, income.Currency).Scan(&incomeID)
 	if err1 != nil {
 		log.Println("Error creating income:", err1)
-		return err1
+		return 0, err1
 	}
 	_, err = mydb.GlobalDB.Exec("INSERT INTO operations (user_id, description, amount, date, category, operation_type) VALUES ($1, $2, $3, $4, $5, $6)",
 		income.UserID, "Доход", income.Amount, parsedDate, income.CategoryID, income.CategoryID)
 	if err != nil {
 		log.Println("Error creating income operation:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return incomeID, nil
 }
 
 func GetIncomesByUserID(userID string) ([]Income, error) {

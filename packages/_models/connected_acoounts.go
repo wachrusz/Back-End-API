@@ -15,14 +15,15 @@ type ConnectedAccount struct {
 	AccountType   string `json:"account_type"`
 }
 
-func AddConnectedAccount(account *ConnectedAccount) error {
-	_, err := mydb.GlobalDB.Exec("INSERT INTO connected_accounts (user_id, bank_id, account_number, account_type, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())",
-		account.UserID, account.BankID, account.AccountNumber, account.AccountType)
+func AddConnectedAccount(account *ConnectedAccount) (int64, error) {
+	var connectedAccountID int64
+	err := mydb.GlobalDB.QueryRow("INSERT INTO connected_accounts (user_id, bank_id, account_number, account_type, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id",
+		account.UserID, account.BankID, account.AccountNumber, account.AccountType).Scan(&connectedAccountID)
 	if err != nil {
 		log.Println("Error adding connected_account:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return connectedAccountID, nil
 
 }
 
