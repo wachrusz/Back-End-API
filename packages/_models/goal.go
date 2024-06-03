@@ -18,14 +18,15 @@ type Goal struct {
 	UserID       string  `json:"user_id"`
 }
 
-func CreateGoal(goal *Goal) error {
-	_, err := mydb.GlobalDB.Exec("INSERT INTO goal (goal, need, current_state, user_id) VALUES ($1, $2, $3, $4)",
-		goal.Goal, goal.Need, goal.CurrentState, goal.UserID)
+func CreateGoal(goal *Goal) (int64, error) {
+	var goalID int64
+	err := mydb.GlobalDB.QueryRow("INSERT INTO goal (goal, need, current_state, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
+		goal.Goal, goal.Need, goal.CurrentState, goal.UserID).Scan(&goalID)
 	if err != nil {
 		log.Println("Error creating goal:", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return goalID, nil
 }
 
 func GetGoalsByUserID(userID string) ([]Goal, error) {

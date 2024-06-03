@@ -32,15 +32,16 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := models.CreateExpenseCategory(&category)
+	expenseCategoryID, err := models.CreateExpenseCategory(&category)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Expense category created successfully",
-		"status_code": http.StatusCreated,
+		"message":           "Expense category created successfully",
+		"created_object_id": expenseCategoryID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
@@ -65,15 +66,16 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := models.CreateIncomeCategory(&category)
+	incomeCategoryID, err := models.CreateIncomeCategory(&category)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating income category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Income category created successfully",
-		"status_code": http.StatusCreated,
+		"message":           "Income category created successfully",
+		"created_object_id": incomeCategoryID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
@@ -98,15 +100,16 @@ func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := models.CreateInvestmentCategory(&category)
+	investmentCateryID, err := models.CreateInvestmentCategory(&category)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating investment category: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Investment category created successfully",
-		"status_code": http.StatusCreated,
+		"message":           "Investment category created successfully",
+		"created_object_id": investmentCateryID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)

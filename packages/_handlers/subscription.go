@@ -31,15 +31,16 @@ func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := models.CreateSubscription(&subscription)
+	subscriptionID, err := models.CreateSubscription(&subscription)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating subscription: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully created a subscription",
-		"status_code": http.StatusCreated,
+		"message":           "Successfully created a subscription",
+		"created_object_id": subscriptionID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)

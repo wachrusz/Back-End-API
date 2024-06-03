@@ -42,14 +42,15 @@ func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 
 	expense.UserID = userID
 
-	if err := models.CreateExpense(&expense); err != nil {
+	if expenceID, err := models.CreateExpense(&expense); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully created an expense",
-		"status_code": http.StatusCreated,
+		"message":           "Successfully created an expense",
+		"created_object_id": expenceID,
+		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"])
 	json.NewEncoder(w).Encode(response)
