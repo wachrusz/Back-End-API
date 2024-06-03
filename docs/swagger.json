@@ -577,9 +577,9 @@
                   "type": "string",
                   "description": "Message indicating successful expense creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -647,9 +647,9 @@
                   "type": "string",
                   "description": "Message indicating successful income creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -712,15 +712,20 @@
           "201": {
             "description": "Wealth fund created successfully",
             "schema": {
-              "message":{
-                "type": "string"
-              },
-              "created_object_id":{
-                "type": "string",
-                "description":"creation id"
-              },
-              "status_code":{
-                "type":"string"
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "description": "Message indicating successful expense category creation"
+                },
+                "created_object_id": {
+                  "type": "string",
+                  "description": "creation id"
+                },
+                "status_code": {
+                  "type": "integer",
+                  "description": "HTTP status code (201 Created)"
+                }
               }
             }
           },
@@ -783,9 +788,9 @@
                   "type": "string",
                   "description": "Message indicating successful expense category creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -847,9 +852,9 @@
                   "type": "string",
                   "description": "Message indicating successful income category creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -911,9 +916,9 @@
                   "type": "string",
                   "description": "Message indicating successful investment category creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -975,9 +980,9 @@
                   "type": "string",
                   "description": "Message indicating successful connected account addition"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -1956,9 +1961,9 @@
                   "type": "string",
                   "description": "Message indicating successful subscription creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -2020,9 +2025,9 @@
                   "type": "string",
                   "description": "Message indicating successful request"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -2150,9 +2155,9 @@
                   "type": "string",
                   "description": "Message indicating successful goal creation"
                 },
-                "created_object_id":{
+                "created_object_id": {
                   "type": "string",
-                  "description":"creation id"
+                  "description": "creation id"
                 },
                 "status_code": {
                   "type": "integer",
@@ -2483,6 +2488,9 @@
           "type": "string"
         },
         "user_id": {
+          "type": "string"
+        },
+        "request_id": {
           "type": "string"
         }
       }

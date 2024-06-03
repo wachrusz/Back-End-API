@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
-	"time"
 	"strconv"
+	"time"
 
 	auth "main/packages/_auth"
 	email "main/packages/_email"
@@ -16,12 +17,12 @@ import (
 
 // SupportRequest содержит информацию о запросе в техподдержку.
 type SupportRequest struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Subject string `json:"subject"`
-	Message string `json:"message"`
-	UserID  string `json:"user_id"`
-	RequestID string `json:"request_id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	Subject   string `json:"subject"`
+	Message   string `json:"message"`
+	UserID    string `json:"user_id"`
+	RequestID int64  `json:"request_id"`
 }
 
 // @Summary Send support request
@@ -52,19 +53,19 @@ func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	supportRequest.RequestID = (time.Now().UnixMicro()/1e11)*int64(UserID)
-	
+	supportRequest.RequestID = (time.Now().UnixMicro() / 1e11) * int64(UserID)
+
 	if err := sendSupportRequest(supportRequest, userID); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error sending support request: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully sent a support request",
-		"created_object_id" supportRequest.RequestID,
-		"status_code": http.StatusOK,
+		"message":           "Successfully sent a support request",
+		"created_object_id": supportRequest.RequestID,
+		"status_code":       http.StatusOK,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 

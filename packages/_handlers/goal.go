@@ -44,16 +44,17 @@ func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal.UserID = userID
 	log.Print(goal.UserID)
 
-	if goalID, err := models.CreateGoal(&goal); err != nil {
+	goalID, err := models.CreateGoal(&goal)
+	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating goal: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully created a goal",
-		"created_object_id": goalID
-		"status_code": http.StatusCreated,
+		"message":           "Successfully created a goal",
+		"created_object_id": goalID,
+		"status_code":       http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
