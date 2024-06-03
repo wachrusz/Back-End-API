@@ -126,7 +126,7 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code":             http.StatusOK,
 		"device_id":               deviceID,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -217,7 +217,7 @@ func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code":             http.StatusOK,
 		"device_id":               deviceID,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -272,7 +272,7 @@ func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 		"message":     "Successfully confirmed email",
 		"status_code": http.StatusOK,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 

@@ -42,6 +42,6 @@ func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 		"created_object_id": subscriptionID,
 		"status_code":       http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }

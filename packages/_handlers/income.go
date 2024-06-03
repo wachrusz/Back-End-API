@@ -42,7 +42,8 @@ func CreateIncomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	income.UserID = userID
 
-	if incomeID, err := models.CreateIncome(&income); err != nil {
+	incomeID, err := models.CreateIncome(&income)
+	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating income: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -52,6 +53,6 @@ func CreateIncomeHandler(w http.ResponseWriter, r *http.Request) {
 		"created_object_id": incomeID,
 		"status_code":       http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }

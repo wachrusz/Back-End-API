@@ -68,7 +68,7 @@ func UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusCreated,
 		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/profile/image/get/" + encryptedID,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -134,7 +134,7 @@ func UploadIconHandler(w http.ResponseWriter, r *http.Request) {
 		"status_code": http.StatusCreated,
 		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/api/emojis/get/" + encryptedID,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
 

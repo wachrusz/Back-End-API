@@ -42,16 +42,17 @@ func CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
 
 	wealthFund.UserID = userID
 
-	if wealthFundID, err := models.CreateWealthFund(&wealthFund); err != nil {
+	wealthFundID, err := models.CreateWealthFund(&wealthFund)
+	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating wealthFund: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfully created a wealth fund",
-		"created_object_id": wealthFundID
-		"status_code": http.StatusCreated,
+		"message":           "Successfully created a wealth fund",
+		"created_object_id": wealthFundID,
+		"status_code":       http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"])
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }
