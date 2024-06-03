@@ -1,5 +1,4 @@
 # CAdv API 
-Overview
 
 The Cash Advisor API is a comprehensive backend service designed to manage user profiles, authentication, analytics, and more. It provides a robust set of endpoints to interact with various functionalities of the CAdv application.
 API Specification
