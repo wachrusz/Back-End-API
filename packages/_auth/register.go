@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"regexp"
 
 	service "main/packages/_auth/service"
 	email_conf "main/packages/_email"
@@ -15,7 +17,6 @@ import (
 
 	"encoding/json"
 	"net/http"
-	"net/mail"
 )
 
 // @Summary Register user
@@ -47,9 +48,14 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	email := registrationRequest.Email
-	password := registrationRequest.Password
 	if !isValidEmail(email) {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		return
+	}
+	password := registrationRequest.Password
+	if !isValidPassword(password) {
+		log.Println("invalid password")
+		jsonresponse.SendErrorResponse(w, errors.New("password must be at least 7 digits long: "), http.StatusBadRequest)
 		return
 	}
 
@@ -157,6 +163,10 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 
 	email := resetRequest.Email
 	password := resetRequest.Password
+	if !isValidPassword(password) {
+		jsonresponse.SendErrorResponse(w, errors.New("password must be at least 7 digits long: "), http.StatusBadRequest)
+		return
+	}
 	resetToken := resetRequest.ResetToken
 	if !isValidEmail(email) {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
@@ -194,7 +204,7 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-	userID, err := service.GetUserIDFromUsersDatabase(email)
+	userID, _ := service.GetUserIDFromUsersDatabase(email)
 	err = InvalidateTokensByUserID(userID)
 	if err != nil && err != sql.ErrNoRows {
 		response := map[string]interface{}{
@@ -208,9 +218,15 @@ func ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusFound)
 }
 
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
+func isValidEmail(e string) bool {
+	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return emailRegex.MatchString(e)
+}
+
+func isValidPassword(password string) bool {
+
+	regex := regexp.MustCompile(`^[a-zA-Z0-9_]{8,30}$`)
+	return regex.MatchString(password)
 }
 
 // *NEW
