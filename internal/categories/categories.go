@@ -1,0 +1,457 @@
+//go:build !exclude_swagger
+// +build !exclude_swagger
+
+// Package categories provides functionality related to user analytics, tracking, and additional information.
+package categories
+
+import (
+	//"encoding/json"
+
+	"main/internal/_currency"
+	models2 "main/internal/models"
+	"main/pkg/logger"
+	mydb "main/pkg/mydatabase"
+	"math"
+	"time"
+
+	"log"
+)
+
+// Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
+type Analytics struct {
+	Income     []models2.Income     `json:"income"`
+	Expense    []models2.Expense    `json:"expense"`
+	WealthFund []models2.WealthFund `json:"wealth_fund"`
+}
+
+// Tracker represents the structure for tracking data, including tracking state and goals.
+type Tracker struct {
+	TrackingState models2.TrackingState `json:"tracking_state"`
+	Goal          []models2.Goal        `json:"goal"`
+	FinHealth     models2.FinHealth     `json:"fin_health"`
+}
+
+// More represents additional user information, including app and settings details.
+type More struct {
+	App      models2.App      `json:"app"`
+	Settings models2.Settings `json:"settings"`
+}
+
+var exchangeRates = currency.CurrentCurrencyData.Valute
+
+func round(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return math.Round(num*output) / output
+}
+
+func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
+	if fromCurrencyCode == "" || toCurrencyCode == "" {
+		return round(amount, 2)
+	}
+	if fromCurrencyCode == toCurrencyCode {
+		return round(amount, 2)
+	}
+	if len(exchangeRates) == 0 {
+		exchangeRates = currency.CurrentCurrencyData.Valute
+	}
+
+	if fromCurrencyCode == "RUB" {
+		rate, ok := exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round(amount/(rate.Value/float64(rate.Nominal)), 2)
+	} else {
+		rubleRateFrom, ok := exchangeRates[fromCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		rubleRateTo, ok := exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round((amount*(rubleRateFrom.Value/float64(rubleRateFrom.Nominal)))/(rubleRateTo.Value/float64(rubleRateTo.Nominal)), 2)
+	}
+
+	if toCurrencyCode == "RUB" {
+		rate, ok := exchangeRates[fromCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			return amount
+		}
+		return round(amount*(rate.Value/float64(rate.Nominal)), 2)
+	}
+
+	return round(amount, 2)
+}
+
+func GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error) {
+	if startDateStr == "" {
+		startDateStr = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+
+	}
+	if endDateStr == "" {
+		endDateStr = time.Now().Format("2006-01-02")
+	}
+
+	queryIncome := "SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsIncome.Close()
+
+	var incomeList []models2.Income
+	for rowsIncome.Next() {
+		var income models2.Income
+		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
+			return nil, err
+		}
+		income.UserID = userID
+		if income.Currency != currencyCode && currencyCode != "" {
+			income.Amount = convertCurrency(income.Amount, income.Currency, currencyCode)
+		}
+		incomeList = append(incomeList, income)
+	}
+
+	queryExpense := "SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsExpense.Close()
+
+	var expenseList []models2.Expense
+	for rowsExpense.Next() {
+		var expense models2.Expense
+		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
+			return nil, err
+		}
+		expense.UserID = userID
+		if expense.Currency != currencyCode && currencyCode != "" {
+			expense.Amount = convertCurrency(expense.Amount, expense.Currency, currencyCode)
+		}
+		expenseList = append(expenseList, expense)
+	}
+
+	queryWealthFund := "SELECT id, amount, date, planned, currency_code, connected_account, user_id, category_id FROM wealth_fund WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
+	rowsWealthFund, err := mydb.GlobalDB.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	if err != nil {
+		return nil, err
+	}
+	defer rowsWealthFund.Close()
+
+	var wealthFundList []models2.WealthFund
+	for rowsWealthFund.Next() {
+		var wealthFund models2.WealthFund
+		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
+			return nil, err
+		}
+		if wealthFund.Currency != currencyCode && currencyCode != "" {
+			wealthFund.Amount = convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
+		}
+		wealthFundList = append(wealthFundList, wealthFund)
+	}
+
+	analytics := &Analytics{
+		Income:     incomeList,
+		Expense:    expenseList,
+		WealthFund: wealthFundList,
+	}
+
+	return analytics, nil
+}
+
+func GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
+	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
+	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID, limitStr, offsetStr)
+	if err != nil {
+		logger.ErrorLogger.Print("Error getting Goal From DB: (userID, error) ", userID, err)
+		return nil, err
+	}
+	defer rowsGoal.Close()
+
+	var goalList []models2.Goal
+	for rowsGoal.Next() {
+		var goal models2.Goal
+		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.CurrentState); err != nil {
+			return nil, err
+		}
+		goal.UserID = userID
+		goal.Need = convertCurrency(goal.Need, "RUB", currencyCode)
+		goalList = append(goalList, goal)
+	}
+	trackingState := &models2.TrackingState{
+		State:  getTotalState(userID, currencyCode),
+		UserID: userID,
+	}
+
+	tracker := &Tracker{
+		TrackingState: *trackingState,
+		Goal:          goalList,
+	}
+
+	return tracker, nil
+}
+
+func getTotalState(userID string, convertionCode string) float64 {
+	var state float64
+	query := `
+	WITH all_transactions AS (
+		SELECT                                     
+			income.id,
+			CASE                                                    
+				WHEN income.currency_code = 'RUB' THEN income.amount
+				ELSE income.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = income.currency_code), 1)
+			END AS converted_amount
+		FROM
+			income
+		WHERE
+			income.user_id = $1
+		UNION ALL
+		SELECT
+			expense.id,
+			CASE
+				WHEN expense.currency_code = 'RUB' THEN -expense.amount
+				ELSE -expense.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = expense.currency_code), 1)
+			END AS converted_amount                                                                                                      
+		FROM                       
+			expense
+		WHERE
+			expense.user_id = $1
+	)                             
+	SELECT
+		SUM(converted_amount) AS total_balance_in_rubles
+	FROM                                                                                                             
+		all_transactions;
+	
+	`
+	err := mydb.GlobalDB.QueryRow(query, userID).Scan(&state)
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+	return convertCurrency(state, "RUB", convertionCode)
+}
+
+func GetUserInfoFromDB(userID string) (string, string, error) {
+	query := "SELECT surname, name FROM users WHERE id = $1"
+	var surname, name string
+
+	row := mydb.GlobalDB.QueryRow(query, userID)
+	err := row.Scan(&surname, &name)
+	if err != nil {
+		logger.ErrorLogger.Print("Error getting user information from DB: ", err)
+		return "", "", err
+	}
+
+	return surname, name, nil
+}
+
+func GetMoreFromDB(userID string) (*More, error) {
+	var more More
+
+	subs, err := GetSubscriptionFromDB(userID)
+	if err != nil {
+		log.Println("Error getting Subs from DB:", err)
+		return nil, err
+	}
+
+	var settings models2.Settings
+
+	app, err := GetAppFromDB(userID)
+	if err != nil {
+		logger.ErrorLogger.Printf("Error in GetAppFromDB: %v", err)
+	}
+
+	settings.Subscriptions = *subs
+
+	more.App = *app
+	more.Settings = settings
+
+	return &more, nil
+}
+
+func GetAppFromDB(userID string) (*models2.App, error) {
+	connectedAccounts, err := GetConnectedAccountsFromDB(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	categorySettings, err := GetCategorySettingsFromDB(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	app := &models2.App{
+		ConnectedAccounts: connectedAccounts,
+		CategorySettings:  *categorySettings,
+		//OperationArchive:  operationArchive,
+	}
+
+	return app, nil
+}
+
+func GetSubscriptionFromDB(userID string) (*models2.Subscription, error) {
+	var subscription models2.Subscription
+
+	query := "SELECT id, user_id, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1"
+	row := mydb.GlobalDB.QueryRow(query, userID)
+
+	err := row.Scan(&subscription.ID, &subscription.UserID, &subscription.StartDate, &subscription.EndDate, &subscription.IsActive)
+	if err != nil {
+		return &models2.Subscription{}, nil
+	}
+
+	return &subscription, nil
+}
+
+func GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error) {
+	var connectedAccounts []models2.ConnectedAccount
+
+	// Запрос к базе данных для выбора подключенных аккаунтов по идентификатору пользователя.
+	query := `
+		SELECT id, user_id, bank_id, account_number, account_type
+		FROM connected_accounts
+		WHERE user_id = $1;
+	`
+
+	rows, err := mydb.GlobalDB.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var connectedAccount models2.ConnectedAccount
+		err := rows.Scan(
+			&connectedAccount.ID,
+			&connectedAccount.UserID,
+			&connectedAccount.BankID,
+			&connectedAccount.AccountNumber,
+			&connectedAccount.AccountType,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		connectedAccounts = append(connectedAccounts, connectedAccount)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return connectedAccounts, nil
+}
+
+func GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error) {
+	var categorySettings models2.CategorySettings
+
+	// Запрос для получения конфигурации доходов
+	queryIncome := "SELECT id, name, icon, is_fixed, user_id FROM income_categories WHERE user_id = $1"
+	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID)
+	if err != nil {
+		log.Println("Error getting income category configuration from DB:", err)
+		return nil, err
+	}
+	defer rowsIncome.Close()
+
+	for rowsIncome.Next() {
+		var config models2.IncomeCategory
+		err := rowsIncome.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
+		if err != nil {
+			log.Println("Error scanning income category configuration:", err)
+			return nil, err
+		}
+		categorySettings.IncomeCategories = append(categorySettings.IncomeCategories, config)
+	}
+
+	// Запрос для получения конфигурации расходов
+	queryExpense := "SELECT id, name, icon, is_fixed, user_id FROM expense_categories WHERE user_id = $1"
+	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID)
+	if err != nil {
+		log.Println("Error getting expense category configuration from DB:", err)
+		return nil, err
+	}
+	defer rowsExpense.Close()
+
+	for rowsExpense.Next() {
+		var config models2.ExpenseCategory
+		err := rowsExpense.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
+		if err != nil {
+			log.Println("Error scanning expense category configuration:", err)
+			return nil, err
+		}
+		categorySettings.ExpenseCategories = append(categorySettings.ExpenseCategories, config)
+	}
+
+	queryInvestment := "SELECT id, name, icon, is_fixed, user_id FROM investment_categories WHERE user_id = $1"
+	rowsInvestment, err := mydb.GlobalDB.Query(queryInvestment, userID)
+	if err != nil {
+		log.Println("Error getting investment category configuration from DB:", err)
+		return nil, err
+	}
+	defer rowsInvestment.Close()
+
+	for rowsInvestment.Next() {
+		var config models2.InvestmentCategory
+		err := rowsInvestment.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
+		if err != nil {
+			log.Println("Error scanning investment category configuration:", err)
+			return nil, err
+		}
+		categorySettings.InvestmentCategories = append(categorySettings.InvestmentCategories, config)
+	}
+
+	// Проверка, что были получены данные
+	if len(categorySettings.ExpenseCategories) == 0 && len(categorySettings.IncomeCategories) == 0 && len(categorySettings.InvestmentCategories) == 0 {
+		return &models2.CategorySettings{}, nil
+	}
+
+	return &categorySettings, nil
+}
+
+func GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error) {
+	var operations []models2.Operation
+
+	query := `
+		SELECT id, description, amount, date, category, operation_type
+		FROM operations
+		WHERE user_id = $1
+		ORDER BY date DESC
+		LIMIT $2 OFFSET $3;
+	`
+
+	rows, err := mydb.GlobalDB.Query(query, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var operation models2.Operation
+		err := rows.Scan(
+			&operation.ID,
+			&operation.Description,
+			&operation.Amount,
+			&operation.Date,
+			&operation.Category,
+			&operation.Type,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, operation)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return operations, nil
+}
