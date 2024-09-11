@@ -7,15 +7,15 @@ package auth
 import (
 	"context"
 	"errors"
-	email_conf "main/internal/_email"
-	service2 "main/internal/auth/service"
-	"main/internal/user"
-	enc "main/pkg/encryption"
-	"main/pkg/json_response"
+	"github.com/go-chi/chi/v5"
+	service2 "github.com/wachrusz/Back-End-API/internal/auth/service"
+	email_conf "github.com/wachrusz/Back-End-API/internal/email"
+	"github.com/wachrusz/Back-End-API/internal/user"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -42,6 +42,7 @@ func setDeviceIDInContext(ctx context.Context, deviceID string) context.Context 
 	return context.WithValue(ctx, "device_id", deviceID)
 }
 
+/*
 func RegisterHandlers(router *mux.Router) {
 	router.HandleFunc("/auth/login", Login).Methods("POST")
 	//* NEW
@@ -62,6 +63,39 @@ func RegisterHandlers(router *mux.Router) {
 
 	router.HandleFunc("/auth/tokens/delete", service2.DeleteTokensHandler).Methods("DELETE")
 	router.HandleFunc("/auth/tokens/ammount", service2.GetTokenPairsAmmountHandler).Methods("GET")
+}
+*/
+
+func RegisterHandlers(router chi.Router) {
+	// Auth routes
+	router.Route("/auth", func(r chi.Router) {
+		r.Post("/login", Login)
+		r.Post("/login/confirm", ConfirmEmailLoginHandler)
+		r.Post("/logout", AuthMiddleware(Logout))
+		r.Post("/register", RegisterUser)
+		r.Post("/register/confirm-email", ConfirmEmailHandler)
+
+		// Password reset routes
+		r.Route("/login/reset", func(r chi.Router) {
+			r.Post("/password", ResetPasswordHandler)
+			r.Post("/password/confirm", ResetPasswordConfirmHandler)
+			r.Put("/password/put", ChangePasswordForRecoverHandler)
+		})
+
+		// Token routes
+		r.Post("/refresh", AuthMiddleware(RefreshTokenHandler))
+		r.Delete("/tokens/delete", service2.DeleteTokensHandler)
+		r.Get("/tokens/amount", service2.GetTokenPairsAmmountHandler)
+	})
+
+	// OAuth login routes
+	router.Route("/auth/login", func(r chi.Router) {
+		r.Get("/vk", handleVKLogin)
+		r.Get("/google", handleGoogleLogin)
+	})
+
+	// Developer routes
+	router.Get("/dev/confirmation-code/get", email_conf.GetConfirmationCodeTestHandler)
 }
 
 func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {

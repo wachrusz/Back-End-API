@@ -7,8 +7,8 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"main/pkg/logger"
-	mydb "main/pkg/mydatabase"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"sync"
 
 	"golang.org/x/crypto/bcrypt"

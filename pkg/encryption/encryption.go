@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 
-	secret "main/secret"
+	secret "github.com/wachrusz/Back-End-API/secret"
 )
 
 var (

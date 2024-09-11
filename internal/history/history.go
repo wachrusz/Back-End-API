@@ -6,14 +6,13 @@ package history
 
 import (
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
-func RegisterHandlers(router *mux.Router) {
-	router.HandleFunc("/history/get", GetHistory).Methods("GET")
-	router.HandleFunc("/history/add", AddHistoryEntry).Methods("POST")
+func RegisterHandlers(router chi.Router) {
+	router.Get("/history/get", GetHistory)
+	router.Post("/history/add", AddHistoryEntry)
 }
 
 // @Summary Get history entries

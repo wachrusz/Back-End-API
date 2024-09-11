@@ -7,10 +7,10 @@ package categories
 import (
 	//"encoding/json"
 
-	"main/internal/_currency"
-	models2 "main/internal/models"
-	"main/pkg/logger"
-	mydb "main/pkg/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/currency"
+	models2 "github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"math"
 	"time"
 

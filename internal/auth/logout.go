@@ -7,8 +7,7 @@ package auth
 import (
 	"encoding/json"
 	"errors"
-	"main/internal/auth/service"
-	"main/pkg/json_response"
+	"github.com/wachrusz/Back-End-API/internal/auth/service"
 	"net/http"
 )
 

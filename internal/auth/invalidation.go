@@ -1,7 +1,7 @@
 package auth
 
 import (
-	mydb "main/pkg/mydatabase"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 )
 
 func InvalidateTokensByUserID(userID string) error {

@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	enc "main/pkg/encryption"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"math/big"
 	"time"
 

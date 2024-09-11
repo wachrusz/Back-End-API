@@ -7,13 +7,12 @@ package profile
 import (
 	"encoding/json"
 	"errors"
-	"main/internal/auth"
-	"main/internal/categories"
-	"main/pkg/json_response"
-	mydb "main/pkg/mydatabase"
+	"github.com/go-chi/chi/v5"
+	"github.com/wachrusz/Back-End-API/internal/auth"
+	"github.com/wachrusz/Back-End-API/internal/categories"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 type UserProfile struct {
@@ -28,17 +27,23 @@ var (
 	offsetStr string = "0"
 )
 
-func RegisterHandlers(router *mux.Router) {
-	router.HandleFunc("/profile/info/get", auth.AuthMiddleware(GetProfile)).Methods("GET")
-	router.HandleFunc("/profile/analytics/get", auth.AuthMiddleware(GetProfileAnalytics)).Methods("GET")
-	router.HandleFunc("/profile/tracker/get", auth.AuthMiddleware(GetProfileTracker)).Methods("GET")
-	router.HandleFunc("/profile/more/get", auth.AuthMiddleware(GetProfileMore)).Methods("GET")
-	router.HandleFunc("/profile/name/put", auth.AuthMiddleware(UpdateName)).Methods("PUT")
-	router.HandleFunc("/profile/operation-archive/get", auth.AuthMiddleware(GetOperationArchive)).Methods("GET")
+func RegisterHandlers(router chi.Router) {
+	// Profile routes
+	router.Route("/profile", func(r chi.Router) {
+		r.Get("/info/get", auth.AuthMiddleware(GetProfile))
+		r.Get("/analytics/get", auth.AuthMiddleware(GetProfileAnalytics))
+		r.Get("/tracker/get", auth.AuthMiddleware(GetProfileTracker))
+		r.Get("/more/get", auth.AuthMiddleware(GetProfileMore))
+		r.Put("/name/put", auth.AuthMiddleware(UpdateName))
+		r.Get("/operation-archive/get", auth.AuthMiddleware(GetOperationArchive))
+		r.Put("/image/put", auth.AuthMiddleware(UploadAvatarHandler))
+	})
 
-	router.HandleFunc("/profile/image/put", auth.AuthMiddleware(UploadAvatarHandler)).Methods("PUT")
-	router.HandleFunc("/api/emojis/put", UploadIconHandler).Methods("PUT")
-	router.HandleFunc("/api/emojis/get/list", GetIconsURLs).Methods("GET")
+	// Emojis routes
+	router.Route("/api/emojis", func(r chi.Router) {
+		r.Put("/put", UploadIconHandler)
+		r.Get("/get/list", GetIconsURLs)
+	})
 }
 
 // @Summary Get user profile

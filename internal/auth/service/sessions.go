@@ -5,9 +5,9 @@
 package service
 
 import (
-	enc "main/pkg/encryption"
-	"main/pkg/logger"
-	mydb "main/pkg/mydatabase"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 
 	"fmt"
 	"net/http"

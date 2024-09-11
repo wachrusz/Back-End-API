@@ -3,8 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
-	"main/pkg/json_response"
-	mydb "main/pkg/mydatabase"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
 )
 

@@ -1,14 +1,14 @@
-package handlers
+package v1
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/auth"
+	"github.com/wachrusz/Back-End-API/internal/email"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
 	"log"
-	"main/internal/_email"
-	"main/internal/auth"
-	"main/pkg/json_response"
-	"main/pkg/logger"
 	"net/http"
 	"strconv"
 	"time"

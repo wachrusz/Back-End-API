@@ -2,7 +2,7 @@
 // +build !exclude_swagger
 
 // Package handlers provides http functionality.
-package handlers
+package v1
 
 /*
 func CreateFinHealthHandler(w http.ResponseWriter, r *http.Request) {

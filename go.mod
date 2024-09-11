@@ -1,4 +1,4 @@
-module main
+module github.com/wachrusz/Back-End-API
 
 go 1.21.5
 

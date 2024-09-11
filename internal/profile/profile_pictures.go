@@ -1,11 +1,10 @@
 package profile
 
 import (
-	"main/internal/auth"
-	"main/pkg/encryption"
-	"main/pkg/json_response"
-	mydb "main/pkg/mydatabase"
-	"main/secret"
+	"github.com/wachrusz/Back-End-API/internal/auth"
+	"github.com/wachrusz/Back-End-API/pkg/encryption"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	"github.com/wachrusz/Back-End-API/secret"
 	"math/rand"
 	"strconv"
 	"time"

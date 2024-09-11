@@ -1,7 +1,7 @@
 package report
 
 import (
-	mydb "main/pkg/mydatabase"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 )
 
 func fetchDataFromDatabase(userID string) ([]ReportData, error) {
