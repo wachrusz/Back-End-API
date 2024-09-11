@@ -6,7 +6,7 @@ package report
 
 import (
 	"fmt"
-	"main/internal/auth"
+	"github.com/wachrusz/Back-End-API/internal/auth"
 	"net/http"
 	"os"
 

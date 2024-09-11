@@ -2,15 +2,13 @@
 // +build !exclude_swagger
 
 // Package handlers provides http functionality.
-package handlers
+package v1
 
 import (
-	"main/internal/auth"
-	"main/internal/models"
-	"main/pkg/json_response"
-
 	"encoding/json"
 	"errors"
+	"github.com/wachrusz/Back-End-API/internal/auth"
+	"github.com/wachrusz/Back-End-API/internal/models"
 	"net/http"
 )
 

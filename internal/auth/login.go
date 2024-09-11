@@ -5,17 +5,14 @@
 package auth
 
 import (
-	"errors"
-	email_conf "main/internal/_email"
-	"main/internal/auth/service"
-	enc "main/pkg/encryption"
-	"main/pkg/json_response"
-	"main/pkg/logger"
-	mydb "main/pkg/mydatabase"
-	"main/pkg/util"
-
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/auth/service"
+	email_conf "github.com/wachrusz/Back-End-API/internal/email"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
 	"time"
 

@@ -2,11 +2,10 @@ package http
 
 import (
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/auth/service"
+	"github.com/wachrusz/Back-End-API/internal/currency"
+	"github.com/wachrusz/Back-End-API/internal/profile"
 	"log"
-	"main/initialisation"
-	"main/internal/_currency"
-	"main/internal/auth/service"
-	"main/internal/profile"
 	//"encoding/json"
 
 	"net/http"
@@ -18,7 +17,7 @@ import (
 func InitRouters() (*mux.Router, *mux.Router, error) {
 	mainRouter := mux.NewRouter().PathPrefix("/v1").Subrouter()
 	docRouter := mux.NewRouter()
-	initialisation.registerHandlers(mainRouter)
+	registerHandlers(mainRouter)
 
 	imageGroup := mainRouter.PathPrefix("/profile/image").Subrouter()
 	{

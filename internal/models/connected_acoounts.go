@@ -1,8 +1,8 @@
 package models
 
 import (
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"log"
-	mydb "main/pkg/mydatabase"
 )
 
 // ConnectedAccount

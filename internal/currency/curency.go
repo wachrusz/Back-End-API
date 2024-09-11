@@ -3,9 +3,9 @@ package currency
 import (
 	"encoding/json"
 	"fmt"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	"github.com/wachrusz/Back-End-API/secret"
 	"io"
-	mydb "main/pkg/mydatabase"
-	"main/secret"
 	"net/http"
 	"time"
 )

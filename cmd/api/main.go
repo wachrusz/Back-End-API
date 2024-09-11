@@ -1,13 +1,12 @@
 package main
 
 import (
+	"github.com/wachrusz/Back-End-API/internal/currency"
+	initialisation "github.com/wachrusz/Back-End-API/internal/http"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	secret "github.com/wachrusz/Back-End-API/secret"
 	"log"
-	"main/internal/_currency"
-	initialisation "main/internal/http"
-	"main/internal/http/v1"
-	"main/pkg/logger"
-	mydb "main/pkg/mydatabase"
-	secret "main/secret"
 	"os"
 
 	//"encoding/json"
@@ -30,7 +29,7 @@ func main() {
 		logger.ErrorLogger.Fatal(errR)
 	}
 
-	http.Handle("/", handlers.handlers.ContentTypeMiddleware(router))
+	http.Handle("/", v1.ContentTypeMiddleware(router))
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 
