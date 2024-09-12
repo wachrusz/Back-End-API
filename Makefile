@@ -4,4 +4,9 @@ include secret/.env
 .PHONY: db/psql
 db/psql:
 	@echo "Connecting to the database...\nTo quit type \\q\n"
-	@psql postgres://cadvadmin:${PASSWORD_DB}@${HOST}:${PORT}/cadvdb?sslmode=disable
+	@psql postgres://cadvadmin:${DB_PASSWORD}@${HOST}:5432/cadvdb?sslmode=disable
+
+## runs the application
+.PHONY: run/api
+run/api:
+	@go run cmd/api/main.go
