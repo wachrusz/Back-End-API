@@ -8,6 +8,7 @@ import (
 	"errors"
 	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/models"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"log"
 
 	"encoding/json"

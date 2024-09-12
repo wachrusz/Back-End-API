@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/wachrusz/Back-End-API/internal/currency"
 	initialisation "github.com/wachrusz/Back-End-API/internal/http"
+	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	secret "github.com/wachrusz/Back-End-API/secret"
