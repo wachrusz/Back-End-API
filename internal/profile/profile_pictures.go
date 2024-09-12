@@ -3,6 +3,7 @@ package profile
 import (
 	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"github.com/wachrusz/Back-End-API/secret"
 	"math/rand"

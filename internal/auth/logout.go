@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/wachrusz/Back-End-API/internal/auth/service"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+
 	"net/http"
 )
 

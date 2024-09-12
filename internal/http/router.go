@@ -6,10 +6,9 @@ import (
 	"github.com/wachrusz/Back-End-API/internal/history"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	"github.com/wachrusz/Back-End-API/internal/profile"
-	"net/http"
 )
 
-func NewRouter() http.Handler {
+func NewRouter() chi.Router {
 	r := chi.NewRouter()
 	auth.RegisterHandlers(r)
 	profile.RegisterHandlers(r)
