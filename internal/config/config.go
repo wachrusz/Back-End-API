@@ -2,20 +2,21 @@ package config
 
 import (
 	"fmt"
-	"github.com/kelseyhightower/envconfig"
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 	"os"
+	"strconv"
 )
 
 type Config struct {
-	Host             string `yaml:"host" envconfig:"HOST"`
-	Port             int    `yaml:"port" envconfig:"PORT"`
-	DBPassword       string `yaml:"db_password" envconfig:"DB_PASSWORD"`
-	CrtPath          string `yaml:"crt_path" envconfig:"CRT_PATH"`
-	KeyPath          string `yaml:"key_path" envconfig:"KEY_PATH"`
-	SecretKey        []byte `yaml:"secret_key" envconfig:"SECRET_KEY"`
-	SecretRefreshKey []byte `yaml:"secret_refresh_key" envconfig:"SECRET_REFRESH_KEY"`
-	CurrencyURL      string `yaml:"currency_url" envconfig:"CURRENCY_URL"`
+	Host             string `yaml:"host"`
+	Port             int    `yaml:"port"`
+	DBPassword       string `yaml:"db_password"`
+	CrtPath          string `yaml:"crt_path"`
+	KeyPath          string `yaml:"key_path"`
+	SecretKey        []byte `yaml:"secret_key"`
+	SecretRefreshKey []byte `yaml:"secret_refresh_key"`
+	CurrencyURL      string `yaml:"currency_url"`
 }
 
 func New() (*Config, error) {
@@ -55,8 +56,39 @@ func loadConfig(filename string, cfg *Config) error {
 }
 
 func processEnvironment(cfg *Config) error {
-	if err := envconfig.Process("", cfg); err != nil {
-		return fmt.Errorf("failed to process environment variables: %w", err)
+	err := godotenv.Load("secret/.env")
+	if err != nil {
+		return err
 	}
+	if host, exists := os.LookupEnv("HOST"); exists {
+		cfg.Host = host
+	}
+	if portStr, exists := os.LookupEnv("PORT"); exists {
+		port, err := strconv.Atoi(portStr)
+		if err != nil {
+			return fmt.Errorf("invalid PORT value: %w", err)
+		}
+		cfg.Port = port
+	}
+	if dbPassword, exists := os.LookupEnv("DB_PASSWORD"); exists {
+		cfg.DBPassword = dbPassword
+	}
+	if secretKey, exists := os.LookupEnv("SECRET_KEY"); exists {
+		cfg.SecretKey = []byte(secretKey)
+	}
+	if secretRefreshKey, exists := os.LookupEnv("SECRET_REFRESH_KEY"); exists {
+		cfg.SecretRefreshKey = []byte(secretRefreshKey)
+	}
+	if currencyURL, exists := os.LookupEnv("CURRENCY_URL"); exists {
+		cfg.CurrencyURL = currencyURL
+	}
+
+	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {
+	//	cfg.CrtPath = crtPath
+	//}
+	//if keyPath, exists := os.LookupEnv("KEY_PATH"); exists {
+	//	cfg.KeyPath = keyPath
+	//}
+
 	return nil
 }
