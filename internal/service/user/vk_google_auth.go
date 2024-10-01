@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -31,12 +31,12 @@ var (
 	oauthStateString = "random"
 )
 
-func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HandleGoogleLogin(w http.ResponseWriter, r *http.Request) {
 	url := googleConfig.AuthCodeURL(oauthStateString)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	state := r.FormValue("state")
 	if state != oauthStateString {
 		fmt.Println("invalid oauth state")
@@ -73,12 +73,12 @@ func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-func handleVKLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HandleVKLogin(w http.ResponseWriter, r *http.Request) {
 	url := vkConfig.AuthCodeURL(oauthStateString)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
-func handleVKCallback(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HandleVKCallback(w http.ResponseWriter, r *http.Request) {
 	state := r.FormValue("state")
 	if state != oauthStateString {
 		fmt.Println("invalid oauth state")
