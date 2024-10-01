@@ -6,7 +6,7 @@ package report
 
 import (
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth"
+	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"net/http"
 	"os"
 
@@ -78,7 +78,7 @@ func generatePDFReport(data []ReportData) error {
 // @Security JWT
 // @Router /app/report [get]
 func ExportHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

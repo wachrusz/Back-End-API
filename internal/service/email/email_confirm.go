@@ -2,12 +2,13 @@
 // +build !exclude_swagger
 
 // Package profile provides profile information and it's functionality.
-package auth
+package email
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/auth/service"
 	email_conf "github.com/wachrusz/Back-End-API/internal/email"
 	"github.com/wachrusz/Back-End-API/internal/user"
@@ -95,7 +96,7 @@ func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-	token_details, err := generateToken(userID, deviceID, time.Minute*15)
+	token_details, err := auth.generateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
@@ -186,7 +187,7 @@ func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
-	token_details, err := generateToken(userID, deviceID, time.Minute*15)
+	token_details, err := auth.generateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
 		return

@@ -8,8 +8,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
-	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/categories"
+	"github.com/wachrusz/Back-End-API/internal/http/v1"
+	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
@@ -30,13 +31,13 @@ var (
 func RegisterHandlers(router chi.Router) {
 	// Profile routes
 	router.Route("/profile", func(r chi.Router) {
-		r.Get("/info/get", auth.AuthMiddleware(GetProfile))
-		r.Get("/analytics/get", auth.AuthMiddleware(GetProfileAnalytics))
-		r.Get("/tracker/get", auth.AuthMiddleware(GetProfileTracker))
-		r.Get("/more/get", auth.AuthMiddleware(GetProfileMore))
-		r.Put("/name/put", auth.AuthMiddleware(UpdateName))
-		r.Get("/operation-archive/get", auth.AuthMiddleware(GetOperationArchive))
-		r.Put("/image/put", auth.AuthMiddleware(UploadAvatarHandler))
+		r.Get("/info/get", v1.AuthMiddleware(GetProfile))
+		r.Get("/analytics/get", v1.AuthMiddleware(GetProfileAnalytics))
+		r.Get("/tracker/get", v1.AuthMiddleware(GetProfileTracker))
+		r.Get("/more/get", v1.AuthMiddleware(GetProfileMore))
+		r.Put("/name/put", v1.AuthMiddleware(UpdateName))
+		r.Get("/operation-archive/get", v1.AuthMiddleware(GetOperationArchive))
+		r.Put("/image/put", v1.AuthMiddleware(UploadAvatarHandler))
 	})
 
 	// Emojis routes
@@ -56,7 +57,7 @@ func RegisterHandlers(router chi.Router) {
 // @Security JWT
 // @Router /profile/get [get]
 func GetProfile(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -88,7 +89,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -117,7 +118,7 @@ func GetProfileAnalytics(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -144,7 +145,7 @@ func GetProfileTracker(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProfileMore(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -165,7 +166,7 @@ func GetProfileMore(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated"), http.StatusUnauthorized)
 		return
@@ -203,7 +204,7 @@ func GetOperationArchive(w http.ResponseWriter, r *http.Request) {
 // @Security JWT
 // @Router /profile/update-name [put]
 func UpdateName(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := user.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
