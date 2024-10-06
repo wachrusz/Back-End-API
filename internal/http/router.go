@@ -6,7 +6,6 @@ import (
 	"github.com/wachrusz/Back-End-API/docs"
 	"github.com/wachrusz/Back-End-API/internal/history"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
-	"github.com/wachrusz/Back-End-API/internal/profile"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"net/http"
 )
@@ -14,8 +13,8 @@ import (
 func NewRouter() chi.Router {
 	r := chi.NewRouter()
 	r.Route("/v1", func(r chi.Router) {
-		user.RegisterHandlers(r)
-		profile.RegisterHandlers(r)
+		v1.RegisterHandlers(r)
+		v1.RegisterHandlers(r)
 		history.RegisterHandlers(r)
 
 		v1.RegisterHandler(r)
@@ -29,7 +28,7 @@ func InitRouters() (chi.Router, chi.Router, error) {
 
 	// Группа для изображений профиля
 	mainRouter.Route("/v1/profile/image", func(r chi.Router) {
-		r.Get("/get/{id}", profile.GetAvatarHandler) // Маршрут для получения изображения профиля
+		r.Get("/get/{id}", user.GetAvatarHandler) // Маршрут для получения изображения профиля
 	})
 
 	// Группа для эмодзи

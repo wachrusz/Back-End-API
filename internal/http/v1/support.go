@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/email"
+	"github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/logger"

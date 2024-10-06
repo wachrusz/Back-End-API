@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	auth "github.com/wachrusz/Back-End-API/internal/auth/service"
-	emailService "github.com/wachrusz/Back-End-API/internal/email"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	emailConf "github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,7 +24,7 @@ func (s *Service) PrimaryRegistration(email, password string) (string, error) {
 		return "", err
 	}
 	if used {
-		return "", ErrDuplicated
+		return "", myerrors.ErrDuplicated
 	}
 
 	token, err := utility.GenerateRegisterJWTToken(email, password)
@@ -33,9 +32,9 @@ func (s *Service) PrimaryRegistration(email, password string) (string, error) {
 		return "", fmt.Errorf("error generating confirmation token: %v", err)
 	}
 
-	err = emailService.SendConfirmationEmail(email, token)
+	err = emailConf.SendConfirmationEmail(email, token)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", ErrEmailing, err)
+		return "", fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
 
 	return token, nil
@@ -51,7 +50,7 @@ func (s *Service) ResetPassword(email string) error {
 		return fmt.Errorf("error generating confirmation token: %v", err)
 	}
 
-	err = emailService.SendConfirmationEmail(email, token)
+	err = emailConf.SendConfirmationEmail(email, token)
 	if err != nil {
 		return fmt.Errorf("error sending confirm email: %v", err)
 	}
@@ -67,7 +66,7 @@ type UserPasswordReset struct {
 
 func (s *Service) ChangePasswordForRecover(email, password, resetToken string) error {
 	if resetToken == "" {
-		return ErrEmpty
+		return myerrors.ErrEmpty
 	}
 	_, err := utility.VerifyResetJWTToken(resetToken)
 	if err != nil {
@@ -85,10 +84,10 @@ func (s *Service) ChangePasswordForRecover(email, password, resetToken string) e
 		return fmt.Errorf("invalid email: %v", err)
 	}
 
-	userID, _ := auth.GetUserIDFromUsersDatabase(email)
+	userID, _ := GetUserIDFromUsersDatabase(email)
 	err = s.invalidateTokensByUserID(userID)
 	if err != nil && err != sql.ErrNoRows {
-		return fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 
 	return nil
@@ -113,7 +112,7 @@ type IdentificationData struct {
 	HashedPassword string
 }
 
-func (s *Service) register(email, password string) error {
+func (s *Service) Register(email, password string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -127,7 +126,7 @@ func (s *Service) register(email, password string) error {
 		return errors.New("Blank fields are not allowed")
 	}
 
-	hashedPassword, err := hashPassword(password)
+	hashedPassword, err := s.HashPassword(password)
 	if err != nil {
 		return err
 	}
@@ -143,7 +142,7 @@ func (s *Service) register(email, password string) error {
 	return nil
 }
 
-func hashPassword(password string) (string, error) {
+func (s *Service) HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		logger.ErrorLogger.Println("Error hashing password:", err)

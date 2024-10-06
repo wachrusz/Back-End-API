@@ -6,11 +6,10 @@ package user
 
 import (
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth/service"
-	email_conf "github.com/wachrusz/Back-End-API/internal/email"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/service/email"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"golang.org/x/crypto/bcrypt"
 	"time"
@@ -25,12 +24,12 @@ func (s *Service) Login(email, password string) (string, error) {
 
 	token, err := utility.GenerateRegisterJWTToken(email, password)
 	if err != nil {
-		return "", ErrInternal
+		return "", myerrors.ErrInternal
 	}
 
-	err = email_conf.SendConfirmationEmail(email, token)
+	err = email.SendConfirmationEmail(email, token)
 	if err != nil {
-		return "", ErrEmailing
+		return "", myerrors.ErrEmailing
 	}
 
 	return token, nil
@@ -38,11 +37,11 @@ func (s *Service) Login(email, password string) (string, error) {
 
 func (s *Service) checkLoginConds(email, password string) (bool, error) {
 	if email == "" || password == "" {
-		return false, ErrEmpty
+		return false, myerrors.ErrEmpty
 	}
 
 	if !s.isValidCredentials(email, password) {
-		return false, ErrInvalidCreds
+		return false, myerrors.ErrInvalidCreds
 	}
 
 	return true, nil
@@ -62,14 +61,14 @@ func (s *Service) isValidCredentials(username, password string) bool {
 // *NEW
 // ! СРОЧНО ДОДЕЛАТЬ ЭТО
 func (s *Service) RefreshToken(rt, userID string) (string, string, error) {
-	tokenDetails, err := refreshToken(rt)
+	tokenDetails, err := s.refreshToken(rt)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", ErrInternal, err)
+		return "", "", fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	err = updateTokenInDB(userID, tokenDetails.AccessToken)
 	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", ErrInternal, err)
+		return "", "", fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	return tokenDetails.AccessToken, tokenDetails.RefreshToken, nil
@@ -83,7 +82,7 @@ func updateTokenInDB(userID, newAccessToken string) error {
 		return err
 	}
 
-	service.SetAccessToken(userID, newAccessToken)
+	SetAccessToken(userID, newAccessToken)
 
 	query := `
 		UPDATE sessions
@@ -95,7 +94,7 @@ func updateTokenInDB(userID, newAccessToken string) error {
 	return err
 }
 
-func generateToken(userID string, device_id string, duration time.Duration) (*email.TokenDetails, error) {
+func (s *Service) GenerateToken(userID string, device_id string, duration time.Duration) (*email.TokenDetails, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":       userID,
 		"exp":       time.Now().Add(duration).Unix(),
@@ -125,7 +124,7 @@ func generateToken(userID string, device_id string, duration time.Duration) (*em
 	}, nil
 }
 
-func refreshToken(refreshTokenString string) (*email.TokenDetails, error) {
+func (s *Service) refreshToken(refreshTokenString string) (*email.TokenDetails, error) {
 	refreshToken, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -155,7 +154,7 @@ func refreshToken(refreshTokenString string) (*email.TokenDetails, error) {
 		return nil, fmt.Errorf("Failed to get device ID from refresh token")
 	}
 
-	return generateToken(userID, deviceID, time.Minute*15)
+	return s.GenerateToken(userID, deviceID, time.Minute*15)
 }
 
 func comparePasswords(hashedPassword, password string) bool {

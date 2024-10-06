@@ -1,24 +1,22 @@
 package user
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/service/email"
-	"github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"sync"
 )
 
-type UserService interface {
-}
-
 type Service struct {
-	email *email.EmailServce
-	repo  *mydatabase.Database
-	mutex sync.Mutex
+	repo        *mydatabase.Database
+	ActiveUsers map[string]ActiveUser
+	mutex       sync.Mutex
+	activeMu    sync.Mutex
 }
 
-func NewService(email *email.EmailServce, repo *mydatabase.Database) *Service {
+func NewService(repo *mydatabase.Database) *Service {
 	return &Service{
-		email: email,
-		repo:  repo,
-		mutex: sync.Mutex{},
+		repo:        repo,
+		ActiveUsers: make(map[string]ActiveUser),
+		mutex:       sync.Mutex{},
+		activeMu:    sync.Mutex{},
 	}
 }
