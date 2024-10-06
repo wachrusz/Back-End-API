@@ -1,10 +1,9 @@
-package profile
+package user
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/service/user"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"github.com/wachrusz/Back-End-API/secret"
 	"math/rand"
 	"strconv"
@@ -32,7 +31,7 @@ type Icon struct {
 func UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)
 
-	userID, ok := user.GetUserIDFromContext(r.Context())
+	userID, ok := GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("Error getting userID: "), http.StatusUnauthorized)
 		return

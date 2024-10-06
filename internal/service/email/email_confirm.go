@@ -5,18 +5,11 @@
 package email
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth"
-	"github.com/wachrusz/Back-End-API/internal/auth/service"
-	email_conf "github.com/wachrusz/Back-End-API/internal/email"
-	"github.com/wachrusz/Back-End-API/internal/user"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-	"net/http"
 	"time"
 )
 
@@ -31,251 +24,135 @@ type TokenDetails struct {
 	ExpiresAt    int64  `json:"expires_at"`
 }
 
-// ! Доделать
-func ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var confirmRequest ConfirmEmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	token := confirmRequest.Token
-	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var registerRequest utility.UserAuthenticationRequest
+func (s *Service) ConfirmEmail(token, code, deviceID string) (*TokenDetails, error) {
 	registerRequest, err := utility.GetAuthFromJWT(token)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 
-	codeCheckResponse := email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.Token, confirmRequest.EnteredCode)
+	codeCheckResponse := s.CheckConfirmationCode(registerRequest.Email, token, code) // TODO:убрать эту хуйню
 	if codeCheckResponse.Err != "nil" {
-		w.WriteHeader(codeCheckResponse.StatusCode)
-		json.NewEncoder(w).Encode(codeCheckResponse)
-		return
+		return nil, myerrors.ErrInternal
 	}
 
-	err = email_conf.ConfirmEmail(registerRequest.Email, confirmRequest.EnteredCode)
+	err = s.confirmEmail(registerRequest.Email, code)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
 
-	err = user.RegisterUser(registerRequest.Email, registerRequest.Password)
+	err = s.users.Register(registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error registring user: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: error registring user: %v", myerrors.ErrInternal, err)
 	}
 	//! SESSIONS
 
-	userID, err_id := service.GetUserIDFromUsersDatabase(registerRequest.Email)
+	userID, err := s.users.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error getting session: %v", err_id), http.StatusInternalServerError)
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
+		// FIXME: тут не было ретурна, но по идее должен быть
+		// return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	deviceID, err := service.GetDeviceIDFromRequest(r)
+	tokenDetails, err := s.users.GenerateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
-		return
-	}
-	token_details, err := auth.generateToken(userID, deviceID, time.Minute*15)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, myerrors.ErrInternal
 	}
 
-	if service.IsUserActive(userID) {
-		currentUser := service.ActiveUsers[userID]
+	if s.users.IsUserActive(userID) {
+		currentUser := s.users.ActiveUsers[userID]
 
-		service.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID)
+		s.users.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID) // TODO: handle error + concurrency safety
 		currentUser.DeviceID = deviceID
-		service.ActiveUsers[userID] = currentUser
+		s.users.ActiveUsers[userID] = currentUser
 	}
 
 	//! SAVE SESSIONS
-	service.AddActiveUser(userID, registerRequest.Email, deviceID, token_details.AccessToken)
+	s.users.AddActiveUser(userID, registerRequest.Email, deviceID, tokenDetails.AccessToken)
 
-	service.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, token_details.AccessToken)
+	s.users.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
 
-	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message":                 "Successfuly confirmed email",
-		"token_details":           token_details,
-		"access_token_life_time":  time.Minute * 15,
-		"refresh_token_life_time": 30 * 24 * time.Hour,
-		"status_code":             http.StatusOK,
-		"device_id":               deviceID,
-	}
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
+	return tokenDetails, nil
 }
 
-func ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var confirmRequest ConfirmEmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	token := confirmRequest.Token
-	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var registerRequest utility.UserAuthenticationRequest
+func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*TokenDetails, error) {
 	registerRequest, err := utility.GetAuthFromJWT(token)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 
-	codeCheckResponse := email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.Token, confirmRequest.EnteredCode)
+	codeCheckResponse := s.CheckConfirmationCode(registerRequest.Email, token, code)
 	if codeCheckResponse.Err != "nil" {
-		w.WriteHeader(codeCheckResponse.StatusCode)
-		json.NewEncoder(w).Encode(codeCheckResponse)
-		return
+		return nil, myerrors.ErrInternal
 	}
 
-	err = email_conf.ConfirmEmail(registerRequest.Email, confirmRequest.EnteredCode)
+	err = s.confirmEmail(registerRequest.Email, code)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
 
 	//! SESSIONS
 
-	userID, err_id := service.GetUserIDFromUsersDatabase(registerRequest.Email)
+	userID, err := s.users.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error getting session: %v", err_id), http.StatusInternalServerError)
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 	}
 
-	deviceID, err := service.GetDeviceIDFromRequest(r)
+	tokenDetails, err := s.users.GenerateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
-		return
-	}
-	token_details, err := auth.generateToken(userID, deviceID, time.Minute*15)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Internal Server Error: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, myerrors.ErrInternal
 	}
 
-	if service.IsUserActive(userID) {
-		currentUser := service.ActiveUsers[userID]
+	if s.users.IsUserActive(userID) {
+		currentUser := s.users.ActiveUsers[userID]
 
-		service.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID)
+		s.users.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID) // TODO: handle error + concurrency safety
 		currentUser.DeviceID = deviceID
-		service.ActiveUsers[userID] = currentUser
+		s.users.ActiveUsers[userID] = currentUser
 	}
 
-	//! SAVE SESSIONS
-	service.AddActiveUser(userID, registerRequest.Email, deviceID, token_details.AccessToken)
+	s.users.AddActiveUser(userID, registerRequest.Email, deviceID, tokenDetails.AccessToken)
 
-	service.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, token_details.AccessToken)
+	s.users.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
 
-	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message":                 "Successfuly logged in",
-		"token_details":           token_details,
-		"access_token_life_time":  time.Minute * 15,
-		"refresh_token_life_time": 30 * 24 * time.Hour,
-		"status_code":             http.StatusOK,
-		"device_id":               deviceID,
-	}
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
+	return tokenDetails, nil
 }
 
-func ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var confirmRequest ConfirmEmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	token := confirmRequest.Token
-	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
+func (s *Service) ResetPasswordConfirm(token, code string) error {
 	claims, err := utility.ParseResetToken(token)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error in parsing token: "+err.Error()), http.StatusInternalServerError)
-		return
+		return myerrors.ErrInternal
 	}
 
 	var registerRequest utility.UserAuthenticationRequest
 	registerRequest, err = utility.VerifyResetJWTToken(token)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid or expired token: "+err.Error()), http.StatusUnauthorized)
-		return
+		return myerrors.ErrInvalidToken
 	}
 
-	codeCheckResponse := email_conf.CheckConfirmationCode(registerRequest.Email, confirmRequest.Token, confirmRequest.EnteredCode)
+	codeCheckResponse := s.CheckConfirmationCode(registerRequest.Email, token, code)
 	if codeCheckResponse.Err != "nil" {
-		json.NewEncoder(w).Encode(codeCheckResponse)
-		return
+		return myerrors.ErrInternal
 	}
 
-	err = email_conf.ConfirmEmail(registerRequest.Email, confirmRequest.EnteredCode)
+	err = s.confirmEmail(registerRequest.Email, code)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error confirming email: "+err.Error()), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+
 	}
 	claims["confirmed"] = true
-
-	response := map[string]interface{}{
-		"message":     "Successfully confirmed email",
-		"status_code": http.StatusOK,
-	}
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
+	return nil
 }
 
-func ResetPassword(email, password string) error {
-	hashedPassword, err := user.HashPassword(password)
+func (s *Service) ResetPassword(email, password string) error {
+	hashedPassword, err := s.users.HashPassword(password)
 	if err != nil {
 		return err
 	}

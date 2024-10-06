@@ -6,7 +6,6 @@ package user
 
 import (
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth/service"
 )
 
 // @Summary Logout the user
@@ -18,11 +17,11 @@ import (
 // @Security JWT
 // @Router /auth/logout [post]
 func Logout(device, userID string) error {
-	err := service.RemoveSessionFromDatabase(device, userID)
+	err := RemoveSessionFromDatabase(device, userID)
 	if err != nil {
 		return fmt.Errorf("error removing session from db: %v", err)
 	}
 
-	delete(service.ActiveUsers, userID)
+	delete(ActiveUsers, userID)
 	return nil
 }

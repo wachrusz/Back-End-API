@@ -7,15 +7,25 @@ package categories
 import (
 	//"encoding/json"
 
-	"github.com/wachrusz/Back-End-API/internal/currency"
 	models2 "github.com/wachrusz/Back-End-API/internal/models"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/service/currency"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"math"
 	"time"
 
 	"log"
 )
+
+type Service struct {
+	repo *mydb.Database
+}
+
+func NewService(db *mydb.Database) *Service {
+	return &Service{
+		repo: db,
+	}
+}
 
 // Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
 type Analytics struct {
@@ -45,6 +55,7 @@ func round(num float64, precision int) float64 {
 }
 
 func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
+	// TODO: refactor: unreachable code
 	if fromCurrencyCode == "" || toCurrencyCode == "" {
 		return round(amount, 2)
 	}
@@ -88,7 +99,8 @@ func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode str
 	return round(amount, 2)
 }
 
-func GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error) {
+func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error) {
+	// TODO: refactor maybe? too complicated
 	if startDateStr == "" {
 		startDateStr = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
 
@@ -98,7 +110,7 @@ func GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr,
 	}
 
 	queryIncome := "SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
-	rowsIncome, err := mydb.GlobalDB.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	rowsIncome, err := s.repo.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +177,7 @@ func GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr,
 	return analytics, nil
 }
 
-func GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
+func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
 	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
@@ -251,10 +263,10 @@ func GetUserInfoFromDB(userID string) (string, string, error) {
 	return surname, name, nil
 }
 
-func GetMoreFromDB(userID string) (*More, error) {
+func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 	var more More
 
-	subs, err := GetSubscriptionFromDB(userID)
+	subs, err := s.GetSubscriptionFromDB(userID)
 	if err != nil {
 		log.Println("Error getting Subs from DB:", err)
 		return nil, err
@@ -262,7 +274,7 @@ func GetMoreFromDB(userID string) (*More, error) {
 
 	var settings models2.Settings
 
-	app, err := GetAppFromDB(userID)
+	app, err := s.GetAppFromDB(userID)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error in GetAppFromDB: %v", err)
 	}
@@ -275,13 +287,13 @@ func GetMoreFromDB(userID string) (*More, error) {
 	return &more, nil
 }
 
-func GetAppFromDB(userID string) (*models2.App, error) {
-	connectedAccounts, err := GetConnectedAccountsFromDB(userID)
+func (s *Service) GetAppFromDB(userID string) (*models2.App, error) {
+	connectedAccounts, err := s.GetConnectedAccountsFromDB(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	categorySettings, err := GetCategorySettingsFromDB(userID)
+	categorySettings, err := s.GetCategorySettingsFromDB(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +307,7 @@ func GetAppFromDB(userID string) (*models2.App, error) {
 	return app, nil
 }
 
-func GetSubscriptionFromDB(userID string) (*models2.Subscription, error) {
+func (s *Service) GetSubscriptionFromDB(userID string) (*models2.Subscription, error) {
 	var subscription models2.Subscription
 
 	query := "SELECT id, user_id, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1"
@@ -309,7 +321,7 @@ func GetSubscriptionFromDB(userID string) (*models2.Subscription, error) {
 	return &subscription, nil
 }
 
-func GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error) {
+func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error) {
 	var connectedAccounts []models2.ConnectedAccount
 
 	// Запрос к базе данных для выбора подключенных аккаунтов по идентификатору пользователя.
@@ -348,7 +360,7 @@ func GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, erro
 	return connectedAccounts, nil
 }
 
-func GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error) {
+func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error) {
 	var categorySettings models2.CategorySettings
 
 	// Запрос для получения конфигурации доходов
@@ -415,7 +427,7 @@ func GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error)
 	return &categorySettings, nil
 }
 
-func GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error) {
+func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error) {
 	var operations []models2.Operation
 
 	query := `

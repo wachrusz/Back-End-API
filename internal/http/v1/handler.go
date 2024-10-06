@@ -2,8 +2,9 @@ package v1
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/wachrusz/Back-End-API/internal/report"
+	"github.com/google/uuid"
 	"github.com/wachrusz/Back-End-API/internal/service"
+	"net/http"
 )
 
 type MyHandler struct {
@@ -14,7 +15,7 @@ func NewHandler(s *service.Services) *MyHandler {
 	return &MyHandler{s: s}
 }
 
-func RegisterHandler(r chi.Router) {
+func (h *MyHandler) RegisterHandler(r chi.Router) {
 	r.Route("/app", func(r chi.Router) {
 		r.Route("/category", func(r chi.Router) {
 			r.Post("/expense", AuthMiddleware(CreateExpenseCategoryHandler))
@@ -27,7 +28,7 @@ func RegisterHandler(r chi.Router) {
 			r.Delete("/delete", AuthMiddleware(DeleteConnectedAccountHandler))
 		})
 
-		r.Get("/report", AuthMiddleware(report.ExportHandler))
+		r.Get("/report", AuthMiddleware(h.ExportHandler))
 	})
 
 	r.Route("/analytics", func(r chi.Router) {
@@ -41,4 +42,12 @@ func RegisterHandler(r chi.Router) {
 	r.Post("/settings/subscription", AuthMiddleware(CreateSubscriptionHandler))
 
 	r.Post("/support/request", AuthMiddleware(SendSupportRequestHandler))
+}
+
+func (h *MyHandler) getDeviceIDFromRequest(r *http.Request) (string, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil.String(), err
+	}
+	return id.String(), nil
 }

@@ -1,14 +1,14 @@
 package app
 
 import (
-	auth "github.com/wachrusz/Back-End-API/internal/auth/service"
 	"github.com/wachrusz/Back-End-API/internal/config"
-	"github.com/wachrusz/Back-End-API/internal/currency"
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service"
+	"github.com/wachrusz/Back-End-API/internal/service/currency"
+	auth "github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
 )
 

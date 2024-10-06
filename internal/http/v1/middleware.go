@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/wachrusz/Back-End-API/internal/auth/service"
+	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
 	"net/http"
@@ -74,7 +74,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if !service.IsUserActive(userID) {
+		if !user.IsUserActive(userID) {
 			err := errors.New("Inactive user")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
@@ -82,7 +82,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		r = r.WithContext(setUserIDInContext(r.Context(), userID))
 		r = r.WithContext(setDeviceIDInContext(r.Context(), deviceID))
-		service.UpdateLastActivity(userID)
+		user.UpdateLastActivity(userID)
 
 		next.ServeHTTP(w, r)
 	}
