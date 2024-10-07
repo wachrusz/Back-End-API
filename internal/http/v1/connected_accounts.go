@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/wachrusz/Back-End-API/internal/models"
-	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 )
 
@@ -24,7 +24,7 @@ import (
 // @Failure 500 {string} string "Error adding connected account"
 // @Security JWT
 // @Router /app/connected-accounts/add [post]
-func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	var account models.ConnectedAccount
 
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
@@ -32,7 +32,7 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := user.GetUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -63,8 +63,8 @@ func AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Error adding connected account"
 // @Security JWT
 // @Router /app/connected-accounts/delete [delete]
-func DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := user.GetUserIDFromContext(r.Context())
+func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("Error deleting connected account: UNAUTHORIZED"), http.StatusUnauthorized)
 		return

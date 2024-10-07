@@ -97,7 +97,7 @@ func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	deviceID, err := h.getDeviceIDFromRequest(r)
+	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
 		return
@@ -150,7 +150,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	deviceID, err := h.getDeviceIDFromRequest(r)
+	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
 		return
