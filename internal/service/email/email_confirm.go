@@ -8,6 +8,7 @@ import (
 	"fmt"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"time"
@@ -78,7 +79,7 @@ func (s *Service) ConfirmEmail(token, code, deviceID string) (*TokenDetails, err
 	return tokenDetails, nil
 }
 
-func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*TokenDetails, error) {
+func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*user.TokenDetails, error) {
 	registerRequest, err := utility.GetAuthFromJWT(token)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)

@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
 	"net/http"
 	"strings"
 )
 
-func ContentTypeMiddleware(next http.Handler) http.Handler {
+func (h *MyHandler) ContentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		contentType := r.Header.Get("Content-Type")
 
@@ -23,7 +22,7 @@ func ContentTypeMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 
@@ -74,7 +73,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if !user.IsUserActive(userID) {
+		if !h.s.Users.IsUserActive(userID) {
 			err := errors.New("Inactive user")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
@@ -82,7 +81,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		r = r.WithContext(setUserIDInContext(r.Context(), userID))
 		r = r.WithContext(setDeviceIDInContext(r.Context(), deviceID))
-		user.UpdateLastActivity(userID)
+		h.s.Users.UpdateLastActivity(userID)
 
 		next.ServeHTTP(w, r)
 	}

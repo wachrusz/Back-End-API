@@ -1,11 +1,14 @@
 package utility
 
 import (
+	"context"
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"math/big"
+	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -186,4 +189,22 @@ func GetDeviceIDFromJWT(tokenString string) (string, error) {
 		return "", errors.New("Invalid token")
 	}
 	return deviceID, nil
+}
+
+func GetDeviceIDFromRequest(r *http.Request) (string, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil.String(), err
+	}
+	return id.String(), nil
+}
+
+func GetDeviceIDFromContext(ctx context.Context) (string, bool) {
+	deviceID, ok := ctx.Value("device_id").(string)
+	return deviceID, ok
+}
+
+func GetUserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value("userID").(string)
+	return userID, ok
 }

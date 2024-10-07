@@ -18,12 +18,16 @@ import (
 )
 
 type Service struct {
-	repo *mydb.Database
+	repo          *mydb.Database
+	curr          *currency.Service
+	exchangeRates map[string]currency.Valute
 }
 
-func NewService(db *mydb.Database) *Service {
+func NewService(db *mydb.Database, currencyService *currency.Service) *Service {
 	return &Service{
-		repo: db,
+		repo:          db,
+		curr:          currencyService,
+		exchangeRates: make(map[string]currency.Valute),
 	}
 }
 
@@ -47,39 +51,37 @@ type More struct {
 	Settings models2.Settings `json:"settings"`
 }
 
-var exchangeRates = currency.CurrentCurrencyData.Valute
-
 func round(num float64, precision int) float64 {
 	output := math.Pow(10, float64(precision))
 	return math.Round(num*output) / output
 }
 
-func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
-	// TODO: refactor: unreachable code
+func (s *Service) convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
+	// TODO: refactor: unsafe map exchangeRates
 	if fromCurrencyCode == "" || toCurrencyCode == "" {
 		return round(amount, 2)
 	}
 	if fromCurrencyCode == toCurrencyCode {
 		return round(amount, 2)
 	}
-	if len(exchangeRates) == 0 {
-		exchangeRates = currency.CurrentCurrencyData.Valute
+	if len(s.exchangeRates) == 0 {
+		s.exchangeRates = s.curr.CurrentCurrencyData.Valute
 	}
 
 	if fromCurrencyCode == "RUB" {
-		rate, ok := exchangeRates[toCurrencyCode]
+		rate, ok := s.exchangeRates[toCurrencyCode]
 		if !ok {
 			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
 			return amount
 		}
 		return round(amount/(rate.Value/float64(rate.Nominal)), 2)
 	} else {
-		rubleRateFrom, ok := exchangeRates[fromCurrencyCode]
+		rubleRateFrom, ok := s.exchangeRates[fromCurrencyCode]
 		if !ok {
 			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
 			return amount
 		}
-		rubleRateTo, ok := exchangeRates[toCurrencyCode]
+		rubleRateTo, ok := s.exchangeRates[toCurrencyCode]
 		if !ok {
 			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
 			return amount
@@ -87,8 +89,10 @@ func convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode str
 		return round((amount*(rubleRateFrom.Value/float64(rubleRateFrom.Nominal)))/(rubleRateTo.Value/float64(rubleRateTo.Nominal)), 2)
 	}
 
+	// TODO: refactor: unreachable code
+
 	if toCurrencyCode == "RUB" {
-		rate, ok := exchangeRates[fromCurrencyCode]
+		rate, ok := s.exchangeRates[fromCurrencyCode]
 		if !ok {
 			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
 			return amount
@@ -124,13 +128,13 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 		}
 		income.UserID = userID
 		if income.Currency != currencyCode && currencyCode != "" {
-			income.Amount = convertCurrency(income.Amount, income.Currency, currencyCode)
+			income.Amount = s.convertCurrency(income.Amount, income.Currency, currencyCode)
 		}
 		incomeList = append(incomeList, income)
 	}
 
 	queryExpense := "SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
-	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	rowsExpense, err := s.repo.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -144,13 +148,13 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 		}
 		expense.UserID = userID
 		if expense.Currency != currencyCode && currencyCode != "" {
-			expense.Amount = convertCurrency(expense.Amount, expense.Currency, currencyCode)
+			expense.Amount = s.convertCurrency(expense.Amount, expense.Currency, currencyCode)
 		}
 		expenseList = append(expenseList, expense)
 	}
 
 	queryWealthFund := "SELECT id, amount, date, planned, currency_code, connected_account, user_id, category_id FROM wealth_fund WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
-	rowsWealthFund, err := mydb.GlobalDB.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
+	rowsWealthFund, err := s.repo.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +167,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 			return nil, err
 		}
 		if wealthFund.Currency != currencyCode && currencyCode != "" {
-			wealthFund.Amount = convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
+			wealthFund.Amount = s.convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
 		}
 		wealthFundList = append(wealthFundList, wealthFund)
 	}
@@ -179,7 +183,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 
 func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
-	rowsGoal, err := mydb.GlobalDB.Query(queryGoal, userID, limitStr, offsetStr)
+	rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
 		logger.ErrorLogger.Print("Error getting Goal From DB: (userID, error) ", userID, err)
 		return nil, err
@@ -193,11 +197,11 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 			return nil, err
 		}
 		goal.UserID = userID
-		goal.Need = convertCurrency(goal.Need, "RUB", currencyCode)
+		goal.Need = s.convertCurrency(goal.Need, "RUB", currencyCode)
 		goalList = append(goalList, goal)
 	}
 	trackingState := &models2.TrackingState{
-		State:  getTotalState(userID, currencyCode),
+		State:  s.getTotalState(userID, currencyCode),
 		UserID: userID,
 	}
 
@@ -209,7 +213,7 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	return tracker, nil
 }
 
-func getTotalState(userID string, convertionCode string) float64 {
+func (s *Service) getTotalState(userID string, convertionCode string) float64 {
 	var state float64
 	query := `
 	WITH all_transactions AS (
@@ -241,19 +245,19 @@ func getTotalState(userID string, convertionCode string) float64 {
 		all_transactions;
 	
 	`
-	err := mydb.GlobalDB.QueryRow(query, userID).Scan(&state)
+	err := s.repo.QueryRow(query, userID).Scan(&state)
 	if err != nil {
 		log.Println(err)
 		return 0
 	}
-	return convertCurrency(state, "RUB", convertionCode)
+	return s.convertCurrency(state, "RUB", convertionCode)
 }
 
-func GetUserInfoFromDB(userID string) (string, string, error) {
+func (s *Service) GetUserInfoFromDB(userID string) (string, string, error) {
 	query := "SELECT surname, name FROM users WHERE id = $1"
 	var surname, name string
 
-	row := mydb.GlobalDB.QueryRow(query, userID)
+	row := s.repo.QueryRow(query, userID)
 	err := row.Scan(&surname, &name)
 	if err != nil {
 		logger.ErrorLogger.Print("Error getting user information from DB: ", err)
@@ -311,7 +315,7 @@ func (s *Service) GetSubscriptionFromDB(userID string) (*models2.Subscription, e
 	var subscription models2.Subscription
 
 	query := "SELECT id, user_id, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1"
-	row := mydb.GlobalDB.QueryRow(query, userID)
+	row := s.repo.QueryRow(query, userID)
 
 	err := row.Scan(&subscription.ID, &subscription.UserID, &subscription.StartDate, &subscription.EndDate, &subscription.IsActive)
 	if err != nil {
@@ -331,7 +335,7 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models2.Connected
 		WHERE user_id = $1;
 	`
 
-	rows, err := mydb.GlobalDB.Query(query, userID)
+	rows, err := s.repo.Query(query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +388,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 
 	// Запрос для получения конфигурации расходов
 	queryExpense := "SELECT id, name, icon, is_fixed, user_id FROM expense_categories WHERE user_id = $1"
-	rowsExpense, err := mydb.GlobalDB.Query(queryExpense, userID)
+	rowsExpense, err := s.repo.Query(queryExpense, userID)
 	if err != nil {
 		log.Println("Error getting expense category configuration from DB:", err)
 		return nil, err
@@ -402,7 +406,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 	}
 
 	queryInvestment := "SELECT id, name, icon, is_fixed, user_id FROM investment_categories WHERE user_id = $1"
-	rowsInvestment, err := mydb.GlobalDB.Query(queryInvestment, userID)
+	rowsInvestment, err := s.repo.Query(queryInvestment, userID)
 	if err != nil {
 		log.Println("Error getting investment category configuration from DB:", err)
 		return nil, err
@@ -438,7 +442,7 @@ func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]mod
 		LIMIT $2 OFFSET $3;
 	`
 
-	rows, err := mydb.GlobalDB.Query(query, userID, limit, offset)
+	rows, err := s.repo.Query(query, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

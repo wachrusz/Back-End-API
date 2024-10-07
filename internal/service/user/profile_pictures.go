@@ -1,203 +1,106 @@
 package user
 
 import (
-	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/secret"
 	"math/rand"
+	"mime/multipart"
 	"strconv"
 	"time"
 
-	"encoding/json"
-	"errors"
 	"io/ioutil"
-	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
-type List struct {
-	icons       []Icon `json:"icons"`
-	message     string `json:"message"`
-	status_code string `json:"code"`
-}
 type Icon struct {
 	id        string `json:"id"`
 	url       string `json:"url"`
 	serviceID string `json:"service_id"`
 }
 
-func UploadAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 20)
-
-	userID, ok := GetUserIDFromContext(r.Context())
-	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("Error getting userID: "), http.StatusUnauthorized)
-		return
-	}
-
-	file, _, err := r.FormFile("image")
+func (s *Service) UploadAvatar(userID string, f multipart.File) (string, error) {
+	fileBytes, err := ioutil.ReadAll(f)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error retrieving the file: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	fileBytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error reading the file: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to read avatar: %v", myerrors.ErrInternal, err)
 	}
 
 	encryptedID, err := encryption.EncryptID(userID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error encrypting ID: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to encrypt avatar: %v", myerrors.ErrInternal, err)
 	}
 
-	err = saveAvatarInfo(userID, fileBytes, encryptedID)
+	err = s.saveAvatarInfo(userID, fileBytes, encryptedID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error saving avatar info: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to save avatar: %v", myerrors.ErrInternal, err)
 	}
 
-	response := map[string]interface{}{
-		"message":     "Successfuly uploaded a file",
-		"status_code": http.StatusCreated,
-		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/profile/image/get/" + encryptedID,
-	}
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
+	return encryptedID, nil
 }
 
 // ! ЛИКВИДИРОВАТЬ
-func GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" || len(id) < 20 {
-		jsonresponse.SendErrorResponse(w, errors.New("Something went wrong: "), http.StatusBadRequest)
-		return
-	}
-
+func (s *Service) GetAvatar(id string) ([]byte, error) {
 	encryptedID, err := encryption.DecryptID(id)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error decrypting ID: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: decryption failed: %v", myerrors.ErrInternal, err)
 	}
 
-	image, err := GetAvatarBytes(encryptedID)
+	var bytes []byte
+	err = s.repo.QueryRow("SELECT image_data FROM profile_images WHERE profile_id = $1", encryptedID).Scan(&bytes)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error getting avatar: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: error getting avatar: %v", myerrors.ErrInternal, err)
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Write(image)
+	return bytes, nil
 }
 
-func UploadIconHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseMultipartForm(10 << 20)
-
+func (s *Service) UploadIcon(file multipart.File) (string, error) {
 	rand.Seed(time.Now().UnixNano())
 	userID_i := rand.Intn(20000000)
 	userID := strconv.Itoa(userID_i)
 
-	file, _, err := r.FormFile("image")
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error retrieving the file: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
 	fileBytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error reading the file: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to read icon: %v", myerrors.ErrInternal, err)
 	}
 
 	encryptedID, err := encryption.EncryptID(userID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error encrypting ID: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to encrypt icon: %v", myerrors.ErrInternal, err)
 	}
 
-	err = saveIconInfo(userID, fileBytes, encryptedID)
+	err = s.saveIconInfo(userID, fileBytes, encryptedID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error saving avatar info: "+err.Error()), http.StatusInternalServerError)
-		return
+		return "", fmt.Errorf("%w: failed to save icon info: %v", myerrors.ErrInternal, err)
 	}
 
-	response := map[string]interface{}{
-		"message":     "Successfuly uploaded a file",
-		"status_code": http.StatusCreated,
-		"avatar_url":  "https://" + secret.Secret.BaseURL + "/v1/api/emojis/get/" + encryptedID,
-	}
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
+	return encryptedID, nil
 }
 
-func GetIconHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	if id == "" || len(id) < 20 {
-		jsonresponse.SendErrorResponse(w, errors.New("Something went wrong: "), http.StatusBadRequest)
-		return
-	}
-
+func (s *Service) GetIcon(id string) ([]byte, error) {
 	encryptedID, err := encryption.DecryptID(id)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error decrypting ID: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: decryption failed: %v", myerrors.ErrInternal, err)
 	}
 
-	image, err := GetIconBytes(encryptedID)
+	var bytes []byte
+	err = s.repo.QueryRow("SELECT image_data FROM service_images WHERE service_id = $1", encryptedID).Scan(&bytes)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error getting avatar: "+err.Error()), http.StatusInternalServerError)
-		return
+		return nil, fmt.Errorf("%w: error getting avatar: %v", myerrors.ErrInternal, err)
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Write(image)
+	return bytes, nil
 }
 
-func GetIconsURLs(w http.ResponseWriter, r *http.Request) {
-	icons, err := getIconsFromDataSource()
-	if err != nil {
-		list := List{
-			icons:       nil,
-			message:     err.Error(),
-			status_code: "500",
-		}
-		response := map[string]interface{}{
-			"response": list,
-		}
-		json.NewEncoder(w).Encode(response)
-		return
-	}
-
-	list := List{
-		icons:       icons,
-		message:     "Successfully got icons",
-		status_code: "200",
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	response := map[string]interface{}{
-		"response": list,
-	}
-	json.NewEncoder(w).Encode(response)
-}
-
-func getIconsFromDataSource() ([]Icon, error) {
+func (s *Service) GetIconsFromDataSource() ([]Icon, error) {
 	query := "SELECT id, url, service_id FROM service_images"
-	rows, err := mydb.GlobalDB.Query(query)
+	rows, err := s.repo.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	icons := []Icon{}
+	var icons []Icon
 
 	for rows.Next() {
 		var icon Icon
@@ -218,45 +121,33 @@ func getIconsFromDataSource() ([]Icon, error) {
 	return icons, nil
 }
 
-func saveAvatarInfo(userID string, imageBytes []byte, encryptedID string) error {
+func (s *Service) saveAvatarInfo(userID string, imageBytes []byte, encryptedID string) error {
 	url, err := encryption.EncryptID("https://" + secret.Secret.BaseURL + "/v1/profile/image/get/" + encryptedID)
 	if err != nil {
 		return err
 	}
-	_, err = mydb.GlobalDB.Exec("INSERT INTO service_images (profile_id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (profile_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
+	_, err = s.repo.Exec("INSERT INTO service_images (profile_id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (profile_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
 	if err != nil {
 		return err
 	}
 	return err
 }
 
-func saveIconInfo(userID string, imageBytes []byte, encryptedID string) error {
+func (s *Service) saveIconInfo(userID string, imageBytes []byte, encryptedID string) error {
 	url, err := encryption.EncryptID("https://" + secret.Secret.BaseURL + "/v1/api/emojis/get/" + encryptedID)
 	if err != nil {
 		return err
 	}
-	_, err = mydb.GlobalDB.Exec("INSERT INTO service_images (service_id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (service_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
+	_, err = s.repo.Exec("INSERT INTO service_images (service_id, image_data, url) VALUES ($1, $2, $3) ON CONFLICT (service_id) DO UPDATE SET image_data = $2", userID, imageBytes, url)
 	if err != nil {
 		return err
 	}
 	return err
 }
 
-func GetAvatarBytes(userID string) ([]byte, error) {
-	var bytes []byte
-	err := mydb.GlobalDB.QueryRow("SELECT image_data FROM profile_images WHERE profile_id = $1", userID).Scan(&bytes)
-	return bytes, err
-}
-
-func GetIconBytes(userID string) ([]byte, error) {
-	var bytes []byte
-	err := mydb.GlobalDB.QueryRow("SELECT image_data FROM service_images WHERE service_id = $1", userID).Scan(&bytes)
-	return bytes, err
-}
-
-func GetAvatarInfo(userID string) (string, error) {
+func (s *Service) getAvatarInfo(userID string) (string, error) {
 	var avatarURL string
-	err := mydb.GlobalDB.QueryRow("SELECT url FROM profile_images WHERE profile_id = $1", userID).Scan(&avatarURL)
+	err := s.repo.QueryRow("SELECT url FROM profile_images WHERE profile_id = $1", userID).Scan(&avatarURL)
 	if err != nil {
 		return "null", err
 	}

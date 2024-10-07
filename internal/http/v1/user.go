@@ -1,15 +1,13 @@
 package v1
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
-	"github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	"github.com/wachrusz/Back-End-API/pkg/util"
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"log"
 	"net/http"
@@ -219,7 +217,7 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	//! Заставляет задуматься
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -266,19 +264,19 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 // @Security JWT
 // @Router /auth/logout [post]
 func (h *MyHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	currentDeviceID, ok := getDeviceIDFromContext(r.Context())
+	currentDeviceID, ok := utility.GetDeviceIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, fmt.Errorf("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
-	err := user.Logout(currentDeviceID, userID)
+	err := h.s.Users.Logout(currentDeviceID, userID)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
 		return
@@ -292,16 +290,6 @@ func (h *MyHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func getDeviceIDFromContext(ctx context.Context) (string, bool) {
-	deviceID, ok := ctx.Value("device_id").(string)
-	return deviceID, ok
-}
-
-func getUserIDFromContext(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value("userID").(string)
-	return userID, ok
-}
-
 // @Summary Get user profile
 // @Description Get the user profile for the authenticated user.
 // @Tags Profile
@@ -312,7 +300,7 @@ func getUserIDFromContext(ctx context.Context) (string, bool) {
 // @Security JWT
 // @Router /profile/get [get]
 func (h *MyHandler) GetProfileHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
@@ -335,7 +323,7 @@ func (h *MyHandler) GetProfileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MyHandler) GetProfileAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -365,7 +353,7 @@ func (h *MyHandler) GetProfileAnalyticsHandler(w http.ResponseWriter, r *http.Re
 }
 
 func (h *MyHandler) GetProfileTrackerHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -392,7 +380,7 @@ func (h *MyHandler) GetProfileTrackerHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *MyHandler) GetProfileMore(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -413,7 +401,7 @@ func (h *MyHandler) GetProfileMore(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *MyHandler) GetOperationArchive(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
@@ -451,7 +439,7 @@ func (h *MyHandler) GetOperationArchive(w http.ResponseWriter, r *http.Request) 
 // @Security JWT
 // @Router /profile/update-name [put]
 func (h *MyHandler) UpdateName(w http.ResponseWriter, r *http.Request) {
-	userID, ok := getUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -520,55 +508,4 @@ func (h *MyHandler) GetTokenPairsAmountHandler(w http.ResponseWriter, r *http.Re
 		"status_code": http.StatusOK,
 	}
 	json.NewEncoder(w).Encode(response)
-}
-
-func (h *MyHandler) RegisterUserHandlers(router chi.Router) {
-	// Auth routes
-	router.Route("/auth", func(r chi.Router) {
-		r.Post("/login", h.Login)
-		r.Post("/login/confirm", email.ConfirmEmailLogin)
-		r.Post("/logout", AuthMiddleware(h.Logout))
-		r.Post("/register", h.RegisterUserHandler)
-		r.Post("/register/confirm-email", email.ConfirmEmailHandler)
-
-		// Password reset routes
-		r.Route("/login/reset", func(r chi.Router) {
-			r.Post("/password", h.ResetPasswordHandler)
-			r.Post("/password/confirm", email.ResetPasswordConfirmHandler)
-			r.Put("/password/put", h.ChangePasswordForRecoverHandler)
-		})
-
-		// Token routes
-		r.Post("/refresh", AuthMiddleware(h.RefreshTokenHandler))
-		r.Delete("/tokens/delete", h.DeleteTokensHandler)
-		r.Get("/tokens/amount", h.GetTokenPairsAmountHandler)
-	})
-
-	// OAuth login routes
-	router.Route("/auth/login", func(r chi.Router) {
-		r.Get("/vk", h.s.Users.HandleVKLogin)
-		r.Get("/google", h.s.Users.HandleGoogleLogin)
-	})
-
-	// Developer routes
-	router.Get("/dev/confirmation-code/get", email.GetConfirmationCodeTestHandler)
-}
-
-func (h *MyHandler) RegisterProfileHandlers(router chi.Router) {
-	// Profile routes
-	router.Route("/profile", func(r chi.Router) {
-		r.Get("/info/get", AuthMiddleware(h.GetProfileHandler))
-		r.Get("/analytics/get", AuthMiddleware(h.GetProfileAnalyticsHandler))
-		r.Get("/tracker/get", AuthMiddleware(h.GetProfileTrackerHandler))
-		r.Get("/more/get", AuthMiddleware(h.GetProfileMore))
-		r.Put("/name/put", AuthMiddleware(h.UpdateName))
-		r.Get("/operation-archive/get", AuthMiddleware(h.GetOperationArchive))
-		r.Put("/image/put", AuthMiddleware(user.UploadAvatarHandler))
-	})
-
-	// Emojis routes
-	router.Route("/api/emojis", func(r chi.Router) {
-		r.Put("/put", user.UploadIconHandler)
-		r.Get("/get/list", user.GetIconsURLs)
-	})
 }

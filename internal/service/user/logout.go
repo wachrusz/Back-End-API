@@ -16,12 +16,12 @@ import (
 // @Failure 500 {string} string "Internal Server Error"
 // @Security JWT
 // @Router /auth/logout [post]
-func Logout(device, userID string) error {
-	err := RemoveSessionFromDatabase(device, userID)
+func (s *Service) Logout(device, userID string) error {
+	err := s.RemoveSessionFromDatabase(device, userID)
 	if err != nil {
 		return fmt.Errorf("error removing session from db: %v", err)
 	}
 
-	delete(ActiveUsers, userID)
+	delete(s.ActiveUsers, userID)
 	return nil
 }
