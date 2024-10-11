@@ -3,16 +3,29 @@ package currency
 import (
 	"encoding/json"
 	"fmt"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/secret"
 	"io"
 	"net/http"
 	"time"
 )
 
-var (
-	CurrentCurrencyData CurrencyData
-)
+type Service struct {
+	repo                *mydb.Database
+	CurrentCurrencyData *CurrencyData
+}
+
+func NewService(db *mydb.Database) (*Service, error) {
+	s := &Service{
+		repo:                db,
+		CurrentCurrencyData: new(CurrencyData),
+	}
+	err := s.initCurrentCurrencyData()
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
+}
 
 type Valute struct {
 	ID       string  `json:"ID"`
@@ -32,13 +45,13 @@ type CurrencyData struct {
 	Valute       map[string]Valute
 }
 
-func InitCurrentCurrencyData() error {
-	err := parseJSONAndUpdateDB(secret.Secret.CurrencyURL)
+func (s *Service) initCurrentCurrencyData() error {
+	err := s.parseJSONAndUpdateDB(secret.Secret.CurrencyURL)
 	if err != nil {
 		fmt.Println("Error in updating database:", err)
 	}
-	CurrentCurrencyData.Valute = make(map[string]Valute)
-	rows, err := mydb.GlobalDB.Query("SELECT id, num_code, currency_code, nominal, name, value, previous FROM currency")
+	s.CurrentCurrencyData.Valute = make(map[string]Valute)
+	rows, err := s.repo.Query("SELECT id, num_code, currency_code, nominal, name, value, previous FROM currency")
 	if err != nil {
 		return err
 	}
@@ -50,13 +63,13 @@ func InitCurrentCurrencyData() error {
 			return err
 		}
 
-		CurrentCurrencyData.Valute[item.CharCode] = item
+		s.CurrentCurrencyData.Valute[item.CharCode] = item
 	}
 
 	return nil
 }
 
-func parseJSONAndUpdateDB(url string) error {
+func (s *Service) parseJSONAndUpdateDB(url string) error {
 	response, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("Error retrieving data: %w", err)
@@ -74,9 +87,9 @@ func parseJSONAndUpdateDB(url string) error {
 		return fmt.Errorf("Ошибка при разборе JSON: %w", err)
 	}
 
-	CurrentCurrencyData = data
+	s.CurrentCurrencyData = &data
 
-	err = updateCurrencyRatesAndDataInDB(data.Valute)
+	err = s.updateCurrencyRatesAndDataInDB(data.Valute)
 	if err != nil {
 		return fmt.Errorf("Ошибка при обновлении курсов валют в базе данных: %w", err)
 	}
@@ -84,7 +97,7 @@ func parseJSONAndUpdateDB(url string) error {
 	return nil
 }
 
-func updateCurrencyRatesAndDataInDB(rates map[string]Valute) error {
+func (s *Service) updateCurrencyRatesAndDataInDB(rates map[string]Valute) error {
 	query1 := `
     INSERT INTO exchange_rates (currency_code, rate_to_ruble)
     VALUES ($1, $2)
@@ -112,7 +125,7 @@ func updateCurrencyRatesAndDataInDB(rates map[string]Valute) error {
 	return nil
 }
 
-func ScheduleCurrencyUpdates() {
+func (s *Service) ScheduleCurrencyUpdates() {
 	timeStr := "11:40"
 	updateHour, err := time.Parse("15:04", timeStr)
 	if err != nil {
@@ -130,9 +143,13 @@ func ScheduleCurrencyUpdates() {
 
 		time.Sleep(nextUpdate.Sub(now))
 
-		err := parseJSONAndUpdateDB(secret.Secret.CurrencyURL)
+		err := s.parseJSONAndUpdateDB(secret.Secret.CurrencyURL)
 		if err != nil {
 			fmt.Println("Error in updating database:", err)
 		}
 	}
+}
+
+type CurrencyService interface {
+	ScheduleCurrencyUpdates()
 }

@@ -7,9 +7,9 @@ package v1
 import (
 	"encoding/json"
 	"errors"
-	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/models"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 )
 
@@ -25,14 +25,14 @@ import (
 // @Failure 500 {string} string "Error creating expense"
 // @Security JWT
 // @Router /analytics/expense [post]
-func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	var expense models.Expense
 	if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -40,7 +40,7 @@ func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 
 	expense.UserID = userID
 
-	expenceID, err := models.CreateExpense(&expense)
+	expenseID, err := models.CreateExpense(&expense)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense: "+err.Error()), http.StatusInternalServerError)
 		return
@@ -48,7 +48,7 @@ func CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := map[string]interface{}{
 		"message":           "Successfully created an expense",
-		"created_object_id": expenceID,
+		"created_object_id": expenseID,
 		"status_code":       http.StatusCreated,
 	}
 	w.WriteHeader(response["status_code"].(int))

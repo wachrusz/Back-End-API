@@ -5,7 +5,7 @@
 package models
 
 import (
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"log"
 )
 

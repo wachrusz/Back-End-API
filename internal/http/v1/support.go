@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth"
-	"github.com/wachrusz/Back-End-API/internal/email"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"log"
 	"net/http"
 	"strconv"
@@ -34,14 +33,14 @@ type SupportRequest struct {
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error sending support request"
 // @Router /support/request [post]
-func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 	var supportRequest SupportRequest
 	if err := json.NewDecoder(r.Body).Decode(&supportRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
@@ -54,7 +53,7 @@ func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	supportRequest.RequestID = (time.Now().UnixMicro() / 1e11) * int64(UserID)
 
-	if err := sendSupportRequest(supportRequest, userID); err != nil {
+	if err := h.sendSupportRequest(supportRequest, userID); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Error sending support request: "+err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -68,11 +67,11 @@ func SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func sendSupportRequest(request SupportRequest, userID string) error {
+func (h *MyHandler) sendSupportRequest(request SupportRequest, userID string) error {
 	body := fmt.Sprintf("Name: %s\nEmail: %s\nSubject: %s\n\nMessage:\n%s\nUserID: %s",
 		request.Name, request.Email, request.Subject, request.Message, request.UserID)
 
-	err := email.SendEmail("support@yourdomain.com", "Support Request", body)
+	err := h.s.Emails.SendEmail("support@yourdomain.com", "Support Request", body)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error sending support request email: %v", err)
 		return err

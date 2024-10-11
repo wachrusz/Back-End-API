@@ -6,9 +6,9 @@ package v1
 
 import (
 	"errors"
-	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/models"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"log"
 
 	"encoding/json"
@@ -26,7 +26,7 @@ import (
 // @Failure 401 {string} string "User not authenticated"
 // @Failure 500 {string} string "Error creating goal"
 // @Router /tracker/goal [post]
-func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	log.Print("Started CreateGoalHandler")
 	var goal models.Goal
 	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
@@ -34,7 +34,7 @@ func CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return

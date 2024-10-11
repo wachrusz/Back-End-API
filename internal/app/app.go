@@ -1,13 +1,12 @@
 package app
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/auth/service"
 	"github.com/wachrusz/Back-End-API/internal/config"
-	"github.com/wachrusz/Back-End-API/internal/currency"
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/service"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
 	"net/http"
 )
 
@@ -19,24 +18,31 @@ func Run(cfg *config.Config) error {
 	}
 	defer db.Close()
 
-	mydb.SetDB(db)
+	mydb.SetDB(db) // TODO: Избавиться от этой хуйни окончательно!
 
-	if err = currency.InitCurrentCurrencyData(); err != nil {
-		return err
+	deps := service.Dependencies{
+		Repo: db,
 	}
 
-	router, docRouter, errR := api.InitRouters()
-	service.InitActiveUsers()
+	services, err := service.NewServices(deps)
+	if err != nil {
+		logger.ErrorLogger.Fatal(err)
+	}
+
+	handler := v1.NewHandler(services)
+
+	router, docRouter, errR := api.InitRouters(handler)
+	services.Users.InitActiveUsers()
 
 	if errR != nil {
 		logger.ErrorLogger.Fatal(errR)
 	}
 
-	http.Handle("/", v1.ContentTypeMiddleware(router))
+	http.Handle("/", handler.ContentTypeMiddleware(router))
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 
-	go currency.ScheduleCurrencyUpdates()
+	go services.Currency.ScheduleCurrencyUpdates()
 
 	//changed tls hosting now everything works
 	err = http.ListenAndServeTLS(":8080", cfg.CrtPath, cfg.CrtPath, nil)

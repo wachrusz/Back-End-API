@@ -2,18 +2,12 @@
 // +build !exclude_swagger
 
 // Package auth provides authentication and authorization functionality.
-package service
+package user
 
 import (
+	"fmt"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
-
-	"fmt"
-	"net/http"
-	"sync"
-
-	"github.com/google/uuid"
 )
 
 type ActiveUser struct {
@@ -23,14 +17,9 @@ type ActiveUser struct {
 	DecryptedToken string
 }
 
-var (
-	ActiveUsers = make(map[string]ActiveUser)
-	activeMu    sync.Mutex
-)
-
-func InitActiveUsers() {
-	var query string = "SELECT user_id, email, device_id, token FROM sessions"
-	rows, err := mydb.GlobalDB.Query(query)
+func (s *Service) InitActiveUsers() {
+	var query = "SELECT user_id, email, device_id, token FROM sessions"
+	rows, err := s.repo.Query(query)
 	if err != nil {
 		logger.ErrorLogger.Printf("Unnable to check DB DUE TO: %v", err)
 	}
@@ -46,96 +35,69 @@ func InitActiveUsers() {
 		if err != nil {
 			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID, ", token: %v", decryptedToken)
 		}
-
-		activeUser := ActiveUser{
-			UserID:         userID,
-			Email:          email,
-			DeviceID:       deviceID,
-			DecryptedToken: decryptedToken,
-		}
-
-		ActiveUsers[userID] = activeUser
 	}
 }
 
-func GetActiveUser(userID string) ActiveUser {
-	return ActiveUsers[userID]
+func (s *Service) GetActiveUser(userID string) ActiveUser {
+	return s.ActiveUsers[userID]
 }
 
-func IsUserActive(userID string) bool {
-	activeMu.Lock()
-	defer activeMu.Unlock()
+func (s *Service) IsUserActive(userID string) bool {
+	s.activeMu.Lock()
+	defer s.activeMu.Unlock()
 
-	_, ok := ActiveUsers[userID]
+	_, ok := s.ActiveUsers[userID]
 	if !ok {
 		logger.ErrorLogger.Printf("User %s is not active", userID)
 	}
 	return ok
 }
 
-func AddActiveUser(userID, email, deviceID, token string) {
-	activeMu.Lock()
-	defer activeMu.Unlock()
+func (s *Service) AddActiveUser(user ActiveUser) {
+	s.activeMu.Lock()
+	defer s.activeMu.Unlock()
 
-	ActiveUsers[userID] = ActiveUser{userID, email, deviceID, token}
+	s.ActiveUsers[user.UserID] = user
 }
 
-func RemoveActiveUser(userID string) {
-	activeMu.Lock()
-	defer activeMu.Unlock()
+func (s *Service) RemoveActiveUser(userID string) {
+	s.activeMu.Lock()
+	defer s.activeMu.Unlock()
 
-	delete(ActiveUsers, userID)
-}
-
-// *NEW
-func SetAccessToken(userID, newAccessToken string) {
-	activeMu.Lock()
-	defer activeMu.Unlock()
-
-	if ActiveUsers == nil {
-		ActiveUsers = make(map[string]ActiveUser)
-	}
-
-	user, exists := ActiveUsers[userID]
-	if !exists {
-		user = ActiveUser{}
-		ActiveUsers[userID] = user
-	}
-
-	user.DecryptedToken = newAccessToken
+	delete(s.ActiveUsers, userID)
 }
 
 // DATABASE OPERATIONS
-func SaveSessionToDatabase(email, deviceID, user_id, token string) error {
+func (s *Service) SaveSessionToDatabase(email, deviceID, userID, token string) error {
 
 	encryptedToken, err := enc.EncryptToken(token)
 	if err != nil {
 		return err
 	}
 
-	_, err = mydb.GlobalDB.Exec(`
+	_, err = s.repo.Exec(`
         INSERT INTO sessions (email, device_id, created_at, last_activity, user_id, token)
         VALUES ($1, $2, NOW(), NOW(), $3, $4)`,
-		email, deviceID, user_id, encryptedToken)
+		email, deviceID, userID, encryptedToken)
 	return err
 }
 
 // *NEW
-func UpdateLastActivity(userID string) error {
+func (s *Service) UpdateLastActivity(userID string) error {
 	query := `
 	UPDATE sessions
 	SET last_activity = NOW()
 	WHERE user_id = $1;
 	`
 
-	_, err := mydb.GlobalDB.Exec(query, userID)
+	_, err := s.repo.Exec(query, userID)
 	return err
 }
 
-func CheckSessionInDatabase(email, deviceID string) (bool, error) {
+func (s *Service) CheckSessionInDatabase(email, deviceID string) (bool, error) {
 	var count int
 
-	err := mydb.GlobalDB.QueryRow(`
+	err := s.repo.QueryRow(`
         SELECT COUNT(*) FROM sessions WHERE
             email = $1 AND device_id = $2;`,
 		email, deviceID).Scan(&count)
@@ -147,20 +109,20 @@ func CheckSessionInDatabase(email, deviceID string) (bool, error) {
 	return count > 0, nil
 }
 
-func RemoveSessionFromDatabase(deviceID, userID string) error {
-	_, err := mydb.GlobalDB.Exec(`
+func (s *Service) RemoveSessionFromDatabase(deviceID, userID string) error {
+	_, err := s.repo.Exec(`
         DELETE FROM sessions WHERE device_id = $1 AND user_id = $2`,
 		deviceID, userID)
 	return err
 }
 
 // SERVICE FUNCTIONS
-func IsDeviceIDAlreadyUsed(db *mydb.Database, email, deviceID string) (error, bool) {
+func (s *Service) IsDeviceIDAlreadyUsed(email, deviceID string) (error, bool) {
 
 	query := "SELECT COUNT(*) FROM sessions WHERE email = $1 AND device_id = $2"
 
 	var count int
-	err := db.QueryRow(query, email, deviceID).Scan(&count)
+	err := s.repo.QueryRow(query, email, deviceID).Scan(&count)
 	if err != nil {
 		return fmt.Errorf("error checking device ID: %v", err), false
 	}
@@ -168,19 +130,10 @@ func IsDeviceIDAlreadyUsed(db *mydb.Database, email, deviceID string) (error, bo
 	return nil, count > 0
 }
 
-// !FIX
-func GetDeviceIDFromRequest(r *http.Request) (string, error) {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil.String(), err
-	}
-	return id.String(), nil
-}
-
-func GetUserIDFromUsersDatabase(usernameOrDeviceID string) (string, error) {
+func (s *Service) GetUserIDFromUsersDatabase(usernameOrDeviceID string) (string, error) {
 	var result string
 
-	err := mydb.GlobalDB.QueryRow(`
+	err := s.repo.QueryRow(`
 	SELECT id FROM users WHERE email = $1;
 	`, usernameOrDeviceID).Scan(&result)
 
@@ -188,16 +141,32 @@ func GetUserIDFromUsersDatabase(usernameOrDeviceID string) (string, error) {
 		return "", fmt.Errorf("error checking session in database: %v", err)
 	}
 	return result, nil
-
 }
 
-func GetUserIDFromSessionDatabase(usernameOrDeviceID string) (string, error) {
+func (s *Service) GetUserIDFromSessionDatabase(usernameOrDeviceID string) (string, error) {
 	var result string
-	err := mydb.GlobalDB.QueryRow(`
+	err := s.repo.QueryRow(`
 	SELECT user_id FROM sessions WHERE device_id = $1;
 	`, usernameOrDeviceID).Scan(&result)
 	if err != nil {
 		return "", fmt.Errorf("error checking session in database: %v", err)
 	}
 	return result, nil
+}
+
+func (s *Service) SetAccessToken(userID, newAccessToken string) {
+	s.activeMu.Lock()
+	defer s.activeMu.Unlock()
+
+	if s.ActiveUsers == nil {
+		s.ActiveUsers = make(map[string]ActiveUser)
+	}
+
+	user, exists := s.ActiveUsers[userID]
+	if !exists {
+		user = ActiveUser{}
+		s.ActiveUsers[userID] = user
+	}
+
+	user.DecryptedToken = newAccessToken
 }

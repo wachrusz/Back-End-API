@@ -7,9 +7,9 @@ package v1
 import (
 	"encoding/json"
 	"errors"
-	"github.com/wachrusz/Back-End-API/internal/auth"
 	"github.com/wachrusz/Back-End-API/internal/models"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 )
 
@@ -25,14 +25,14 @@ import (
 // @Failure 500 {string} string "Error creating wealth fund"
 // @Security JWT
 // @Router /analytics/wealth_fund [post]
-func CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
 	var wealthFund models.WealthFund
 	if err := json.NewDecoder(r.Body).Decode(&wealthFund); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := auth.GetUserIDFromContext(r.Context())
+	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return

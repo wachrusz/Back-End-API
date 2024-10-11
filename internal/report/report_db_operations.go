@@ -1,12 +1,8 @@
 package report
 
-import (
-	mydb "github.com/wachrusz/Back-End-API/pkg/mydatabase"
-)
+func (s *Service) fetchDataFromDatabase(userID string) ([]ReportData, error) {
 
-func fetchDataFromDatabase(userID string) ([]ReportData, error) {
-
-	rows, err := mydb.GlobalDB.Query("SELECT date, description, amount FROM transactions WHERE user_id = $1", userID)
+	rows, err := s.repo.Query("SELECT date, description, amount FROM transactions WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err
 	}

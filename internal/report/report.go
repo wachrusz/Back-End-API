@@ -6,13 +6,19 @@ package report
 
 import (
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/auth"
-	"net/http"
-	"os"
-
 	"github.com/jung-kurt/gofpdf"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/xuri/excelize/v2"
 )
+
+type Service struct {
+	repo *mydb.Database
+}
+
+func NewService(db *mydb.Database) *Service {
+	return &Service{db}
+}
 
 type ReportData struct {
 	Date        string
@@ -20,7 +26,7 @@ type ReportData struct {
 	Amount      string
 }
 
-func generateExcelReport(data []ReportData) (*excelize.File, error) {
+func (s *Service) generateExcelReport(data []ReportData) (*excelize.File, error) {
 	file := excelize.NewFile()
 
 	index, err := file.NewSheet("Sheet1")
@@ -50,7 +56,7 @@ func generateExcelReport(data []ReportData) (*excelize.File, error) {
 	return file, nil
 }
 
-func generatePDFReport(data []ReportData) error {
+func (s *Service) generatePDFReport(data []ReportData) error {
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 
@@ -68,48 +74,24 @@ func generatePDFReport(data []ReportData) error {
 	return pdf.OutputFileAndClose("report.pdf")
 }
 
-// @Summary Exports report
-// @Description Get a financial report .
-// @Tags App
-// @Param expense body models.ConnectedAccount true "ConnectedAccount object"
-// @Success 201 {string} string "Connected account created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error adding connected account"
-// @Security JWT
-// @Router /app/report [get]
-func ExportHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserIDFromContext(r.Context())
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
+func (s *Service) ExportHandler(userID string) error {
+	data, err := s.fetchDataFromDatabase(userID)
+	if err != nil {
+		return myerrors.ErrInternal
 	}
 
-	data, err := fetchDataFromDatabase(userID)
+	excelReport, err := s.generateExcelReport(data)
 	if err != nil {
-		http.Error(w, "Failed to fetch data from database", http.StatusInternalServerError)
-		return
-	}
-
-	excelReport, err := generateExcelReport(data)
-	if err != nil {
-		http.Error(w, "Failed to generate Excel report", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	excelFilename := "report.xlsx"
 	if err := excelReport.SaveAs(excelFilename); err != nil {
-		http.Error(w, "Failed to save Excel report", http.StatusInternalServerError)
-		return
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	if err := generatePDFReport(data); err != nil {
-		http.Error(w, "Failed to generate PDF report", http.StatusInternalServerError)
-		return
+	if err := s.generatePDFReport(data); err != nil {
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
-
-	http.ServeFile(w, r, excelFilename)
-	http.ServeFile(w, r, "report.pdf")
-
-	defer os.Remove(excelFilename)
-	defer os.Remove("report.pdf")
+	return nil
 }
