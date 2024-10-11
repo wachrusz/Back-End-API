@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
-	"github.com/wachrusz/Back-End-API/internal/service/email"
+	token2 "github.com/wachrusz/Back-End-API/internal/service/token"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
@@ -84,7 +84,7 @@ func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var confirmRequest email.ConfirmEmailRequest
+	var confirmRequest token2.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
@@ -103,7 +103,7 @@ func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	token_details, err := h.s.Emails.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	token_details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
@@ -137,7 +137,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var confirmRequest email.ConfirmEmailRequest
+	var confirmRequest token2.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
@@ -156,7 +156,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	token_details, err := h.s.Emails.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	token_details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
@@ -190,7 +190,7 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	var confirmRequest email.ConfirmEmailRequest
+	var confirmRequest token2.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return

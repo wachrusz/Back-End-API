@@ -35,8 +35,6 @@ func (s *Service) InitActiveUsers() {
 		if err != nil {
 			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID, ", token: %v", decryptedToken)
 		}
-
-		s.AddActiveUser(userID, email, deviceID, token)
 	}
 }
 
@@ -55,11 +53,11 @@ func (s *Service) IsUserActive(userID string) bool {
 	return ok
 }
 
-func (s *Service) AddActiveUser(userID, email, deviceID, token string) {
+func (s *Service) AddActiveUser(user ActiveUser) {
 	s.activeMu.Lock()
 	defer s.activeMu.Unlock()
 
-	s.ActiveUsers[userID] = ActiveUser{userID, email, deviceID, token}
+	s.ActiveUsers[user.UserID] = user
 }
 
 func (s *Service) RemoveActiveUser(userID string) {
@@ -67,24 +65,6 @@ func (s *Service) RemoveActiveUser(userID string) {
 	defer s.activeMu.Unlock()
 
 	delete(s.ActiveUsers, userID)
-}
-
-// *NEW
-func (s *Service) SetAccessToken(userID, newAccessToken string) {
-	s.activeMu.Lock()
-	defer s.activeMu.Unlock()
-
-	if s.ActiveUsers == nil {
-		s.ActiveUsers = make(map[string]ActiveUser)
-	}
-
-	user, exists := s.ActiveUsers[userID]
-	if !exists {
-		user = ActiveUser{}
-		s.ActiveUsers[userID] = user
-	}
-
-	user.DecryptedToken = newAccessToken
 }
 
 // DATABASE OPERATIONS
@@ -161,7 +141,6 @@ func (s *Service) GetUserIDFromUsersDatabase(usernameOrDeviceID string) (string,
 		return "", fmt.Errorf("error checking session in database: %v", err)
 	}
 	return result, nil
-
 }
 
 func (s *Service) GetUserIDFromSessionDatabase(usernameOrDeviceID string) (string, error) {
@@ -173,4 +152,21 @@ func (s *Service) GetUserIDFromSessionDatabase(usernameOrDeviceID string) (strin
 		return "", fmt.Errorf("error checking session in database: %v", err)
 	}
 	return result, nil
+}
+
+func (s *Service) SetAccessToken(userID, newAccessToken string) {
+	s.activeMu.Lock()
+	defer s.activeMu.Unlock()
+
+	if s.ActiveUsers == nil {
+		s.ActiveUsers = make(map[string]ActiveUser)
+	}
+
+	user, exists := s.ActiveUsers[userID]
+	if !exists {
+		user = ActiveUser{}
+		s.ActiveUsers[userID] = user
+	}
+
+	user.DecryptedToken = newAccessToken
 }

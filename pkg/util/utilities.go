@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	"github.com/wachrusz/Back-End-API/pkg/logger"
+	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"net/http"
 	"time"
@@ -207,4 +209,13 @@ func GetDeviceIDFromContext(ctx context.Context) (string, bool) {
 func GetUserIDFromContext(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value("userID").(string)
 	return userID, ok
+}
+
+func HashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		logger.ErrorLogger.Println("Error hashing password:", err)
+		return "", err
+	}
+	return string(hashedPassword), nil
 }
