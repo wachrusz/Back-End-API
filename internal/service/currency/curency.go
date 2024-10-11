@@ -149,3 +149,7 @@ func (s *Service) ScheduleCurrencyUpdates() {
 		}
 	}
 }
+
+type CurrencyService interface {
+	ScheduleCurrencyUpdates()
+}

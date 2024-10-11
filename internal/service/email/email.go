@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
-	"github.com/wachrusz/Back-End-API/internal/service/user"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
@@ -16,14 +16,24 @@ import (
 )
 
 type Service struct {
-	repo  *mydb.Database
-	users *user.Service
+	repo *mydb.Database
 }
 
-func NewService(db *mydb.Database, userService *user.Service) *Service {
+type Emails interface {
+	SendEmail(to, subject, body string) error
+	SendConfirmationEmail(email, token string) error
+	DecryptToken(encryptedToken string) (string, error)
+	SaveConfirmationCode(email, confirmationCode, token string) error
+	CheckConfirmationCode(email, token, enteredCode string) CheckResult
+	DeleteConfirmationCode(email string, code string) error
+	GetConfirmationCode(email string) (string, error)
+	ResetPasswordConfirm(token, code string) error
+	ResetPassword(email, password string) error
+}
+
+func NewService(db *mydb.Database) *Service {
 	return &Service{
-		repo:  db,
-		users: userService,
+		repo: db,
 	}
 }
 
@@ -136,7 +146,7 @@ func (s *Service) CheckConfirmationCode(email, token, enteredCode string) CheckR
 
 	err = s.repo.QueryRow(`SELECT attempts FROM confirmation_codes WHERE email = $1 
 	ORDER BY expiration_time DESC LIMIT 1`, email).Scan(&attempts)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		result.Err = errors.New("Can't get attempts").Error()
 		result.StatusCode = http.StatusUnauthorized
 		return result
@@ -147,7 +157,7 @@ func (s *Service) CheckConfirmationCode(email, token, enteredCode string) CheckR
 	}
 
 	err = s.repo.QueryRow("SELECT expiration_time FROM confirmation_codes WHERE email = $1 AND code = $2", email, enteredCode).Scan(&expirationTime)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		result.Err = errors.New("Invalid confirmation code.").Error()
 		result.RemainingAttempts = maxAttempts - (attempts + 1)
 
@@ -192,9 +202,9 @@ func (s *Service) CheckConfirmationCode(email, token, enteredCode string) CheckR
 
 func (s *Service) checkToken(token, email string) error {
 	var encToken string
-	err := mydb.GlobalDB.QueryRow(`SELECT token FROM confirmation_codes WHERE email = $1
+	err := s.repo.QueryRow(`SELECT token FROM confirmation_codes WHERE email = $1
 	ORDER BY expiration_time DESC LIMIT 1`, email).Scan(&encToken)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return err
 	} else if err != nil {
 		return err
@@ -211,16 +221,12 @@ func (s *Service) checkToken(token, email string) error {
 	return nil
 }
 
-func (s *Service) DeleteConfirmationCode(email string, code string) {
-	err := mydb.GlobalDB.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
+func (s *Service) DeleteConfirmationCode(email string, code string) error {
+	err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
 	if err != nil {
 		logger.ErrorLogger.Printf("Error deleting code for Email: %v", email)
-		return
+		return fmt.Errorf("error deleting confirmation")
 	}
-}
-
-func (s *Service) confirmEmail(email, code string) error {
-	s.DeleteConfirmationCode(email, code)
 	return nil
 }
 
@@ -230,7 +236,7 @@ func (s *Service) incrementAttempts(email string) error {
 		FROM confirmation_codes 
 		WHERE email = $1
 	);`
-	_, err := mydb.GlobalDB.Exec(query, email)
+	_, err := s.repo.Exec(query, email)
 	return err
 }
 
@@ -242,14 +248,14 @@ func (s *Service) lockUser(email string) error {
 		FROM confirmation_codes 
 		WHERE email = $1
 	);`
-	_, err := mydb.GlobalDB.Exec(query, email)
+	_, err := s.repo.Exec(query, email)
 	return err
 }
 
 func (s *Service) isUserLocked(email string) (bool, error) {
 	query := "SELECT locked_until FROM confirmation_codes WHERE email = $1 ORDER BY locked_until DESC LIMIT 1"
 	var lockedUntil time.Time
-	err := mydb.GlobalDB.QueryRow(query, email).Scan(&lockedUntil)
+	err := s.repo.QueryRow(query, email).Scan(&lockedUntil)
 	if err == sql.ErrNoRows {
 		return false, nil
 	} else if err != nil {
@@ -263,7 +269,7 @@ func (s *Service) getLockDuration(email string) (time.Duration, error) {
 	var lockedUntil time.Time
 
 	query := "SELECT locked_until FROM confirmation_codes WHERE email = $1 ORDER BY locked_until DESC LIMIT 1"
-	err := mydb.GlobalDB.QueryRow(query, email).Scan(&lockedUntil)
+	err := s.repo.QueryRow(query, email).Scan(&lockedUntil)
 	if err == sql.ErrNoRows {
 		return 0, nil
 	} else if err != nil {
@@ -276,10 +282,45 @@ func (s *Service) getLockDuration(email string) (time.Duration, error) {
 // ! DEV/TEST functions
 func (s *Service) GetConfirmationCode(email string) (string, error) {
 	var code string
-	err := mydb.GlobalDB.QueryRow("SELECT code FROM confirmation_codes WHERE email = $1 ORDER BY expiration_time DESC LIMIT 1", email).Scan(&code)
+	err := s.repo.QueryRow("SELECT code FROM confirmation_codes WHERE email = $1 ORDER BY expiration_time DESC LIMIT 1", email).Scan(&code)
 	if err != nil {
 		logger.ErrorLogger.Printf("Confirmation code not found for Email: %v", email)
 		return "", err
 	}
 	return code, nil
+}
+
+func (s *Service) ResetPasswordConfirm(token, code string) error {
+	claims, err := utility.ParseResetToken(token)
+	if err != nil {
+		return myerrors.ErrInternal
+	}
+
+	var registerRequest utility.UserAuthenticationRequest
+	registerRequest, err = utility.VerifyResetJWTToken(token)
+	if err != nil {
+		return myerrors.ErrInvalidToken
+	}
+
+	codeCheckResponse := s.CheckConfirmationCode(registerRequest.Email, token, code)
+	if codeCheckResponse.Err != "nil" {
+		return myerrors.ErrInternal
+	}
+
+	err = s.DeleteConfirmationCode(registerRequest.Email, code)
+	if err != nil {
+		return fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+
+	}
+	claims["confirmed"] = true
+	return nil
+}
+
+func (s *Service) ResetPassword(email, password string) error {
+	hashedPassword, err := utility.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	_, err = s.repo.Exec("UPDATE users SET hashed_password = $1 WHERE email = $2", hashedPassword, email)
+	return err
 }

@@ -471,3 +471,15 @@ func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]mod
 
 	return operations, nil
 }
+
+type Categories interface {
+	GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error)
+	GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error)
+	GetUserInfoFromDB(userID string) (string, string, error)
+	GetMoreFromDB(userID string) (*More, error)
+	GetAppFromDB(userID string) (*models2.App, error)
+	GetSubscriptionFromDB(userID string) (*models2.Subscription, error)
+	GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error)
+	GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error)
+	GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error)
+}

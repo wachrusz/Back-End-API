@@ -6,8 +6,6 @@ package user
 
 import (
 	"fmt"
-	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
-	"github.com/wachrusz/Back-End-API/internal/service/categories"
 )
 
 type UserProfile struct {
@@ -23,12 +21,12 @@ var (
 )
 
 func (s *Service) GetProfile(userID string) (*UserProfile, error) {
-	surname, name, err := categories.GetUserInfoFromDB(userID)
+	surname, name, err := s.categories.GetUserInfoFromDB(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user information")
 	}
 
-	avatarURL, err := GetAvatarInfo(userID)
+	avatarURL, err := s.getAvatarInfo(userID)
 	if err != nil {
 		avatarURL = "null"
 	}
@@ -42,6 +40,6 @@ func (s *Service) GetProfile(userID string) (*UserProfile, error) {
 }
 
 func (s *Service) UpdateUserNameInDB(userID, newName, newSurname string) error {
-	_, err := mydb.GlobalDB.Exec("UPDATE users SET name = $1, surname = $3 WHERE id = $2", newName, userID, newSurname)
+	_, err := s.repo.Exec("UPDATE users SET name = $1, surname = $3 WHERE id = $2", newName, userID, newSurname)
 	return err
 }

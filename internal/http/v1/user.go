@@ -55,7 +55,7 @@ func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	token, err := h.s.Users.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
+	token, err := h.s.Tokens.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
 	if err != nil {
 		switch err {
 		case myerrors.ErrDuplicated:
@@ -98,7 +98,7 @@ func (h *MyHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.s.Users.ResetPassword(email)
+	err = h.s.Tokens.ResetPassword(email)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
 	}
@@ -133,7 +133,7 @@ func (h *MyHandler) ChangePasswordForRecoverHandler(w http.ResponseWriter, r *ht
 	}
 
 	resetToken := resetRequest.ResetToken
-	err = h.s.Users.ChangePasswordForRecover(email, password, resetToken)
+	err = h.s.Tokens.ChangePasswordForRecover(email, password, resetToken)
 	if err != nil {
 		var statusCode = 500
 		switch {
@@ -188,7 +188,7 @@ func (h *MyHandler) Login(w http.ResponseWriter, r *http.Request) {
 	email := loginRequest.Email
 	password := loginRequest.Password
 
-	token, err := h.s.Users.Login(email, password)
+	token, err := h.s.Tokens.Login(email, password)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrEmpty) || errors.Is(err, myerrors.ErrInvalidCreds):
@@ -235,7 +235,7 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	access, refresh, err := h.s.Users.RefreshToken(tmpToken.RefreshToken, userID)
+	access, refresh, err := h.s.Tokens.RefreshToken(tmpToken.RefreshToken, userID)
 	if err != nil {
 		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
 		return
