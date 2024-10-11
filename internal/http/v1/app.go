@@ -23,7 +23,7 @@ import (
 // @Failure 500 {string} string "Error creating expense category"
 // @Security JWT
 // @Router /app/category/expense [post]
-func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.ExpenseCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
@@ -57,7 +57,7 @@ func CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Error creating income category"
 // @Security JWT
 // @Router /app/category/income [post]
-func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.IncomeCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
@@ -91,7 +91,7 @@ func CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "Error creating investment category"
 // @Security JWT
 // @Router /app/category/investment [post]
-func CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	var category models.InvestmentCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {

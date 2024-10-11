@@ -23,7 +23,7 @@ import (
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error creating subscription"
 // @Router /settings/subscription [post]
-func CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	var subscription models.Subscription
 
 	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
