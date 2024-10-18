@@ -48,7 +48,7 @@ jobs:
         
     - name: List files before deploy
       run: |
-        ls -la
+        ls
 
     - name: Print current working directory
       run: pwd
@@ -62,5 +62,5 @@ jobs:
 
     - name: Deploy using Docker Compose (cadv_api)
       run: |
-        docker-compose -f docker-compose.yml up -d
+        docker-compose -f ./build/docker-compose.yml up -d
 
