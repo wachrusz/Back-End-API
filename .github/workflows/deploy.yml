@@ -40,13 +40,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+    
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+        
     - name: List files before deploy
       run: |
         ls -la
 
     - name: Print current working directory
       run: pwd
-      
 #    - name: Create .env file for deploy (cadv_api)
 #      run: |
 #        echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
