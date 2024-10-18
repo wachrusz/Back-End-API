@@ -33,7 +33,7 @@ jobs:
 
       - name: Build and push Docker images using Docker Compose
         run: |
-          docker build -f build/dockerfile -t cashadvisorbeta/cadv_email:latest .
-          docker push cashadvisorbeta/cadv_email:latest
+          docker-compose -f build/docker-compose.yml build
+          docker-compose -f build/docker-compose.yml push
           timeout 30s docker-compose -f build/docker-compose.yml up
 
