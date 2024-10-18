@@ -47,15 +47,15 @@ jobs:
     - name: Print current working directory
       run: pwd
       
-    - name: Create .env file for deploy (cadv_api)
-      run: |
-        echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
-        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> build/.env
-        echo "HOST=${{ secrets.HOST }}" >> build/.env
-        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
-        echo "SECRT_REFRESH_KEY=${{ secrets.SECRET_REFRESH_KEY }}" >> build/.env
+#    - name: Create .env file for deploy (cadv_api)
+#      run: |
+#        echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
+#        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> build/.env
+#        echo "HOST=${{ secrets.HOST }}" >> build/.env
+#        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
+#        echo "SECRT_REFRESH_KEY=${{ secrets.SECRET_REFRESH_KEY }}" >> build/.env
 
     - name: Deploy using Docker Compose (cadv_api)
       run: |
-        docker-compose -f build/docker-compose.yml up -d
+        docker-compose -f docker-compose.yml up -d
 
