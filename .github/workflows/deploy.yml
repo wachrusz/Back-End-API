@@ -40,8 +40,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - name: List files in build directory
-      run: ls -la build 
+    - name: List files before deploy
+      run: |
+        ls -la
+
+    - name: Print current working directory
+      run: pwd
       
     - name: Create .env file for deploy (cadv_api)
       run: |
