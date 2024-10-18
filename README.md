@@ -27,8 +27,9 @@ The **Cash Advisor API** is a comprehensive backend service designed to manage u
 >
 
 # External Services
-- [cadv_email([Author: Rostislav Zhukov](https://github.com/zhukovrost/))](https://github.com/zhukovrost/cadv_email)
-- [cadv_logger([Author: Rostislav Zhukov](https://github.com/zhukovrost/))](https://github.com/zhukovrost/cadv_logger)
+>[Rostislav Zhukov](https://github.com/zhukovrost/)
+>>[cadv_email](https://github.com/zhukovrost/cadv_email)
+>>[cadv_logger](https://github.com/zhukovrost/cadv_logger)
 
 # Error Handling
 
