@@ -1,13 +1,14 @@
 package app
 
 import (
+	"net/http"
+
 	"github.com/wachrusz/Back-End-API/internal/config"
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
-	"net/http"
 )
 
 func Run(cfg *config.Config) error {
@@ -45,7 +46,7 @@ func Run(cfg *config.Config) error {
 	go services.Currency.ScheduleCurrencyUpdates()
 
 	//changed tls hosting now everything works
-	err = http.ListenAndServeTLS(":8080", cfg.CrtPath, cfg.CrtPath, nil)
+	err = http.ListenAndServeTLS(":8080", cfg.CrtPath, cfg.KeyPath, nil)
 	if err != nil {
 		return err
 	}

@@ -26,7 +26,7 @@ The **Cash Advisor API** is a comprehensive backend service designed to manage u
 >>Swagger UI
 >
 
-# External Services
+# External Services&Packages
 >[Rostislav Zhukov](https://github.com/zhukovrost/)
 >>[cadv_email](https://github.com/zhukovrost/cadv_email)
 >>
