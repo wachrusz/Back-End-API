@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  api:
+    image: cashadvisorbeta/cadv_api:latest
+    env_file: .env
+    ports:
+      - '8080:8080'
+    restart: unless-stopped
+    network_mode: "host"
+
+  email-sender:
+    image: cashadvisorbeta/cadv_email:latest
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    env_file:
+      - .env
+    ports:
+      - '5672:5672'
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "node_health_check"]
+      interval: 30s
+      retries: 3
+      timeout: 10s
+
+volumes:
+  rabbitmq:
