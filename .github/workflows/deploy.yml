@@ -40,21 +40,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-          
-      - name: Create build directory and .env file for deploy (cadv_api)
-        run: |
-          mkdir -p build
-          echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> build/.env
-          echo "HOST=${{ secrets.HOST }}" >> build/.env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
-          echo "SECRT_REFRESH_KEY=${{ secrets.SECRET_REFRESH_KEY }}" >> build/.env
-  
-      - name: Deploy using Docker Compose (cadv_api)
-        run: |
-          docker-compose -f build/docker-compose.yml up -d
+    - name: Create build directory and move docker-compose.yml
+      run: |
+        mkdir -p build   # создаем директорию, если ее нет
+        cp docker-compose.yml build/docker-compose.yml  # копируем файл в build
+
+    - name: Create .env file for deploy (cadv_api)
+      run: |
+        echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> build/.env
+        echo "HOST=${{ secrets.HOST }}" >> build/.env
+        echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
+        echo "SECRT_REFRESH_KEY=${{ secrets.SECRET_REFRESH_KEY }}" >> build/.env
+
+    - name: Deploy using Docker Compose (cadv_api)
+      run: |
+        docker-compose -f build/docker-compose.yml up -d
 
