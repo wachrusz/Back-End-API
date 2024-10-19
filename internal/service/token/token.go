@@ -300,12 +300,12 @@ func (s *Service) ConfirmEmail(token, code, deviceID string) (*Details, error) {
 	if codeCheckResponse.Err != "nil" {
 		return nil, myerrors.ErrInternal
 	}
-
+/*
 	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
-
+*/
 	err = s.user.Register(registerRequest.Email, registerRequest.Password)
 	if err != nil {
 		return nil, fmt.Errorf("%w: error registring user: %v", myerrors.ErrInternal, err)
