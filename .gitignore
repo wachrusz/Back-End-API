@@ -16,7 +16,10 @@
 
 # Dependency directories (remove the comment below to include it)
 build/.env
-secret/
+secret/ok_server.crt
+secret/ok_server.csr
+secret/ok_server.key
+secret/.env
 test/
 .idea/
 
