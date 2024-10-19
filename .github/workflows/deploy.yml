@@ -21,7 +21,6 @@ jobs:
           echo "${{ secrets.TEST_SERVER_SECRET_CRT }}" > secret/ok_server.crt
           echo "${{ secrets.TEST_SERVER_SECRET_KEY }}" > secret/ok_server.key
           echo "${{ secrets.TEST_SERVER_SECRET_CSR }}" > secret/ok_server.csr
-          echo "${{ secrets.SECRET_GO}}" > secret/secret.go
 
       - name: Create .env file for cadv_api
         run: |
