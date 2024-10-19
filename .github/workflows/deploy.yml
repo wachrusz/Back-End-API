@@ -14,14 +14,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
-          
-      - name: Create .env file for cadv_api
-        run: |
-          echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> secret/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> secret/.env
-          echo "HOST=${{ secrets.HOST }}" >> secret/.env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> secret/.env
-          echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> secret/.env
       
       - name: Create secret folder and add certificates
         run: |
@@ -30,6 +22,14 @@ jobs:
           echo "${{ secrets.TEST_SERVER_SECRET_KEY }}" > secret/ok_server.key
           echo "${{ secrets.TEST_SERVER_SECRET_CSR }}" > secret/ok_server.csr
           echo "${{ secrets.SECRET_GO}}" > secret/secret.go
+
+      - name: Create .env file for cadv_api
+        run: |
+          echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> secret/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> secret/.env
+          echo "HOST=${{ secrets.HOST }}" >> secret/.env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> secret/.env
+          echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> secret/.env
           
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
