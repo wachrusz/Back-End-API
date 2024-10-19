@@ -17,11 +17,11 @@ jobs:
           
       - name: Create .env file for cadv_api
         run: |
-          echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> build/.env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> build/.env
-          echo "HOST=${{ secrets.HOST }}" >> build/.env
-          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
-          echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> build/.env
+          echo "CURRENCY_URL=${{ secrets.CURRENCY_URL }}" >> secret/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> secret/.env
+          echo "HOST=${{ secrets.HOST }}" >> secret/.env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> secret/.env
+          echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> secret/.env
       
       - name: Create secret folder and add certificates
         run: |
