@@ -352,14 +352,13 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, err
 	if codeCheckResponse.Err != "nil" {
 		return nil, myerrors.ErrInternal
 	}
-
+/*
 	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
-
+*/
 	//! SESSIONS
-
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
 		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
