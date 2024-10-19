@@ -27,6 +27,13 @@ jobs:
           echo "HOST=${{ secrets.HOST }}" >> build/.env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> build/.env
           echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> build/.env
+      
+      - name: Create secret folder and add certificates
+        run: |
+          mkdir -p secret
+          echo "${{ secrets.TEST_SERVER_SECRET_CRT }}" > secret/ok_server.crt
+          echo "${{ secrets.TEST_SERVER_SECRET_KEY }}" > secret/ok_server.key
+          echo "${{ secrets.TEST_SERVER_SECRET_CSR }}" > secret/ok_server.csr
           
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
