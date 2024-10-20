@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// @Summary Register user
+// @Summary RegisterUserHandler user
 // @Description Register a new user.
 // @Tags Auth
 // @Accept json
@@ -24,7 +24,7 @@ import (
 // @Param name query string true "Name"
 // @Success 200 {string} string "User registered successfully"
 // @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error registering user"
+// @Failure 409 {string} string "Already exists"
 // @Router /auth/register [post]
 func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
@@ -59,9 +59,9 @@ func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		switch err {
 		case myerrors.ErrDuplicated:
-
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("error registring user: already exists"), http.StatusConflict)
 		default:
-			jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid request payload: %v", err.Error()), http.StatusBadRequest)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("error registring user: invalid request payload: %v", err.Error()), http.StatusBadRequest)
 		}
 		return
 	}
