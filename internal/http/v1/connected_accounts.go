@@ -1,18 +1,15 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/models"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 )
 
+// AddConnectedAccountHandler handles the creation of a new connected account.
+//
 // @Summary Create a connected account
 // @Description Create a new connected account.
 // @Tags App
@@ -21,27 +18,29 @@ import (
 // @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
 // @Success 201 {string} string "Connected account created successfully"
 // @Failure 400 {string} string "Invalid request payload"
+// @Failure 401 {string} string "User not authenticated"
 // @Failure 500 {string} string "Error adding connected account"
 // @Security JWT
 // @Router /app/connected-accounts/add [post]
 func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
-	var account models.ConnectedAccount
+	h.l.Debug("Adding a new connected account...")
 
+	var account models.ConnectedAccount
 	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 	account.UserID = userID
 
 	connectedAccountID, err := models.AddConnectedAccount(&account)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error adding connected account: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error adding connected account: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -54,31 +53,37 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(response)
 }
 
+// DeleteConnectedAccountHandler handles the deletion of an existing connected account.
+//
 // @Summary Delete a connected account
 // @Description Delete an existing connected account.
 // @Tags App
 // @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
-// @Success 201 {string} string "Connected account created successfully"
+// @Success 201 {string} string "Connected account deleted successfully"
 // @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error adding connected account"
+// @Failure 401 {string} string "User not authenticated"
+// @Failure 500 {string} string "Error deleting connected account"
 // @Security JWT
 // @Router /app/connected-accounts/delete [delete]
 func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting connected account...")
+
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("Error deleting connected account: UNAUTHORIZED"), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
 	err := models.DeleteConnectedAccount(userID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error deleting connected account: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error deleting connected account: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	response := map[string]interface{}{
-		"message":     "Successfuly deleted connected account",
+		"message":     "Successfully deleted connected account",
 		"status_code": http.StatusCreated,
 	}
+	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
 }

@@ -1,18 +1,16 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/models"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
+	"go.uber.org/zap"
 	"net/http"
 )
 
+// CreateWealthFundHandler creates a new wealth fund in the database.
+//
 // @Summary Create a wealth fund
 // @Description Create a new wealth fund.
 // @Tags Analytics
@@ -26,26 +24,33 @@ import (
 // @Security JWT
 // @Router /analytics/wealth_fund [post]
 func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Creating a new wealth fund...")
+
+	// Decode the request payload
 	var wealthFund models.WealthFund
 	if err := json.NewDecoder(r.Body).Decode(&wealthFund); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
+	// Assign user ID to the wealth fund
 	wealthFund.UserID = userID
 
+	// Create a new wealth fund in the database
 	wealthFundID, err := models.CreateWealthFund(&wealthFund)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error creating wealthFund: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error creating wealth fund: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send success response
 	response := map[string]interface{}{
 		"message":           "Successfully created a wealth fund",
 		"created_object_id": wealthFundID,
@@ -53,4 +58,6 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	}
 	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Wealth fund created successfully", zap.Int64("wealthFundID", wealthFundID))
 }

@@ -10,7 +10,6 @@ import (
 	models2 "github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	"math"
 	"time"
 
@@ -185,7 +184,6 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
 	rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
-		logger.ErrorLogger.Print("Error getting Goal From DB: (userID, error) ", userID, err)
 		return nil, err
 	}
 	defer rowsGoal.Close()
@@ -260,7 +258,6 @@ func (s *Service) GetUserInfoFromDB(userID string) (string, string, error) {
 	row := s.repo.QueryRow(query, userID)
 	err := row.Scan(&surname, &name)
 	if err != nil {
-		logger.ErrorLogger.Print("Error getting user information from DB: ", err)
 		return "", "", err
 	}
 
@@ -280,7 +277,6 @@ func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 
 	app, err := s.GetAppFromDB(userID)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error in GetAppFromDB: %v", err)
 	}
 
 	settings.Subscriptions = *subs

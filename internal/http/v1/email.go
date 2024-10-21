@@ -5,18 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
-	token2 "github.com/wachrusz/Back-End-API/internal/service/token"
+	"github.com/wachrusz/Back-End-API/internal/service/token"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 	"time"
 )
 
+// SendConfirmationEmailTestHandler sends a confirmation email with a code.
+//
+// @Summary Send confirmation email
+// @Description Sends a confirmation email with a generated code.
+// @Tags Email
+// @Param email query string true "Email address"
+// @Param token query string true "Token"
+// @Success 200 {string} string "Successfully sent confirmation code"
+// @Failure 500 {string} string "Internal server error"
+// @Router /email/send-confirmation [post]
 func (h *MyHandler) SendConfirmationEmailTestHandler(email, token string, w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Sending confirmation email...")
 	confirmationCode, err := utility.GenerateConfirmationCode()
 	if err != nil {
-		logger.ErrorLogger.Printf("Error in generating confirmation code for Email: %v", email)
 		return
 	}
 
@@ -36,7 +45,19 @@ func (h *MyHandler) SendConfirmationEmailTestHandler(email, token string, w http
 	json.NewEncoder(w).Encode(response)
 }
 
+// GetConfirmationCodeTestHandler retrieves the confirmation code for a specific email.
+//
+// @Summary Get confirmation code
+// @Description Retrieves the confirmation code for the provided email.
+// @Tags Email
+// @Param email query string true "Email address"
+// @Success 200 {string} string "Successfully retrieved confirmation code"
+// @Failure 400 {string} string "Invalid email"
+// @Failure 500 {string} string "Internal server error"
+// @Router /email/get-confirmation-code [get]
 func (h *MyHandler) GetConfirmationCodeTestHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Retrieving confirmation code...")
+
 	type jsonEmail struct {
 		Email string `json:"email"`
 	}
@@ -45,9 +66,9 @@ func (h *MyHandler) GetConfirmationCodeTestHandler(w http.ResponseWriter, r *htt
 	/*
 		var email_struct jsonEmail
 
-			err := json.NewDecoder(r.Body).Decode(&email_struct)
-			if err != nil {
-				jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+			errResp := json.NewDecoder(r.Body).Decode(&email_struct)
+			if errResp != nil {
+				jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+errResp.Error()), http.StatusBadRequest)
 				return
 			}
 			email := email_struct.Email
@@ -76,7 +97,21 @@ func (h *MyHandler) GetConfirmationCodeTestHandler(w http.ResponseWriter, r *htt
 	json.NewEncoder(w).Encode(response)
 }
 
+// ConfirmEmailHandler confirms the user's email using a confirmation token and code.
+//
+// @Summary Confirm email
+// @Description Confirms the user's email using a token and confirmation code.
+// @Tags Email
+// @Accept json
+// @Produce json
+// @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
+// @Success 200 {string} string "Successfully confirmed email"
+// @Failure 400 {string} string "Invalid request or missing token"
+// @Failure 500 {string} string "Internal server error"
+// @Router /email/confirm [post]
 func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Confirming email...")
+
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		err := errors.New("Empty 'Content-Type' HEADER")
@@ -84,7 +119,7 @@ func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var confirmRequest token2.ConfirmEmailRequest
+	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
@@ -129,7 +164,20 @@ func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(response)
 }
 
+// ConfirmEmailLoginHandler confirms a user's email for login.
+//
+// @Summary Confirm email for login
+// @Description Confirms the user's email for login using a token and confirmation code.
+// @Tags Email
+// @Accept json
+// @Produce json
+// @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
+// @Success 200 {string} string "Successfully confirmed email for login"
+// @Failure 400 {string} string "Invalid request or missing token"
+// @Failure 500 {string} string "Internal server error"
+// @Router /email/confirm-login [post]
 func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Confirming email for login...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		err := errors.New("Empty 'Content-Type' HEADER")
@@ -137,7 +185,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var confirmRequest token2.ConfirmEmailRequest
+	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
@@ -182,7 +230,20 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(response)
 }
 
+// ResetPasswordConfirmHandler confirms the password reset process.
+//
+// @Summary Confirm password reset
+// @Description Confirms the password reset process using a token and code.
+// @Tags Password
+// @Accept json
+// @Produce json
+// @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
+// @Success 200 {string} string "Successfully confirmed password reset"
+// @Failure 400 {string} string "Invalid request or missing token"
+// @Failure 500 {string} string "Internal server error"
+// @Router /password/reset-confirm [post]
 func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Confirming password reset...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		err := errors.New("Empty 'Content-Type' HEADER")
@@ -190,7 +251,7 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	var confirmRequest token2.ConfirmEmailRequest
+	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
