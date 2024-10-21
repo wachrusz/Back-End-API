@@ -1,3017 +1,1366 @@
 {
-  "schemes": [
-    "https"
-  ],
-  "swagger": "2.0",
-  "info": {
-    "description": "Backend API for managing user profiles, authentication, analytics, and more.",
-    "title": "Cash Advisor API",
-    "contact": {
-      "name": "Mikhail Vakhrushin",
-      "email": "lstwrd@yandex.com"
+    "schemes": [
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Backend API for managing user profiles, authentication, analytics, and more.",
+        "title": "Cash Advisor API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "Mikhail Vakhrushin",
+            "email": "wachrusz@gmail.com"
+        },
+        "version": "0.1"
     },
-    "version": "0.9.6"
-  },
-  "host": "212.233.78.3:8080",
-  "basePath": "/v1",
-  "paths": {
-    "/api/emojis/get/{id}": {
-      "get": {
-        "tags": [
-          "API"
-        ],
-        "summary": "Получить изображение по идентификатору",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
+    "host": "localhost:8080",
+    "basePath": "/v1",
+    "paths": {
+        "/analytics/income": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new income record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Create an income",
+                "parameters": [
+                    {
+                        "description": "Income object",
+                        "name": "income",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Income"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Income created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating income",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
-          },
-          "500": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
+        },
+        "/analytics/wealth_fund": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new wealth fund.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Create a wealth fund",
+                "parameters": [
+                    {
+                        "description": "Wealth fund object",
+                        "name": "wealthFund",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.WealthFund"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Wealth fund created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating wealth fund",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
-          }
+        },
+        "/app/category/expense": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Creates a new expense category in the database and returns its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "CreateExpenseCategoryHandler an expense category",
+                "parameters": [
+                    {
+                        "description": "Expense category object",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ExpenseCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Expense category created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense category",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/category/income": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new income category.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create an income category",
+                "parameters": [
+                    {
+                        "description": "Income category object",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.IncomeCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Income category created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating income category",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/category/investment": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new investment category.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create an investment category",
+                "parameters": [
+                    {
+                        "description": "Investment category object",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.InvestmentCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Investment category created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating investment category",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/connected-accounts/add": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new connected account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Create a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding connected account",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/connected-accounts/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete an existing connected account.",
+                "tags": [
+                    "App"
+                ],
+                "summary": "Delete a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account deleted successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting connected account",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "Login to the system and get an authentication token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login to the system",
+                "parameters": [
+                    {
+                        "description": "UserAuthenticationRequest object",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.UserAuthenticationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Logs out the user, terminating the session.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout the user",
+                "responses": {
+                    "200": {
+                        "description": "Logout successful",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Register a new user in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name",
+                        "name": "name",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User registered successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "User already exists",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/confirm": {
+            "post": {
+                "description": "Confirms the user's email using a token and confirmation code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Confirm email",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully confirmed email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/confirm-login": {
+            "post": {
+                "description": "Confirms the user's email for login using a token and confirmation code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Confirm email for login",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully confirmed email for login",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/get-confirmation-code": {
+            "get": {
+                "description": "Retrieves the confirmation code for the provided email.",
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Get confirmation code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email address",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved confirmation code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/send-confirmation": {
+            "post": {
+                "description": "Sends a confirmation email with a generated code.",
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Send confirmation email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email address",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully sent confirmation code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses": {
+            "post": {
+                "description": "Create a new expense record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Create an expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Expense"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created an expense",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/history/add": {
+            "post": {
+                "description": "Add a new entry to the history.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "History"
+                ],
+                "summary": "Add history entry",
+                "responses": {
+                    "200": {
+                        "description": "History entry added successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/history/get": {
+            "get": {
+                "description": "Get a list of history entries.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "History"
+                ],
+                "summary": "Get history entries",
+                "responses": {
+                    "200": {
+                        "description": "List of history entries",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/password/reset-confirm": {
+            "post": {
+                "description": "Confirms the password reset process using a token and code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Password"
+                ],
+                "summary": "Confirm password reset",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully confirmed password reset",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/get": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Get the user profile for the authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "User profile retrieved successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error getting user profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/update-name": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update the user profile for the authenticated user with a new name and surname.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Update user profile with name",
+                "parameters": [
+                    {
+                        "description": "New name to be added to the profile",
+                        "name": "name",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile updated successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating user profile",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/settings/subscription": {
+            "post": {
+                "description": "Create a new subscription record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Create a subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription object",
+                        "name": "subscription",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Subscription"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Subscription created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating subscription",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/support/request": {
+            "post": {
+                "description": "Send a support request to the technical support team.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Support"
+                ],
+                "summary": "Send support request",
+                "parameters": [
+                    {
+                        "description": "Support request object",
+                        "name": "supportRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.SupportRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Support request sent successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error sending support request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/tracker/goal": {
+            "post": {
+                "description": "Create a new goal.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Create a goal",
+                "parameters": [
+                    {
+                        "description": "Goal object",
+                        "name": "goal",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Goal"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Goal created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating goal",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
-      }
     },
-    "/api/emojis/put": {
-      "put": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "API"
-        ],
-        "summary": "Upload  image",
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "image",
-            "in": "formData",
-            "description": "The image file to upload",
-            "required": true,
-            "type": "file"
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful upload",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Successful upload message"
+    "definitions": {
+        "models.ConnectedAccount": {
+            "type": "object",
+            "properties": {
+                "account_number": {
+                    "type": "string"
                 },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 201
+                "account_type": {
+                    "type": "string"
                 },
-                "avatar_url": {
-                  "type": "string",
-                  "example": "https://{BaseURL}/v1/api/emojis/get/{encryptedID}"
+                "bank_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
-              }
             }
-          },
-          "400": {
-            "description": "Unsuccessful upload",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Unsuccessful upload"
+        },
+        "models.Expense": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
                 },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 400
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "type": "boolean"
+                },
+                "sent_to": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
-              }
             }
-          },
-          "500": {
-            "description": "Server error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Unsuccessful upload"
+        },
+        "models.ExpenseCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
                 },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 500
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
-              }
             }
-          }
-        }
-      }
-    },
-    "/dev/confirmation-code/get": {
-      "get": {
-        "tags": [
-          "Dev"
-        ],
-        "description": "Retrieve confirmation code for a given email.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "email",
-            "in": "query",
-            "description": "Request body containing email",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved confirmation code.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful retrieval of confirmation code."
+        },
+        "models.Goal": {
+            "type": "object",
+            "properties": {
+                "current_state": {
+                    "type": "number"
                 },
+                "goal": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "need": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Income": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "type": "boolean"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.IncomeCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.InvestmentCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Subscription": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WealthFund": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "$ref": "#/definitions/models.WelfareFund"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WelfareFund": {
+            "type": "integer",
+            "enum": [
+                0,
+                1
+            ],
+            "x-enum-varnames": [
+                "Planned",
+                "Unplanned"
+            ]
+        },
+        "token.ConfirmEmailRequest": {
+            "type": "object",
+            "properties": {
                 "code": {
-                  "type": "string",
-                  "description": "Retrieved confirmation code."
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Email Not Found.",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/tokens/delete": {
-      "delete": {
-        "tags": [
-          "Auth"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "email",
-            "in": "query",
-            "description": "Request body containing email",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "deviceID",
-            "in": "query",
-            "description": "Request body containing email",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfuly deleted tokens",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string"
-                },
-                "status_code": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Server Error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/tokens/ammount": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "email",
-            "in": "query",
-            "description": "Request body containing email",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfuly obtained",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string"
-                },
-                "ammount": {
-                  "type": "integer"
-                },
-                "status_code": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Server Error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Auth"
-        ],
-        "description": "Refreshes the access token using the provided refresh token.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing the refresh token",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/RefreshTokenRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully refreshed access token",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "access_token": {
-                  "type": "string",
-                  "description": "Refreshed access token"
-                },
-                "refresh_token": {
-                  "type": "string",
-                  "description": "Refresh token"
-                },
-                "access_token_life_time": {
-                  "type": "integer"
-                },
-                "refresh_token_life_time": {
-                  "type": "integer"
-                },
-                "code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or expired refresh token",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to refresh token",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/reset/password/put": {
-      "put": {
-        "summary": "Reset Password for Recovery",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Resets the user password using a valid reset token.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing email and password for password reset",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserResetRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Password reset successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating the successful password reset"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or expired reset token",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to reset password",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/reset/password": {
-      "post": {
-        "summary": "Initiate Password Reset",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Initiates the password reset process by sending a confirmation email with a reset token.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing the email for password reset",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ResetPasswordRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Password reset initiated successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating the user to confirm their email"
+                    "type": "string"
                 },
                 "token": {
-                  "type": "string",
-                  "description": "Reset token for the user"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
+                    "type": "string"
                 }
-              }
             }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to generate token or send email",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/google": {
-      "get": {
-        "summary": "Initiate Google OAuth Login",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Initiates the Google OAuth login process. Redirects the user to the Google OAuth authorization page.\n",
-        "responses": {
-          "307": {
-            "description": "Temporary Redirect",
-            "headers": {
-              "Location": {
-                "type": "string",
-                "description": "The URL to redirect the user for Google OAuth login."
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/vk": {
-      "get": {
-        "summary": "Initiate VK OAuth Login",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Initiates the VK (Vkontakte) OAuth login process. Redirects the user to the VK OAuth authorization page.\n",
-        "responses": {
-          "307": {
-            "description": "Temporary Redirect",
-            "headers": {
-              "Location": {
-                "type": "string",
-                "description": "The URL to redirect the user for VK OAuth login."
-              }
-            }
-          }
-        }
-      }
-    },
-    "/analytics/expense": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "summary": "Create Expense",
-        "tags": [
-          "Analytics"
-        ],
-        "description": "Create a new expense for the authenticated user.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Expense creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.Expense"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully created an expense",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful expense creation"
+        },
+        "user.UserAuthenticationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
                 },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
+                "password": {
+                    "type": "string"
                 }
-              }
             }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create expense",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/analytics/income": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ],
-        "description": "Create a new income for the authenticated user.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Income creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.Income"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully created an income",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful income creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create income",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/analytics/wealth_fund": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "description": "Create a new wealth fund.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Analytics"
-        ],
-        "summary": "Create a wealth fund",
-        "parameters": [
-          {
-            "description": "Wealth fund object",
-            "name": "wealthFund",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.WealthFund"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Wealth fund created successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful expense category creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request payload",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "401": {
-            "description": "User not authenticated",
-            "schema": {
-              "type": "string"
-            }
-          },
-          "500": {
-            "description": "Error creating wealth fund",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/app/category/expense": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Create a new expense category.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Expense category creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.ExpenseCategory"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully created an expense category",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful expense category creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create expense category",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/app/category/income": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Create a new income category.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Income category creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.IncomeCategory"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully created an income category",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful income category creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create income category",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/app/category/investment": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Create a new investment category.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Investment category creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/InvestmentCategory"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully created an investment category",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful investment category creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create investment category",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/app/connected-accounts/add": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Add a new connected account.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Connected account creation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/ConnectedAccount"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Connected account added successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful connected account addition"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid request payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to add connected account",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/app/connected-accounts/delete": {
-      "delete": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Delete the connected account for the authenticated user.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Successfuly deleted connected account",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful connected account deletion"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to delete connected account",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/app/report": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "App"
-        ],
-        "description": "Export user data to Excel and PDF formats.",
-        "produces": [
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "application/pdf"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Successfully exported data"
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to export data",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login": {
-      "post": {
-        "summary": "User Login",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Authenticates a user and generates an access token.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing email and password for login",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserAuthenticationRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Password reset initiated successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating the user to confirm their email"
-                },
-                "token": {
-                  "type": "string",
-                  "description": "Reset token for the user"
-                },
-                "status_code": {
-                  "type": "string",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid email or password",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to generate token",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/confirm": {
-      "post": {
-        "summary": "Confirm Login",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Confirming email code to log in\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request containing",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/LoginConf"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "schema": {
-              "$ref": "#/definitions/LoginResponse"
-            }
-          },
-          "400": {
-            "description": "Invalid Request Payload",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Wrong confirmation code",
-            "schema": {
-              "$ref": "#/definitions/CheckResult"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to login",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/login/reset/password/confirm": {
-      "post": {
-        "summary": "Confirm Password Reset",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Confirms a password reset by verifying the token and confirmation code.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing reset confirmation details",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/auth.ConfirmEmailRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Password reset confirmation successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful confirmation"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Wrong confirmation code",
-            "schema": {
-              "$ref": "#/definitions/CheckResult"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to confirm password reset",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/logout": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "summary": "Logout",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Logs out the authenticated user, removing the session.",
-        "produces": [
-          "application/json"
-        ],
-        "responses": {
-          "200": {
-            "description": "Logout successful",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful logout"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Invalid or expired token",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to remove session",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/register": {
-      "post": {
-        "summary": "Register User",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Registers a new user and sends a confirmation email.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Registration request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserAuthenticationRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Confirm your email",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating the need to confirm the email"
-                },
-                "token": {
-                  "type": "string",
-                  "description": "JWT token for email confirmation"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid email or missing Content-Type header",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to generate confirmation token or send confirmation email",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/auth/register/confirm-email": {
-      "post": {
-        "summary": "Confirm Email",
-        "tags": [
-          "Auth"
-        ],
-        "description": "Confirm user's email based on the received token and confirmation code.",
-        "produces": [
-          "application/json"
-        ],
-        "consumes": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Confirmation request payload",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/auth.ConfirmEmailRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Confirmed Successfuly",
-            "schema": {
-              "$ref": "#/definitions/LoginResponse"
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid token or missing Content-Type header",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Wrong confirmation code",
-            "schema": {
-              "$ref": "#/definitions/CheckResult"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to confirm email or register user",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/docs/swagger.json": {
-      "get": {
-        "description": "Get the Swagger JSON file.",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Swagger"
-        ],
-        "summary": "Get Swagger JSON",
-        "responses": {
-          "200": {
-            "description": "Swagger JSON retrieved successfully",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/history/add": {
-      "post": {
-        "description": "Add a new entry to the history.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "History"
-        ],
-        "summary": "Add history entry",
-        "responses": {
-          "200": {
-            "description": "History entry added successfully",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/history/get": {
-      "get": {
-        "description": "Get a list of history entries.",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "History"
-        ],
-        "summary": "Get history entries",
-        "responses": {
-          "200": {
-            "description": "List of history entries",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/profile/info/get": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Retrieve the user profile including analytics, tracker, and more.",
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the user profile",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status_code": {
-                  "type": "integer"
+        },
+        "v1.SupportRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
                 },
                 "message": {
-                  "type": "string"
+                    "type": "string"
                 },
-                "profile": {
-                  "$ref": "#/definitions/profile.UserProfile"
+                "name": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
                 }
-              }
             }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to retrieve user profile",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
         }
-      }
     },
-    "/profile/analytics/get": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Retrieve the user profile including analytics, tracker, and more.",
-        "parameters": [
-          {
-            "name": "X-Currency",
-            "type": "string",
-            "in": "header",
-            "description": "Header to point in which currency we need to convert money. If empty all in RUB. There are 3 currencies(EUR,USD,RUB)",
-            "required": false
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Number of operations to retrieve (default is 20)",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of operations to skip (default is 0)",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "name": "start_date",
-            "in": "query",
-            "description": "Default is 30 days ago",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "end_date",
-            "in": "query",
-            "description": "Default is now",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the user profile",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status_code": {
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "response_currency": {
-                  "type": "string"
-                },
-                "profile": {
-                  "$ref": "#/definitions/Analytics"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to retrieve user profile",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
+    "securityDefinitions": {
+        "JWT": {
+            "description": "To authorize,",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
-      }
-    },
-    "/profile/tracker/get": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Retrieve the user profile including analytics, tracker, and more.",
-        "parameters": [
-          {
-            "name": "X-Currency",
-            "type": "string",
-            "in": "header",
-            "description": "Header to point in which currency we need to convert money. If empty all in RUB. There are 3 currencies(EUR,USD,RUB)",
-            "required": false
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Number of operations to retrieve (default is 20)",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of operations to skip (default is 0)",
-            "required": false,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the user profile",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status_code": {
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "response_currency": {
-                  "type": "string"
-                },
-                "profile": {
-                  "$ref": "#/definitions/Tracker"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to retrieve user profile",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/profile/more/get": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Retrieve the user profile including analytics, tracker, and more.",
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved the user profile",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "status_code": {
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "profile": {
-                  "$ref": "#/definitions/More"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to retrieve user profile",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/profile/name/put": {
-      "put": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Updates the user's name.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing updated name and surname",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UpdateNameRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully updated profile",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful update"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to update profile",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/profile/image/put": {
-      "put": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "summary": "Upload user image",
-        "description": "Uploads a new image for the authenticated user",
-        "consumes": [
-          "multipart/form-data"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "image",
-            "in": "formData",
-            "description": "The image file to upload",
-            "required": true,
-            "type": "file"
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful upload",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Successful upload message"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 201
-                },
-                "avatar_url": {
-                  "type": "string",
-                  "example": "https://{BaseURL}/v1/profile/image/get/{encryptedID}"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Unsuccessful upload",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Unsuccessful upload"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 400
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Unsuccessful upload"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code",
-                  "example": 500
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/profile/image/get/{id}": {
-      "get": {
-        "tags": [
-          "Profile"
-        ],
-        "summary": "Получить изображение по идентификатору",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/settings/subscription": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Settings"
-        ],
-        "description": "Creates a new subscription.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing details for creating a subscription",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.Subscription"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Subscription created successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful subscription creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create subscription",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/support/request": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Support"
-        ],
-        "description": "Sends a support request.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing the support request details",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/handlers.SupportRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Support request sent successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful request"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to send support request",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/swagger/index.html": {
-      "get": {
-        "description": "Get the Swagger UI.",
-        "produces": [
-          "text/html"
-        ],
-        "tags": [
-          "Swagger"
-        ],
-        "summary": "Get Swagger UI",
-        "responses": {
-          "200": {
-            "description": "Swagger UI retrieved successfully",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/swagger/json": {
-      "get": {
-        "description": "Get the Swagger JSON file.",
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "Swagger"
-        ],
-        "summary": "Get Swagger JSON",
-        "responses": {
-          "200": {
-            "description": "Swagger JSON retrieved successfully",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/swagger/ui": {
-      "get": {
-        "description": "Get the Swagger UI.",
-        "produces": [
-          "text/html"
-        ],
-        "tags": [
-          "Swagger"
-        ],
-        "summary": "Get Swagger UI",
-        "responses": {
-          "200": {
-            "description": "Swagger UI retrieved successfully",
-            "schema": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "/tracker/goal": {
-      "post": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Tracker"
-        ],
-        "description": "Creates a new goal.\n",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "description": "Request body containing details for creating a goal",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/models.Goal"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Goal created successfully",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful goal creation"
-                },
-                "created_object_id": {
-                  "type": "string",
-                  "description": "creation id"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (201 Created)"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request - Invalid input or content type",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to create goal",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
-    },
-    "/profile/operation-archive/get": {
-      "get": {
-        "security": [
-          {
-            "JWT": []
-          }
-        ],
-        "tags": [
-          "Profile"
-        ],
-        "description": "Gets the operation archive for the authenticated user.\n",
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Number of operations to retrieve (default is 20)",
-            "required": false,
-            "type": "integer"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "description": "Number of operations to skip (default is 0)",
-            "required": false,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully retrieved operation archive",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "message": {
-                  "type": "string",
-                  "description": "Message indicating successful retrieval"
-                },
-                "status_code": {
-                  "type": "integer",
-                  "description": "HTTP status code (200 OK)"
-                },
-                "operation_archive": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Operation"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - User not authenticated",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Failed to retrieve operation archive",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      }
     }
-  },
-  "definitions": {
-    "LoginResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        },
-        "status_code": {
-          "type": "integer"
-        },
-        "access_token_life_time": {
-          "type": "integer",
-          "description": "Long"
-        },
-        "refresh_token_life_time": {
-          "type": "integer",
-          "description": "Long"
-        },
-        "device_id": {
-          "type": "string",
-          "description": "UUID 25 dig long"
-        },
-        "token_details": {
-          "$ref": "#/definitions/TokenDetails"
-        }
-      }
-    },
-    "TokenDetails": {
-      "type": "object",
-      "properties": {
-        "access_token": {
-          "type": "string"
-        },
-        "refresh_token": {
-          "type": "string"
-        },
-        "expires_at": {
-          "type": "integer"
-        }
-      }
-    },
-    "LoginConf": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "code": {
-          "type": "string"
-        },
-        "token": {
-          "type": "string"
-        }
-      }
-    },
-    "UpdateNameRequest": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Updated name"
-        },
-        "surname": {
-          "type": "string",
-          "description": "Updated surname"
-        }
-      }
-    },
-    "ResetPasswordRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "User's email address for password reset"
-        }
-      }
-    },
-    "UserAuthenticationRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "User's email address"
-        },
-        "password": {
-          "type": "string",
-          "description": "User's new password"
-        }
-      }
-    },
-    "UserResetRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "User's email address"
-        },
-        "password": {
-          "type": "string",
-          "description": "User's new password"
-        },
-        "reset_token": {
-          "type": "string",
-          "description": "User's reset token"
-        }
-      }
-    },
-    "CheckResult": {
-      "type": "object",
-      "properties": {
-        "remaining_attempts": {
-          "type": "integer"
-        },
-        "lock_duration": {
-          "type": "integer"
-        },
-        "error": {
-          "type": "string"
-        },
-        "status_code": {
-          "type": "integer"
-        }
-      }
-    },
-    "Error": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "type": "string",
-          "enum": [
-            "Message1",
-            "Message2",
-            "Message3",
-            "Message4",
-            "Message5",
-            "Message6",
-            "Message7",
-            "Message8",
-            "Message9",
-            "Message10",
-            "Message11",
-            "Message12",
-            "Message13",
-            "Message14",
-            "Message15",
-            "Message16",
-            "Message17",
-            "Message18",
-            "Message19",
-            "Message20",
-            "Message21",
-            "Message22",
-            "Message23",
-            "Message24",
-            "Message25",
-            "Message26",
-            "Message27",
-            "Message28",
-            "Message29",
-            "Message30",
-            "Message31",
-            "Message32",
-            "Message33",
-            "Message34",
-            "Message35",
-            "Message36",
-            "Message37",
-            "Message38",
-            "Message39",
-            "Message40",
-            "Message41",
-            "Message42",
-            "Message43",
-            "Message44",
-            "Message45",
-            "Message46",
-            "Message47",
-            "Message48",
-            "Message49",
-            "Message50",
-            "Message51"
-          ],
-          "description": "error:\n  * Already logged in\n  * Error appeared in token_ivalidation\n  * Error confirming email: |Error from Server|\n  * Error confirming email: |Error from Server|\n  * Error creating expense category: |Error from Server|\n  * Error creating expense: |Error from Server|\n  * Error creating goal: |Error from Server|\n  * Error creating income category: |Error from Server|\n  * Error creating income: |Error from Server|\n  * Error creating investment category: |Error from Server|\n  * Error creating investment: |Error from Server|\n  * Error creating subscription: |Error from Server|\n  * Error creating wealthFund: |Error from Server|\n  * Error decoding JSON:\n  * Error deleting connected account: |Error From Server|\n  * Error generating confirmation token: |Error from Server|\n  * Error getting avatar info\n  * Error getting email: |Error from Server|\n  * Error getting session: |UserID|\n  * Error getting userID\n  * Error in parsing token: |Error from Server|\n  * Error reading the file\n  * Error registring user: |Error from Server|\n  * Error removing session from the database: |Error from Server|\n  * Error resetting password: |Error from Server|\n  * Error retrieving the file\n  * Error saving avatar info\n  * Error sending confirm email: |Error from Server|\n  * Error sending support request: |Error from Server|\n  * Error updating name in the database:\n  * Failed to fetch data from database\n  * Failed to generate Excel report\n  * Failed to generate PDF report\n  * Failed to get analytics data: |Error from Server|\n  * Failed to get More data:\n  * Failed to get tracker data: |Error from Server|\n  * Failed to get user data:\n  * Failed to refresh token: |Error from Server|\n  * Failed to save Excel report\n  * Failed to update token in DB: |Error from Server|\n  * Internal Server Error: |Error from Server|\n  * Invalid Content-Type, expected application/json: Empty 'Content-Type' HEADER\n  * Invalid email: |Error from Server|\n  * Invalid or expired reset token: |Error from Server|\n  * Invalid or expired token: |Error from Server|\n  * Invalid request payload: |Error from Server|\n  * Reset token is required\n  * Token has already been used: |Error from Server|\n  * Token is required: Empty token\n  * Unauthorized: |Error from Server|\n  * User not authenticated: |Error from Server|\n  * Error while counting sessions: |Error from Server|\n  * Blank fields and two methods are not allowed\n  * Error while deleting tokens: |Error from server|\n"
-        },
-        "status_code": {
-          "type": "integer",
-          "description": "Status Code"
-        }
-      }
-    },
-    "auth.ConfirmEmailRequest": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "string"
-        },
-        "token": {
-          "type": "string"
-        }
-      }
-    },
-    "auth.UserAuthenticationRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        }
-      }
-    },
-    "handlers.SupportRequest": {
-      "type": "object",
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "subject": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "request_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.ConnectedAccount": {
-      "type": "object",
-      "properties": {
-        "account_number": {
-          "type": "string"
-        },
-        "account_type": {
-          "type": "string"
-        },
-        "bank_id": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.Expense": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "number"
-        },
-        "category_id": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "planned": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "bank_account": {
-          "type": "string"
-        },
-        "sent_to": {
-          "type": "string"
-        },
-        "currency": {
-          "type": "string"
-        }
-      }
-    },
-    "models.ExpenseCategory": {
-      "type": "object",
-      "properties": {
-        "icon": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.Goal": {
-      "type": "object",
-      "properties": {
-        "current_state": {
-          "type": "number"
-        },
-        "goal": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "need": {
-          "type": "number"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.Income": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "number"
-        },
-        "category_id": {
-          "type": "string"
-        },
-        "date": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "planned": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "bank_account": {
-          "type": "string"
-        },
-        "sender": {
-          "type": "string"
-        },
-        "currency": {
-          "type": "string"
-        }
-      }
-    },
-    "models.IncomeCategory": {
-      "type": "object",
-      "properties": {
-        "icon": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.InvestmentCategory": {
-      "type": "object",
-      "properties": {
-        "icon": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.Subscription": {
-      "type": "object",
-      "properties": {
-        "end_date": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "is_active": {
-          "type": "boolean"
-        },
-        "start_date": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.WealthFund": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "number"
-        },
-        "date": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
-        },
-        "planned": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "bank_account": {
-          "type": "string"
-        },
-        "currency": {
-          "type": "string"
-        },
-        "category_id": {
-          "type": "string"
-        }
-      }
-    },
-    "models.WelfareFund": {
-      "type": "integer",
-      "enum": [
-        0,
-        1
-      ],
-      "x-enum-varnames": [
-        "Planned",
-        "Unplanned"
-      ]
-    },
-    "models.FinHealth": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "income_score": {
-          "type": "integer"
-        },
-        "expense_score": {
-          "type": "integer"
-        },
-        "investment_score": {
-          "type": "integer"
-        },
-        "obligation_score": {
-          "type": "integer"
-        },
-        "plan_score": {
-          "type": "integer"
-        },
-        "total_score": {
-          "type": "integer"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "profile.UserProfile": {
-      "type": "object",
-      "properties": {
-        "surname": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "avatar_url": {
-          "type": "string"
-        }
-      }
-    },
-    "Analytics": {
-      "type": "object",
-      "properties": {
-        "income": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.Income"
-          }
-        },
-        "expense": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.Expense"
-          }
-        },
-        "wealth_fund": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.WealthFund"
-          }
-        }
-      }
-    },
-    "Subscription": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "start_date": {
-          "type": "string",
-          "format": "date"
-        },
-        "end_date": {
-          "type": "string",
-          "format": "date"
-        },
-        "is_active": {
-          "type": "boolean"
-        }
-      }
-    },
-    "TrackingState": {
-      "type": "object",
-      "properties": {
-        "state": {
-          "type": "number"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "App": {
-      "type": "object",
-      "properties": {
-        "connected_accounts": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ConnectedAccount"
-          }
-        },
-        "category_settings": {
-          "$ref": "#/definitions/CategorySettings"
-        }
-      }
-    },
-    "CategorySettings": {
-      "type": "object",
-      "properties": {
-        "expense_categories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExpenseCategory"
-          }
-        },
-        "income_categories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/IncomeCategory"
-          }
-        },
-        "investment_categories": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/InvestmentCategory"
-          }
-        }
-      }
-    },
-    "Operation": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "amount": {
-          "type": "number"
-        },
-        "date": {
-          "type": "string"
-        },
-        "category": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        }
-      }
-    },
-    "ExpenseCategory": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "icon": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "IncomeCategory": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "icon": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "RefreshTokenRequest": {
-      "type": "object",
-      "properties": {
-        "refresh_token": {
-          "type": "string",
-          "description": "Refresh token"
-        }
-      }
-    },
-    "InvestmentCategory": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "icon": {
-          "type": "string"
-        },
-        "is_constant": {
-          "type": "boolean"
-        },
-        "user_id": {
-          "type": "string"
-        }
-      }
-    },
-    "ConnectedAccount": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "user_id": {
-          "type": "string"
-        },
-        "bank_id": {
-          "type": "string"
-        },
-        "account_number": {
-          "type": "string"
-        },
-        "account_type": {
-          "type": "string"
-        }
-      }
-    },
-    "Tracker": {
-      "type": "object",
-      "properties": {
-        "tracking_state": {
-          "$ref": "#/definitions/TrackingState"
-        },
-        "goal": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/models.Goal"
-          }
-        },
-        "fin_health": {
-          "$ref": "#/definitions/models.FinHealth"
-        }
-      }
-    },
-    "More": {
-      "type": "object",
-      "properties": {
-        "app": {
-          "$ref": "#/definitions/App"
-        },
-        "settings": {
-          "$ref": "#/definitions/Settings"
-        }
-      }
-    },
-    "Settings": {
-      "type": "object",
-      "properties": {
-        "subscriptions": {
-          "$ref": "#/definitions/Subscription"
-        }
-      }
-    }
-  },
-  "securityDefinitions": {
-    "JWT": {
-      "type": "apiKey",
-      "name": "Authorization",
-      "in": "header"
-    }
-  }
 }

@@ -1,20 +1,18 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
 	"encoding/json"
-	"errors"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/wachrusz/Back-End-API/internal/models"
 	"net/http"
 )
 
+// CreateSubscriptionHandler creates a new subscription in the database.
+//
 // @Summary Create a subscription
-// @Description Create a new subscription.
+// @Description Create a new subscription record.
 // @Tags Settings
 // @Accept json
 // @Produce json
@@ -24,19 +22,23 @@ import (
 // @Failure 500 {string} string "Error creating subscription"
 // @Router /settings/subscription [post]
 func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
-	var subscription models.Subscription
+	h.l.Debug("Creating a new subscription...")
 
+	// Decode the request payload
+	var subscription models.Subscription
 	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// Create a new subscription in the database
 	subscriptionID, err := models.CreateSubscription(&subscription)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error creating subscription: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error creating subscription: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send success response
 	response := map[string]interface{}{
 		"message":           "Successfully created a subscription",
 		"created_object_id": subscriptionID,
@@ -44,4 +46,6 @@ func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Req
 	}
 	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Subscription created successfully", zap.Int64("subscriptionID", subscriptionID))
 }

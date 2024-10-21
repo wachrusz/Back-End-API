@@ -1,20 +1,18 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/models"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
+	"go.uber.org/zap"
 	"net/http"
 )
 
+// CreateIncomeHandler creates a new income record in the database.
+//
 // @Summary Create an income
-// @Description Create a new income.
+// @Description Create a new income record.
 // @Tags Analytics
 // @Accept json
 // @Produce json
@@ -26,26 +24,33 @@ import (
 // @Security JWT
 // @Router /analytics/income [post]
 func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Creating a new income...")
+
+	// Decode the request payload
 	var income models.Income
 	if err := json.NewDecoder(r.Body).Decode(&income); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
+	// Assign user ID to the income
 	income.UserID = userID
 
+	// Create a new income in the database
 	incomeID, err := models.CreateIncome(&income)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error creating income: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error creating income: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send success response
 	response := map[string]interface{}{
 		"message":           "Successfully created an income",
 		"created_object_id": incomeID,
@@ -53,4 +58,6 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Income created successfully", zap.Int64("incomeID", incomeID))
 }

@@ -1,51 +1,56 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/wachrusz/Back-End-API/internal/models"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	utility "github.com/wachrusz/Back-End-API/pkg/util"
+	"fmt"
+	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/wachrusz/Back-End-API/internal/models"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
+// CreateExpenseHandler creates a new expense record in the database.
+//
 // @Summary Create an expense
-// @Description Create a new expense.
-// @Tags Analytics
+// @Description Create a new expense record.
+// @Tags Expenses
 // @Accept json
 // @Produce json
 // @Param expense body models.Expense true "Expense object"
-// @Success 201 {string} string "Expense created successfully"
+// @Success 201 {string} string "Successfully created an expense"
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 401 {string} string "User not authenticated"
 // @Failure 500 {string} string "Error creating expense"
-// @Security JWT
-// @Router /analytics/expense [post]
+// @Router /expenses [post]
 func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Creating a new expense...")
+
+	// Decode the request payload
 	var expense models.Expense
 	if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
+	// Assign user ID to the expense
 	expense.UserID = userID
 
+	// Create a new expense in the database
 	expenseID, err := models.CreateExpense(&expense)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error creating expense: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error creating expense: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send success response
 	response := map[string]interface{}{
 		"message":           "Successfully created an expense",
 		"created_object_id": expenseID,
@@ -53,23 +58,6 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 	}
 	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Expense created successfully", zap.Int64("expenseID", expenseID))
 }
-
-/*
-func GetExpensesHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := auth.Login(r)
-	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
-	}
-
-	expenses, err := models.GetExpensesByUserID(userID)
-	if err != nil {
-		http.Error(w, "Error getting expenses", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(expenses)
-}
-*/

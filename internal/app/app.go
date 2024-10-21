@@ -8,11 +8,14 @@ import (
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
+	logger "github.com/zhukovrost/cadv_logger"
 )
 
 func Run(cfg *config.Config) error {
-	//log.Fatalf("%s", cfg.GetDBURL())
+	l := logger.New("standard", true)
+
+	l.Info("Starting application...")
+	l.Info("Connecting to the database...")
 	db, err := mydb.Init(cfg.GetDBURL())
 	if err != nil {
 		return err
@@ -25,18 +28,20 @@ func Run(cfg *config.Config) error {
 		Repo: db,
 	}
 
+	l.Info("Initializing services...")
 	services, err := service.NewServices(deps)
 	if err != nil {
-		logger.ErrorLogger.Fatal(err)
+		return err
 	}
 
-	handler := v1.NewHandler(services)
+	handler := v1.NewHandler(services, l)
 
-	router, docRouter, errR := api.InitRouters(handler)
+	l.Info("Initializing routers...")
+	router, docRouter, errR := api.InitRouters(handler, l)
 	services.Users.InitActiveUsers()
 
 	if errR != nil {
-		logger.ErrorLogger.Fatal(errR)
+		return errR
 	}
 
 	http.Handle("/", handler.ContentTypeMiddleware(router))
@@ -45,6 +50,7 @@ func Run(cfg *config.Config) error {
 
 	go services.Currency.ScheduleCurrencyUpdates()
 
+	l.Info("Serving...")
 	//changed tls hosting now everything works
 	err = http.ListenAndServeTLS(":8080", cfg.CrtPath, cfg.KeyPath, nil)
 	if err != nil {
@@ -52,44 +58,4 @@ func Run(cfg *config.Config) error {
 	}
 
 	return nil
-}
-
-// @Summary Get Swagger JSON
-// @Description Get the Swagger JSON file.
-// @Tags Swagger
-// @Produce json
-// @Success 200 {string} string "Swagger JSON retrieved successfully"
-// @Router /swagger/json [get]
-func GetSwaggerJSON(w http.ResponseWriter, r *http.Request) {
-	// Empty function, just for Swagger documentation
-}
-
-// @Summary Get Swagger UI
-// @Description Get the Swagger UI.
-// @Tags Swagger
-// @Produce html
-// @Success 200 {string} string "Swagger UI retrieved successfully"
-// @Router /swagger/ui [get]
-func GetSwaggerUI(w http.ResponseWriter, r *http.Request) {
-	// Empty function, just for Swagger documentation
-}
-
-// @Summary Get Swagger JSON
-// @Description Get the Swagger JSON file.
-// @Tags Swagger
-// @Produce json
-// @Success 200 {string} string "Swagger JSON retrieved successfully"
-// @Router /docs/swagger.json [get]
-func GetSwaggerJSONFile(w http.ResponseWriter, r *http.Request) {
-	// Empty function, just for Swagger documentation
-}
-
-// @Summary Get Swagger UI
-// @Description Get the Swagger UI.
-// @Tags Swagger
-// @Produce html
-// @Success 200 {string} string "Swagger UI retrieved successfully"
-// @Router /swagger/index.html [get]
-func GetSwaggerUIFile(w http.ResponseWriter, r *http.Request) {
-	// Empty function, just for Swagger documentation
 }

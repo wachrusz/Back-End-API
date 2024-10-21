@@ -1,10 +1,10 @@
 package http
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/wachrusz/Back-End-API/docs"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -19,7 +19,7 @@ func newRouter(h *v1.MyHandler) chi.Router {
 	return r
 }
 
-func InitRouters(h *v1.MyHandler) (chi.Router, chi.Router, error) {
+func InitRouters(h *v1.MyHandler, l *zap.Logger) (chi.Router, chi.Router, error) {
 	mainRouter := newRouter(h)
 	docRouter := docs.NewRouter()
 
@@ -32,12 +32,14 @@ func InitRouters(h *v1.MyHandler) (chi.Router, chi.Router, error) {
 	//mainRouter.Route("/api/emojis", func(r chi.Router) {
 	//	r.Get("/get/{id}", profile.GetIconHandler) // Маршрут для получения иконки
 	//})
+	l.Info("Available routes:")
 
-	fmt.Println("Available routes:")
-	_ = chi.Walk(mainRouter, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		fmt.Printf("%s %s\n", method, route)
-		return nil
-	})
+	for _, r := range [2]chi.Router{mainRouter, docRouter} {
+		_ = chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+			l.Info("Route found", zap.String("method", method), zap.String("route", route))
+			return nil
+		})
+	}
 
 	return mainRouter, docRouter, nil
 }

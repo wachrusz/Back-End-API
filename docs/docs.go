@@ -9,72 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
+        "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "Mikhail Vakhrushin",
-            "email": "lstwrd@yandex.com"
+            "email": "wachrusz@gmail.com"
         },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/analytics/expense": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Create a new expense.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Analytics"
-                ],
-                "summary": "Create an expense",
-                "parameters": [
-                    {
-                        "description": "Expense object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Expense"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Expense created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/analytics/income": {
             "post": {
                 "security": [
@@ -82,7 +26,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Create a new income.",
+                "description": "Create a new income record.",
                 "consumes": [
                     "application/json"
                 ],
@@ -196,7 +140,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Create a new expense category.",
+                "description": "Creates a new expense category in the database and returns its ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -204,9 +148,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "App"
+                    "Categories"
                 ],
-                "summary": "Create an expense category",
+                "summary": "CreateExpenseCategoryHandler an expense category",
                 "parameters": [
                     {
                         "description": "Expense category object",
@@ -255,7 +199,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "App"
+                    "Categories"
                 ],
                 "summary": "Create an income category",
                 "parameters": [
@@ -306,7 +250,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "App"
+                    "Categories"
                 ],
                 "summary": "Create an investment category",
                 "parameters": [
@@ -384,6 +328,12 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Error adding connected account",
                         "schema": {
@@ -418,7 +368,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "Connected account created successfully",
+                        "description": "Connected account deleted successfully",
                         "schema": {
                             "type": "string"
                         }
@@ -429,53 +379,14 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
-                    "500": {
-                        "description": "Error adding connected account",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/app/report": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Get a financial report .",
-                "tags": [
-                    "App"
-                ],
-                "summary": "Exports report",
-                "parameters": [
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Connected account created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
+                    "401": {
+                        "description": "User not authenticated",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error adding connected account",
+                        "description": "Error deleting connected account",
                         "schema": {
                             "type": "string"
                         }
@@ -485,7 +396,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Login to the system and get an authentication token",
+                "description": "Login to the system and get an authentication token.",
                 "consumes": [
                     "application/json"
                 ],
@@ -503,7 +414,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.UserAuthenticationRequest"
+                            "$ref": "#/definitions/user.UserAuthenticationRequest"
                         }
                     }
                 ],
@@ -528,55 +439,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/auth/login/reset": {
-            "post": {
-                "description": "Confirm the user's email using the provided token and confirmation code.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Confirm user email for password reset",
-                "parameters": [
-                    {
-                        "description": "Confirm Email Request",
-                        "name": "confirmEmailRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Email confirmed successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload or Content-Type",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid or expired token",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error confirming email or reseting password",
                         "schema": {
                             "type": "string"
                         }
@@ -617,7 +479,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Register a new user.",
+                "description": "Register a new user in the system.",
                 "consumes": [
                     "application/json"
                 ],
@@ -627,7 +489,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Register user",
+                "summary": "Register a new user",
                 "parameters": [
                     {
                         "type": "string",
@@ -664,8 +526,8 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
-                    "500": {
-                        "description": "Error registering user",
+                    "409": {
+                        "description": "User already exists",
                         "schema": {
                             "type": "string"
                         }
@@ -673,48 +535,45 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/register/confirm-email": {
+        "/email/confirm": {
             "post": {
-                "description": "Confirm the user's email using the provided token and confirmation code.",
+                "description": "Confirms the user's email using a token and confirmation code.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Auth"
+                    "Email"
                 ],
-                "summary": "Confirm user email",
+                "summary": "Confirm email",
                 "parameters": [
                     {
-                        "description": "Confirm Email Request",
-                        "name": "confirmEmailRequest",
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Email confirmed successfully",
+                        "description": "Successfully confirmed email",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "400": {
-                        "description": "Invalid request payload or Content-Type",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid or expired token",
+                        "description": "Invalid request or missing token",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Error confirming email or registering user",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -722,19 +581,174 @@ const docTemplate = `{
                 }
             }
         },
-        "/docs/swagger.json": {
-            "get": {
-                "description": "Get the Swagger JSON file.",
+        "/email/confirm-login": {
+            "post": {
+                "description": "Confirms the user's email for login using a token and confirmation code.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Swagger"
+                    "Email"
                 ],
-                "summary": "Get Swagger JSON",
+                "summary": "Confirm email for login",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Swagger JSON retrieved successfully",
+                        "description": "Successfully confirmed email for login",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/get-confirmation-code": {
+            "get": {
+                "description": "Retrieves the confirmation code for the provided email.",
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Get confirmation code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email address",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved confirmation code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/email/send-confirmation": {
+            "post": {
+                "description": "Sends a confirmation email with a generated code.",
+                "tags": [
+                    "Email"
+                ],
+                "summary": "Send confirmation email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Email address",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully sent confirmation code",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses": {
+            "post": {
+                "description": "Create a new expense record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Expenses"
+                ],
+                "summary": "Create an expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Expense"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created an expense",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense",
                         "schema": {
                             "type": "string"
                         }
@@ -788,6 +802,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/password/reset-confirm": {
+            "post": {
+                "description": "Confirms the password reset process using a token and code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Password"
+                ],
+                "summary": "Confirm password reset",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully confirmed password reset",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/profile/get": {
             "get": {
                 "security": [
@@ -832,7 +892,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Update the user profile for the authenticated user with a new name.",
+                "description": "Update the user profile for the authenticated user with a new name and surname.",
                 "consumes": [
                     "application/json"
                 ],
@@ -878,7 +938,7 @@ const docTemplate = `{
         },
         "/settings/subscription": {
             "post": {
-                "description": "Create a new subscription.",
+                "description": "Create a new subscription record.",
                 "consumes": [
                     "application/json"
                 ],
@@ -942,7 +1002,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.SupportRequest"
+                            "$ref": "#/definitions/v1.SupportRequest"
                         }
                     }
                 ],
@@ -959,68 +1019,14 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Error sending support request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/index.html": {
-            "get": {
-                "description": "Get the Swagger UI.",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger UI",
-                "responses": {
-                    "200": {
-                        "description": "Swagger UI retrieved successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/json": {
-            "get": {
-                "description": "Get the Swagger JSON file.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger JSON",
-                "responses": {
-                    "200": {
-                        "description": "Swagger JSON retrieved successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/ui": {
-            "get": {
-                "description": "Get the Swagger UI.",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger UI",
-                "responses": {
-                    "200": {
-                        "description": "Swagger UI retrieved successfully",
                         "schema": {
                             "type": "string"
                         }
@@ -1082,48 +1088,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.ConfirmEmailRequest": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.UserAuthenticationRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "handlers.SupportRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "subject": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "models.ConnectedAccount": {
             "type": "object",
             "properties": {
@@ -1150,7 +1114,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "bank_account": {
+                    "type": "string"
+                },
                 "category_id": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "date": {
@@ -1161,6 +1131,9 @@ const docTemplate = `{
                 },
                 "planned": {
                     "type": "boolean"
+                },
+                "sent_to": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -1213,7 +1186,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "bank_account": {
+                    "type": "string"
+                },
                 "category_id": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "date": {
@@ -1224,6 +1203,9 @@ const docTemplate = `{
                 },
                 "planned": {
                     "type": "boolean"
+                },
+                "sender": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -1296,6 +1278,15 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
                 "date": {
                     "type": "string"
                 },
@@ -1320,18 +1311,66 @@ const docTemplate = `{
                 "Planned",
                 "Unplanned"
             ]
+        },
+        "token.ConfirmEmailRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UserAuthenticationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.SupportRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
         }
     },
-    "security": [
-        {
-            "JWT": []
+    "securityDefinitions": {
+        "JWT": {
+            "description": "To authorize,",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
-    ]
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "0.1",
 	Host:             "localhost:8080",
 	BasePath:         "/v1",
 	Schemes:          []string{"https"},

@@ -9,7 +9,6 @@ import (
 	"github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"golang.org/x/crypto/bcrypt"
 	"sync"
@@ -176,8 +175,6 @@ func (s *Service) getHashedPasswordByUsername(email string) (string, error) {
 
 	userData, exists := s.user.GetUserByEmail(email)
 	if !exists {
-		errMsg := "User with email " + email + " not found"
-		logger.ErrorLogger.Println(errMsg)
 		return "", fmt.Errorf("user not found")
 	}
 
@@ -300,12 +297,12 @@ func (s *Service) ConfirmEmail(token, code, deviceID string) (*Details, error) {
 	if codeCheckResponse.Err != "nil" {
 		return nil, myerrors.ErrInternal
 	}
-/*
-	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-	}
-*/
+	/*
+		err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+		}
+	*/
 	err = s.user.Register(registerRequest.Email, registerRequest.Password)
 	if err != nil {
 		return nil, fmt.Errorf("%w: error registring user: %v", myerrors.ErrInternal, err)
@@ -314,7 +311,6 @@ func (s *Service) ConfirmEmail(token, code, deviceID string) (*Details, error) {
 
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
-		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 		// FIXME: тут не было ретурна, но по идее должен быть
 		// return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
@@ -352,16 +348,15 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, err
 	if codeCheckResponse.Err != "nil" {
 		return nil, myerrors.ErrInternal
 	}
-/*
-	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-	}
-*/
+	/*
+		err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+		}
+	*/
 	//! SESSIONS
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
-		logger.ErrorLogger.Printf("Unknown exeption in userID %s\n", userID)
 	}
 
 	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)

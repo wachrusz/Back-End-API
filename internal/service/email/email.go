@@ -7,7 +7,6 @@ import (
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 
 	"net/http"
@@ -72,7 +71,6 @@ func (s *Service) SendEmail(to, subject, body string) error { /*
 func (s *Service) SendConfirmationEmail(email, token string) error {
 	confirmationCode, err := utility.GenerateConfirmationCode()
 	if err != nil {
-		logger.ErrorLogger.Printf("Error in generating confirmation code for Email: %v", email)
 		return err
 	}
 	/*
@@ -224,7 +222,6 @@ func (s *Service) checkToken(token, email string) error {
 func (s *Service) DeleteConfirmationCode(email string, code string) error {
 	err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error deleting code for Email: %v", email)
 		return fmt.Errorf("error deleting confirmation")
 	}
 	return nil
@@ -284,7 +281,6 @@ func (s *Service) GetConfirmationCode(email string) (string, error) {
 	var code string
 	err := s.repo.QueryRow("SELECT code FROM confirmation_codes WHERE email = $1 ORDER BY expiration_time DESC LIMIT 1", email).Scan(&code)
 	if err != nil {
-		logger.ErrorLogger.Printf("Confirmation code not found for Email: %v", email)
 		return "", err
 	}
 	return code, nil

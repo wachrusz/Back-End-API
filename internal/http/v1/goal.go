@@ -1,20 +1,17 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package handlers provides http functionality.
 package v1
 
 import (
-	"errors"
-	"github.com/wachrusz/Back-End-API/internal/models"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	utility "github.com/wachrusz/Back-End-API/pkg/util"
-	"log"
-
 	"encoding/json"
+	"fmt"
+	"go.uber.org/zap"
 	"net/http"
+
+	"github.com/wachrusz/Back-End-API/internal/models"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
+// CreateGoalHandler creates a new goal in the database.
+//
 // @Summary Create a goal
 // @Description Create a new goal.
 // @Tags Tracker
@@ -27,28 +24,33 @@ import (
 // @Failure 500 {string} string "Error creating goal"
 // @Router /tracker/goal [post]
 func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("Started CreateGoalHandler")
+	h.l.Debug("Creating a new goal...")
+
+	// Decode the request payload
 	var goal models.Goal
 	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
+	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
+	// Assign user ID to the goal
 	goal.UserID = userID
-	log.Print(goal.UserID)
 
+	// Create a new goal in the database
 	goalID, err := models.CreateGoal(&goal)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Error creating goal: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error creating goal: %v", err), http.StatusInternalServerError)
 		return
 	}
 
+	// Send success response
 	response := map[string]interface{}{
 		"message":           "Successfully created a goal",
 		"created_object_id": goalID,
@@ -56,4 +58,6 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(response["status_code"].(int))
 	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Goal created successfully", zap.Int64("goalID", goalID))
 }
