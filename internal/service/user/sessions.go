@@ -5,7 +5,9 @@
 package user
 
 import (
+	"database/sql"
 	"fmt"
+
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 )
@@ -46,11 +48,22 @@ func (s *Service) IsUserActive(userID string) bool {
 	s.activeMu.Lock()
 	defer s.activeMu.Unlock()
 
-	_, ok := s.ActiveUsers[userID]
-	if !ok {
-		logger.ErrorLogger.Printf("User %s is not active", userID)
+	query := `
+		SELECT 1 FROM sessions
+		WHERE user_id = $1;
+	`
+	row := s.repo.QueryRow(query, userID)
+	var dummy int
+	err := row.Scan(&dummy)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			logger.ErrorLogger.Printf("User %s is not active", userID)
+			return false
+		}
+		logger.ErrorLogger.Printf("Error executing query for user %s: %v", userID, err)
+		return false
 	}
-	return ok
+	return true
 }
 
 func (s *Service) AddActiveUser(user ActiveUser) {
