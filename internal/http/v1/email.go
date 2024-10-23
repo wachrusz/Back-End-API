@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	token2 "github.com/wachrusz/Back-End-API/internal/service/token"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-	"net/http"
-	"time"
 )
 
 func (h *MyHandler) SendConfirmationEmailTestHandler(email, token string, w http.ResponseWriter, r *http.Request) {
@@ -156,7 +157,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	token_details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	token_details, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
