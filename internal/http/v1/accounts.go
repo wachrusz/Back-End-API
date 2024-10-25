@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/models"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
 )
@@ -16,12 +17,12 @@ import (
 // @Accept json
 // @Produce json
 // @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
-// @Success 201 {string} string "Connected account created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 401 {string} string "User not authenticated"
-// @Failure 500 {string} string "Error adding connected account"
+// @Success 201 {object} jsonresponse.IdResponse "Connected account created successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error adding connected account"
 // @Security JWT
-// @Router /app/connected-accounts/add [post]
+// @Router /app/accounts [post]
 func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Adding a new connected account...")
 
@@ -44,12 +45,12 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":           "Connected account added successfully",
-		"created_object_id": connectedAccountID,
-		"status_code":       http.StatusCreated,
+	response := jsonresponse.IdResponse{
+		Message:    "Connected account added successfully",
+		Id:         connectedAccountID,
+		StatusCode: http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -59,12 +60,12 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 // @Description Delete an existing connected account.
 // @Tags App
 // @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
-// @Success 201 {string} string "Connected account deleted successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 401 {string} string "User not authenticated"
-// @Failure 500 {string} string "Error deleting connected account"
+// @Success 204 {object} jsonresponse.SuccessResponse "Connected account deleted successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting connected account"
 // @Security JWT
-// @Router /app/connected-accounts/delete [delete]
+// @Router /app/accounts [delete]
 func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Deleting connected account...")
 
@@ -80,10 +81,10 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":     "Successfully deleted connected account",
-		"status_code": http.StatusCreated,
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted connected account",
+		StatusCode: http.StatusNoContent,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }

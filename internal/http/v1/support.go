@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"go.uber.org/zap"
 	"net/http"
@@ -28,10 +29,11 @@ type SupportRequest struct {
 // @Accept json
 // @Produce json
 // @Param supportRequest body SupportRequest true "Support request object"
-// @Success 200 {string} string "Support request sent successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 401 {string} string "User not authenticated"
-// @Failure 500 {string} string "Error sending support request"
+// @Success 200 {object} jsonresponse.IdResponse "Support request sent successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error sending support request"
+// @Security JWT
 // @Router /support/request [post]
 func (h *MyHandler) SendSupportRequestHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Sending support request...")
@@ -66,12 +68,12 @@ func (h *MyHandler) SendSupportRequestHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Send success response
-	response := map[string]interface{}{
-		"message":           "Successfully sent a support request",
-		"created_object_id": supportRequest.RequestID,
-		"status_code":       http.StatusOK,
+	response := jsonresponse.IdResponse{
+		Message:    "Successfully sent a support request",
+		Id:         supportRequest.RequestID,
+		StatusCode: http.StatusOK,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Support request sent successfully", zap.Int64("requestID", supportRequest.RequestID))

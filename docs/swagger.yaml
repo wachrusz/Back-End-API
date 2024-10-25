@@ -1,5 +1,118 @@
 basePath: /v1
 definitions:
+  categories.Analytics:
+    properties:
+      expense:
+        items:
+          $ref: '#/definitions/models.Expense'
+        type: array
+      income:
+        items:
+          $ref: '#/definitions/models.Income'
+        type: array
+      wealth_fund:
+        items:
+          $ref: '#/definitions/models.WealthFund'
+        type: array
+    type: object
+  categories.More:
+    properties:
+      app:
+        $ref: '#/definitions/models.App'
+      settings:
+        $ref: '#/definitions/models.Settings'
+    type: object
+  categories.Tracker:
+    properties:
+      fin_health:
+        $ref: '#/definitions/models.FinHealth'
+      goal:
+        items:
+          $ref: '#/definitions/models.Goal'
+        type: array
+      tracking_state:
+        $ref: '#/definitions/models.TrackingState'
+    type: object
+  jsonresponse.AmountResponse:
+    properties:
+      amount:
+        type: integer
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  jsonresponse.DoubleTokenResponse:
+    properties:
+      access_token:
+        type: string
+      access_token_life_time:
+        type: integer
+      message:
+        type: string
+      refresh_token:
+        type: string
+      refresh_token_life_time:
+        type: integer
+      status_code:
+        type: integer
+    type: object
+  jsonresponse.ErrorResponse:
+    properties:
+      error:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  jsonresponse.IdResponse:
+    properties:
+      id:
+        type: integer
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  jsonresponse.SuccessResponse:
+    properties:
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  jsonresponse.TokenResponse:
+    properties:
+      message:
+        type: string
+      status_code:
+        type: integer
+      token:
+        type: string
+    type: object
+  models.App:
+    properties:
+      category_settings:
+        $ref: '#/definitions/models.CategorySettings'
+      connected_accounts:
+        items:
+          $ref: '#/definitions/models.ConnectedAccount'
+        type: array
+    type: object
+  models.CategorySettings:
+    properties:
+      expense_categories:
+        items:
+          $ref: '#/definitions/models.ExpenseCategory'
+        type: array
+      income_categories:
+        items:
+          $ref: '#/definitions/models.IncomeCategory'
+        type: array
+      investment_category:
+        items:
+          $ref: '#/definitions/models.InvestmentCategory'
+        type: array
+    type: object
   models.ConnectedAccount:
     properties:
       account_number:
@@ -44,6 +157,25 @@ definitions:
         type: boolean
       name:
         type: string
+      user_id:
+        type: string
+    type: object
+  models.FinHealth:
+    properties:
+      expense_score:
+        type: integer
+      id:
+        type: string
+      income_score:
+        type: integer
+      investment_score:
+        type: integer
+      obligation_score:
+        type: integer
+      plan_score:
+        type: integer
+      total_score:
+        type: integer
       user_id:
         type: string
     type: object
@@ -107,6 +239,26 @@ definitions:
       user_id:
         type: string
     type: object
+  models.Operation:
+    properties:
+      amount:
+        type: number
+      category:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+    type: object
+  models.Settings:
+    properties:
+      subscriptions:
+        $ref: '#/definitions/models.Subscription'
+    type: object
   models.Subscription:
     properties:
       end_date:
@@ -117,6 +269,13 @@ definitions:
         type: boolean
       start_date:
         type: string
+      user_id:
+        type: string
+    type: object
+  models.TrackingState:
+    properties:
+      state:
+        type: number
       user_id:
         type: string
     type: object
@@ -154,11 +313,101 @@ definitions:
       token:
         type: string
     type: object
-  user.UserAuthenticationRequest:
+  token.Details:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: integer
+      refresh_token:
+        type: string
+    type: object
+  user.ResetPasswordRequest:
     properties:
       email:
         type: string
-      password:
+    type: object
+  user.UserProfile:
+    properties:
+      avatar_url:
+        type: string
+      name:
+        type: string
+      surname:
+        description: '*changed'
+        type: string
+      user_id:
+        type: string
+    type: object
+  v1.ConfirmResponse:
+    properties:
+      access_token_life_time:
+        type: integer
+      device_id:
+        type: string
+      message:
+        type: string
+      refresh_token_life_time:
+        type: integer
+      status_code:
+        type: integer
+      token_details:
+        $ref: '#/definitions/token.Details'
+    type: object
+  v1.ProfileAnalyticsResponse:
+    properties:
+      analytics:
+        $ref: '#/definitions/categories.Analytics'
+      currency:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  v1.ProfileArchiveResponse:
+    properties:
+      archive:
+        items:
+          $ref: '#/definitions/models.Operation'
+        type: array
+      message:
+        type: string
+      status_code:
+        type: integer
+    type: object
+  v1.ProfileMoreResponse:
+    properties:
+      message:
+        type: string
+      more:
+        $ref: '#/definitions/categories.More'
+      status_code:
+        type: integer
+    type: object
+  v1.ProfileResponse:
+    properties:
+      message:
+        type: string
+      profile:
+        $ref: '#/definitions/user.UserProfile'
+      status_code:
+        type: integer
+    type: object
+  v1.ProfileTrackerResponse:
+    properties:
+      currency:
+        type: string
+      message:
+        type: string
+      status_code:
+        type: integer
+      tracker:
+        $ref: '#/definitions/categories.Tracker'
+    type: object
+  v1.RefreshToken:
+    properties:
+      refresh_token:
         type: string
     type: object
   v1.SupportRequest:
@@ -174,6 +423,22 @@ definitions:
       subject:
         type: string
       user_id:
+        type: string
+    type: object
+  v1.UserAuthenticationRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  v1.UserPasswordReset:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      reset_token:
         type: string
     type: object
 host: localhost:8080
@@ -205,19 +470,19 @@ paths:
         "201":
           description: Income created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating income
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Create an income
@@ -241,24 +506,91 @@ paths:
         "201":
           description: Wealth fund created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating wealth fund
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Create a wealth fund
       tags:
       - Analytics
+  /app/accounts:
+    delete:
+      description: Delete an existing connected account.
+      parameters:
+      - description: ConnectedAccount object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConnectedAccount'
+      responses:
+        "204":
+          description: Connected account deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting connected account
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete a connected account
+      tags:
+      - App
+    post:
+      consumes:
+      - application/json
+      description: Create a new connected account.
+      parameters:
+      - description: ConnectedAccount object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/models.ConnectedAccount'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Connected account created successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.IdResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error adding connected account
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Create a connected account
+      tags:
+      - App
   /app/category/expense:
     post:
       consumes:
@@ -278,20 +610,20 @@ paths:
         "201":
           description: Expense category created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating expense category
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: CreateExpenseCategoryHandler an expense category
       tags:
-      - Categories
+      - App
   /app/category/income:
     post:
       consumes:
@@ -310,20 +642,20 @@ paths:
         "201":
           description: Income category created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating income category
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Create an income category
       tags:
-      - Categories
+      - App
   /app/category/investment:
     post:
       consumes:
@@ -342,120 +674,83 @@ paths:
         "201":
           description: Investment category created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating investment category
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Create an investment category
-      tags:
-      - Categories
-  /app/connected-accounts/add:
-    post:
-      consumes:
-      - application/json
-      description: Create a new connected account.
-      parameters:
-      - description: ConnectedAccount object
-        in: body
-        name: ConnectedAccount
-        required: true
-        schema:
-          $ref: '#/definitions/models.ConnectedAccount'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Connected account created successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid request payload
-          schema:
-            type: string
-        "401":
-          description: User not authenticated
-          schema:
-            type: string
-        "500":
-          description: Error adding connected account
-          schema:
-            type: string
-      security:
-      - JWT: []
-      summary: Create a connected account
-      tags:
-      - App
-  /app/connected-accounts/delete:
-    delete:
-      description: Delete an existing connected account.
-      parameters:
-      - description: ConnectedAccount object
-        in: body
-        name: ConnectedAccount
-        required: true
-        schema:
-          $ref: '#/definitions/models.ConnectedAccount'
-      responses:
-        "201":
-          description: Connected account deleted successfully
-          schema:
-            type: string
-        "400":
-          description: Invalid request payload
-          schema:
-            type: string
-        "401":
-          description: User not authenticated
-          schema:
-            type: string
-        "500":
-          description: Error deleting connected account
-          schema:
-            type: string
-      security:
-      - JWT: []
-      summary: Delete a connected account
       tags:
       - App
   /auth/login:
     post:
       consumes:
       - application/json
-      description: Login to the system and get an authentication token.
+      description: LoginUserHandler to the system and get an authentication RefreshToken.
       parameters:
       - description: UserAuthenticationRequest object
         in: body
         name: loginRequest
         required: true
         schema:
-          $ref: '#/definitions/user.UserAuthenticationRequest'
+          $ref: '#/definitions/v1.UserAuthenticationRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Login successful
+          description: LoginUserHandler successful
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.TokenResponse'
         "400":
           description: Bad Request
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
-      summary: Login to the system
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: LoginUserHandler to the system
+      tags:
+      - Auth
+  /auth/login/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirms the user's email for login using a RefreshToken and confirmation
+        code.
+      parameters:
+      - description: Confirmation request
+        in: body
+        name: confirmRequest
+        required: true
+        schema:
+          $ref: '#/definitions/token.ConfirmEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully confirmed email for login
+          schema:
+            $ref: '#/definitions/v1.ConfirmResponse'
+        "400":
+          description: Invalid request or missing RefreshToken
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Confirm email for login
       tags:
       - Auth
   /auth/logout:
@@ -465,16 +760,153 @@ paths:
       - application/json
       responses:
         "200":
-          description: Logout successful
+          description: LogoutUserHandler successful
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
-      summary: Logout the user
+      summary: LogoutUserHandler the user
+      tags:
+      - Auth
+  /auth/password:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows users to request a password reset by providing
+        their email. If the email is valid, a reset token will be sent to it.
+      parameters:
+      - description: Reset password request with email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/user.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully sent email with reset password token
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid Content-Type or invalid email
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Reset password
+      tags:
+      - Auth
+    put:
+      consumes:
+      - application/json
+      description: This endpoint enables users to change their password by providing
+        their email, new password, and a valid reset token.
+      parameters:
+      - description: Password reset request with email, new password, and reset token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UserPasswordReset'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: 'Invalid request: empty fields, invalid email, or password
+            too short'
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: Invalid or expired reset token
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Change password for recovery
+      tags:
+      - Auth
+  /auth/password/confirm:
+    post:
+      consumes:
+      - application/json
+      description: Confirms the password reset process using a RefreshToken and code.
+      parameters:
+      - description: Confirmation request
+        in: body
+        name: confirmRequest
+        required: true
+        schema:
+          $ref: '#/definitions/token.ConfirmEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully confirmed password reset
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request or missing RefreshToken
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Confirm password reset
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows users to refresh their access and refresh
+        tokens using an existing refresh RefreshToken.
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: token
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully refreshed tokens
+          schema:
+            $ref: '#/definitions/jsonresponse.DoubleTokenResponse'
+        "400":
+          description: Invalid Content-Type or request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Refresh authentication tokens
       tags:
       - Auth
   /auth/register:
@@ -504,23 +936,24 @@ paths:
         "200":
           description: User registered successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.TokenResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "409":
           description: User already exists
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       summary: Register a new user
       tags:
       - Auth
-  /email/confirm:
+  /auth/register/confirm:
     post:
       consumes:
       - application/json
-      description: Confirms the user's email using a token and confirmation code.
+      description: Confirms the user's email using a RefreshToken and confirmation
+        code during registration.
       parameters:
       - description: Confirmation request
         in: body
@@ -534,100 +967,81 @@ paths:
         "200":
           description: Successfully confirmed email
           schema:
-            type: string
+            $ref: '#/definitions/v1.ConfirmResponse'
         "400":
-          description: Invalid request or missing token
+          description: Invalid request or missing RefreshToken
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       summary: Confirm email
       tags:
-      - Email
-  /email/confirm-login:
-    post:
+      - Auth
+  /auth/tokens:
+    delete:
       consumes:
       - application/json
-      description: Confirms the user's email for login using a token and confirmation
-        code.
+      description: This endpoint allows users to delete authentication tokens either
+        by email or device ID. Only one of the parameters should be provided.
       parameters:
-      - description: Confirmation request
-        in: body
-        name: confirmRequest
+      - description: User email
+        in: query
+        name: email
+        type: string
+      - description: Device ID
+        in: query
+        name: deviceID
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully deleted tokens
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: 'Invalid request: blank fields or both email and deviceID provided'
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Delete authentication tokens
+      tags:
+      - Auth
+  /auth/tokens/amount:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint returns the number of token pairs (active sessions)
+        associated with the provided email.
+      parameters:
+      - description: User email
+        in: query
+        name: email
         required: true
-        schema:
-          $ref: '#/definitions/token.ConfirmEmailRequest'
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Successfully confirmed email for login
+          description: Successfully got the amount of token pairs
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.AmountResponse'
         "400":
-          description: Invalid request or missing token
+          description: 'Invalid request: blank fields are not allowed'
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
-          description: Internal server error
+          description: Server error
           schema:
-            type: string
-      summary: Confirm email for login
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Get token pairs amount
       tags:
-      - Email
-  /email/get-confirmation-code:
-    get:
-      description: Retrieves the confirmation code for the provided email.
-      parameters:
-      - description: Email address
-        in: query
-        name: email
-        required: true
-        type: string
-      responses:
-        "200":
-          description: Successfully retrieved confirmation code
-          schema:
-            type: string
-        "400":
-          description: Invalid email
-          schema:
-            type: string
-        "500":
-          description: Internal server error
-          schema:
-            type: string
-      summary: Get confirmation code
-      tags:
-      - Email
-  /email/send-confirmation:
-    post:
-      description: Sends a confirmation email with a generated code.
-      parameters:
-      - description: Email address
-        in: query
-        name: email
-        required: true
-        type: string
-      - description: Token
-        in: query
-        name: token
-        required: true
-        type: string
-      responses:
-        "200":
-          description: Successfully sent confirmation code
-          schema:
-            type: string
-        "500":
-          description: Internal server error
-          schema:
-            type: string
-      summary: Send confirmation email
-      tags:
-      - Email
+      - Auth
   /expenses:
     post:
       consumes:
@@ -646,22 +1060,24 @@ paths:
         "201":
           description: Successfully created an expense
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating expense
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
       summary: Create an expense
       tags:
-      - Expenses
+      - Analytics
   /history/add:
     post:
       consumes:
@@ -692,37 +1108,7 @@ paths:
       summary: Get history entries
       tags:
       - History
-  /password/reset-confirm:
-    post:
-      consumes:
-      - application/json
-      description: Confirms the password reset process using a token and code.
-      parameters:
-      - description: Confirmation request
-        in: body
-        name: confirmRequest
-        required: true
-        schema:
-          $ref: '#/definitions/token.ConfirmEmailRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully confirmed password reset
-          schema:
-            type: string
-        "400":
-          description: Invalid request or missing token
-          schema:
-            type: string
-        "500":
-          description: Internal server error
-          schema:
-            type: string
-      summary: Confirm password reset
-      tags:
-      - Password
-  /profile/get:
+  /profile:
     get:
       description: Get the user profile for the authenticated user.
       produces:
@@ -731,21 +1117,130 @@ paths:
         "200":
           description: User profile retrieved successfully
           schema:
-            type: string
+            $ref: '#/definitions/v1.ProfileResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error getting user profile
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Get user profile
       tags:
       - Profile
-  /profile/update-name:
+  /profile/analytics:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to retrieve profile analytics
+        data, filtered by date range and pagination parameters.
+      parameters:
+      - description: Currency code for analytics data (e.g., USD, EUR)
+        in: header
+        name: X-Currency
+        required: true
+        type: string
+      - description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - description: Start date for analytics data (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End date for analytics data (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved analytics data
+          schema:
+            $ref: '#/definitions/v1.ProfileAnalyticsResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while fetching analytics data
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get profile analytics
+      tags:
+      - Profile
+  /profile/archive:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to retrieve their archived
+        operations with optional pagination.
+      parameters:
+      - description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved operation archive
+          schema:
+            $ref: '#/definitions/v1.ProfileArchiveResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while fetching operation archive
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get operation archive
+      tags:
+      - Profile
+  /profile/more:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to retrieve additional
+        profile data.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved additional profile data
+          schema:
+            $ref: '#/definitions/v1.ProfileMoreResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while fetching additional data
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get profile additional data
+      tags:
+      - Profile
+  /profile/name:
     put:
       consumes:
       - application/json
@@ -764,18 +1259,58 @@ paths:
         "200":
           description: User profile updated successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error updating user profile
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
       summary: Update user profile with name
+      tags:
+      - Profile
+  /profile/tracker:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to retrieve tracker data,
+        with optional pagination parameters.
+      parameters:
+      - description: Currency code for tracker data (e.g., USD, EUR)
+        in: header
+        name: X-Currency
+        required: true
+        type: string
+      - description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved tracker data
+          schema:
+            $ref: '#/definitions/v1.ProfileTrackerResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while fetching tracker data
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Get profile tracker
       tags:
       - Profile
   /settings/subscription:
@@ -796,15 +1331,17 @@ paths:
         "201":
           description: Subscription created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating subscription
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
       summary: Create a subscription
       tags:
       - Settings
@@ -826,19 +1363,21 @@ paths:
         "200":
           description: Support request sent successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error sending support request
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
       summary: Send support request
       tags:
       - Support
@@ -860,19 +1399,21 @@ paths:
         "201":
           description: Goal created successfully
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.IdResponse'
         "400":
           description: Invalid request payload
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "401":
           description: User not authenticated
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error creating goal
           schema:
-            type: string
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
       summary: Create a goal
       tags:
       - Tracker

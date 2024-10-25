@@ -6,20 +6,8 @@ import (
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
-// UserAuthenticationRequest is for auth requests
-type UserAuthenticationRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 type ResetPasswordRequest struct {
 	Email string `json:"email"`
-}
-
-type UserPasswordReset struct {
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	ResetToken string `json:"reset_token"`
 }
 
 type IdentificationData struct {

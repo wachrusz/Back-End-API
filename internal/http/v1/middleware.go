@@ -41,7 +41,7 @@ func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !token.Valid {
-			err := errors.New("Invalid token")
+			err := errors.New("Invalid RefreshToken")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
@@ -54,7 +54,7 @@ func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		userIDClaim, ok := claims["sub"]
 		if !ok {
-			err := errors.New("No 'sub' claim in token")
+			err := errors.New("No 'sub' claim in RefreshToken")
 			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
 			return
 		}
