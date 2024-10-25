@@ -6,261 +6,188 @@ import (
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/service/token"
+	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
+	"github.com/wachrusz/Back-End-API/pkg/validator"
+	"go.uber.org/zap"
 	"net/http"
-	"time"
 )
 
-// SendConfirmationEmailTestHandler sends a confirmation email with a code.
-//
-// @Summary Send confirmation email
-// @Description Sends a confirmation email with a generated code.
-// @Tags Email
-// @Param email query string true "Email address"
-// @Param token query string true "Token"
-// @Success 200 {string} string "Successfully sent confirmation code"
-// @Failure 500 {string} string "Internal server error"
-// @Router /email/send-confirmation [post]
-func (h *MyHandler) SendConfirmationEmailTestHandler(email, token string, w http.ResponseWriter, r *http.Request) {
-	h.l.Debug("Sending confirmation email...")
-	confirmationCode, err := utility.GenerateConfirmationCode()
-	if err != nil {
-		return
-	}
-
-	err = h.s.Emails.SaveConfirmationCode(email, confirmationCode, token)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"message":     "Successfully sent confirmation code.",
-		"code":        confirmationCode,
-		"status_code": http.StatusOK,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+// ConfirmResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
+type ConfirmResponse struct {
+	Message              string        `json:"message"`
+	TokenDetails         token.Details `json:"token_details"`
+	AccessTokenLifeTime  int64         `json:"access_token_life_time"`
+	RefreshTokenLifeTime int64         `json:"refresh_token_life_time"`
+	StatusCode           int           `json:"status_code"`
+	DeviceId             string        `json:"device_id"`
 }
 
-// GetConfirmationCodeTestHandler retrieves the confirmation code for a specific email.
-//
-// @Summary Get confirmation code
-// @Description Retrieves the confirmation code for the provided email.
-// @Tags Email
-// @Param email query string true "Email address"
-// @Success 200 {string} string "Successfully retrieved confirmation code"
-// @Failure 400 {string} string "Invalid email"
-// @Failure 500 {string} string "Internal server error"
-// @Router /email/get-confirmation-code [get]
-func (h *MyHandler) GetConfirmationCodeTestHandler(w http.ResponseWriter, r *http.Request) {
-	h.l.Debug("Retrieving confirmation code...")
-
-	type jsonEmail struct {
-		Email string `json:"email"`
-	}
-
-	//! ELDER VER
-	/*
-		var email_struct jsonEmail
-
-			errResp := json.NewDecoder(r.Body).Decode(&email_struct)
-			if errResp != nil {
-				jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+errResp.Error()), http.StatusBadRequest)
-				return
-			}
-			email := email_struct.Email
-	*/
-
-	email := r.URL.Query().Get("email")
-	if email == "" {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("Incorrect email"), http.StatusBadRequest)
-		return
-	}
-
-	code, err := h.s.Emails.GetConfirmationCode(email)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("Email not found."), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"message":     "Successfully sent confirmation code.",
-		"code":        code,
-		"status_code": http.StatusOK,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
-}
-
-// ConfirmEmailHandler confirms the user's email using a confirmation token and code.
+// ConfirmEmailRegisterHandler confirms the user's email using a confirmation RefreshToken and code during registration.
 //
 // @Summary Confirm email
-// @Description Confirms the user's email using a token and confirmation code.
-// @Tags Email
+// @Description Confirms the user's email using a RefreshToken and confirmation code during registration.
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
-// @Success 200 {string} string "Successfully confirmed email"
-// @Failure 400 {string} string "Invalid request or missing token"
-// @Failure 500 {string} string "Internal server error"
-// @Router /email/confirm [post]
-func (h *MyHandler) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
+// @Success 200 {object} ConfirmResponse "Successfully confirmed email"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
+// @Router /auth/register/confirm [post]
+func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming email...")
 
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid Content-Type, expected application/json: %v", err), http.StatusBadRequest)
+		err := errors.New("empty 'Content-Type' HEADER")
+		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
+		err := errors.New("empty RefreshToken")
+		h.errResp(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	token_details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
-			jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+			h.errResp(w, err, http.StatusInternalServerError)
 			break
 		case errors.Is(err, myerrors.ErrInvalidToken):
-			jsonresponse.SendErrorResponse(w, err, http.StatusUnauthorized)
+			h.errResp(w, err, http.StatusUnauthorized)
 			break
 		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message":                 "Successfuly confirmed email",
-		"token_details":           token_details,
-		"access_token_life_time":  time.Minute * 15,
-		"refresh_token_life_time": 30 * 24 * time.Hour,
-		"status_code":             http.StatusOK,
-		"device_id":               deviceID,
+	response := ConfirmResponse{
+		Message:              "Successfully confirmed email",
+		TokenDetails:         *details,
+		AccessTokenLifeTime:  60 * 15,
+		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
+		StatusCode:           http.StatusOK,
+		DeviceId:             deviceID,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
 // ConfirmEmailLoginHandler confirms a user's email for login.
 //
 // @Summary Confirm email for login
-// @Description Confirms the user's email for login using a token and confirmation code.
-// @Tags Email
+// @Description Confirms the user's email for login using a RefreshToken and confirmation code.
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
-// @Success 200 {string} string "Successfully confirmed email for login"
-// @Failure 400 {string} string "Invalid request or missing token"
-// @Failure 500 {string} string "Internal server error"
-// @Router /email/confirm-login [post]
+// @Success 200 {object} ConfirmResponse             "Successfully confirmed email for login"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
+// @Router /auth/login/confirm [post]
 func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming email for login...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
+		err := errors.New("Empty RefreshToken")
+		h.errResp(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	token_details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	token_details, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
-			jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+			h.errResp(w, err, http.StatusInternalServerError)
 			break
 		case errors.Is(err, myerrors.ErrInvalidToken):
-			jsonresponse.SendErrorResponse(w, err, http.StatusUnauthorized)
+			h.errResp(w, err, http.StatusUnauthorized)
 			break
 		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message":                 "Successfuly confirmed email",
-		"token_details":           token_details,
-		"access_token_life_time":  time.Minute * 15,
-		"refresh_token_life_time": 30 * 24 * time.Hour,
-		"status_code":             http.StatusOK,
-		"device_id":               deviceID,
+	response := ConfirmResponse{
+		Message:              "Successfully confirmed email",
+		TokenDetails:         *token_details,
+		AccessTokenLifeTime:  60 * 15,
+		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
+		StatusCode:           http.StatusOK,
+		DeviceId:             deviceID,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
 // ResetPasswordConfirmHandler confirms the password reset process.
 //
 // @Summary Confirm password reset
-// @Description Confirms the password reset process using a token and code.
-// @Tags Password
+// @Description Confirms the password reset process using a RefreshToken and code.
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
-// @Success 200 {string} string "Successfully confirmed password reset"
-// @Failure 400 {string} string "Invalid request or missing token"
-// @Failure 500 {string} string "Internal server error"
-// @Router /password/reset-confirm [post]
+// @Success 200 {object} jsonresponse.SuccessResponse "Successfully confirmed password reset"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
+// @Router /auth/password/confirm [post]
 func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming password reset...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
 		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		err := errors.New("Empty token")
-		jsonresponse.SendErrorResponse(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
+		err := errors.New("empty RefreshToken")
+		h.errResp(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
@@ -268,19 +195,205 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
-			jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+			h.errResp(w, err, http.StatusInternalServerError)
 			break
 		case errors.Is(err, myerrors.ErrInvalidToken):
-			jsonresponse.SendErrorResponse(w, err, http.StatusUnauthorized)
+			h.errResp(w, err, http.StatusUnauthorized)
 			break
 		}
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":     "Successfully confirmed email",
-		"status_code": http.StatusOK,
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully confirmed email",
+		StatusCode: http.StatusOK,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
+}
+
+// RegisterUserHandler registers a new user in the system.
+//
+// @Summary Register a new user
+// @Description Register a new user in the system.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param username query string true "Username"
+// @Param password query string true "Password"
+// @Param name query string true "Name"
+// @Success 200 {object} jsonresponse.TokenResponse "User registered successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 409 {object} jsonresponse.ErrorResponse "User already exists"
+// @Router /auth/register [post]
+func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Received request to register a new user.")
+
+	// Check Content-Type header
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		err := fmt.Errorf("empty 'Content-Type' header")
+		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Decode the request body into registrationRequest
+	var registrationRequest UserAuthenticationRequest
+	if err := json.NewDecoder(r.Body).Decode(&registrationRequest); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Validate the email format
+	if !validator.IsValidEmail(registrationRequest.Email) {
+		h.errResp(w, fmt.Errorf("invalid email: %s", registrationRequest.Email), http.StatusBadRequest)
+		return
+	}
+
+	// Validate the password strength
+	if !validator.IsValidPassword(registrationRequest.Password) {
+		h.l.Warn("Invalid password provided.")
+		h.errResp(w, fmt.Errorf("password must be at least 7 characters long"), http.StatusBadRequest)
+		return
+	}
+
+	// Generate registration RefreshToken
+	token, err := h.s.Tokens.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
+	if err != nil {
+		switch err {
+		case myerrors.ErrDuplicated:
+			h.errResp(w, fmt.Errorf("error registering user: already exists"), http.StatusConflict)
+		default:
+			h.errResp(w, fmt.Errorf("error registering user: invalid request payload: %v", err), http.StatusBadRequest)
+		}
+		return
+	}
+
+	// Send success response
+	response := jsonresponse.TokenResponse{
+		Message:    "Confirm your email",
+		Token:      token,
+		StatusCode: http.StatusOK,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.l.Error("Failed to send response", zap.Error(err))
+	}
+
+	h.l.Debug("User registered successfully", zap.String("email", registrationRequest.Email))
+}
+
+// LoginUserHandler authenticates a user and returns an authentication RefreshToken.
+//
+// @Summary LoginUserHandler to the system
+// @Description LoginUserHandler to the system and get an authentication RefreshToken.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param loginRequest body UserAuthenticationRequest true "UserAuthenticationRequest object"
+// @Success 200 {object} jsonresponse.TokenResponse "LoginUserHandler successful"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Bad Request"
+// @Failure 401 {object} jsonresponse.ErrorResponse "Unauthorized"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Internal Server Error"
+// @Router /auth/login [post]
+func (h *MyHandler) LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Login attempt initiated...")
+
+	// Check Content-Type header
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json"), http.StatusBadRequest)
+		return
+	}
+
+	// Decode the login request payload
+	var loginRequest UserAuthenticationRequest
+	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	email := loginRequest.Email
+	password := loginRequest.Password
+
+	// Attempt to log in and retrieve the authentication RefreshToken
+	token, err := h.s.Tokens.Login(email, password)
+	if err != nil {
+		switch {
+		case errors.Is(err, myerrors.ErrEmpty), errors.Is(err, myerrors.ErrInvalidCreds):
+			h.errResp(w, fmt.Errorf("invalid email or password: %w", err), http.StatusUnauthorized)
+		case errors.Is(err, myerrors.ErrInternal), errors.Is(err, myerrors.ErrEmailing):
+			h.errResp(w, fmt.Errorf("internal error during login: %w", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Send success response with RefreshToken
+	response := jsonresponse.TokenResponse{
+		Message:    "Confirm your email",
+		Token:      token,
+		StatusCode: http.StatusOK,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+
+	h.l.Debug("Login successful", zap.String("email", email))
+}
+
+// ResetPasswordHandler sends a password reset token to the user's email.
+//
+// @Summary Reset password
+// @Description This endpoint allows users to request a password reset by providing their email. If the email is valid, a reset token will be sent to it.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   body  body  user.ResetPasswordRequest  true  "Reset password request with email"
+// @Success 200 {object} jsonresponse.SuccessResponse "Successfully sent email with reset password token"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid Content-Type or invalid email"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error"
+// @Router /auth/password [post]
+func (h *MyHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Attempting to reset password...")
+	contentType := r.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		err := errors.New("empty 'Content-Type' HEADER")
+		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	var resetRequest user.ResetPasswordRequest
+
+	err := json.NewDecoder(r.Body).Decode(&resetRequest)
+	if err != nil {
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	email := resetRequest.Email
+	if !validator.IsValidEmail(email) {
+		h.errResp(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		return
+	}
+
+	err = h.s.Tokens.ResetPassword(email)
+	if err != nil {
+		h.errResp(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully sent email with reset password token",
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// UserAuthenticationRequest is for auth requests
+type UserAuthenticationRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

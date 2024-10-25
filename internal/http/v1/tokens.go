@@ -5,203 +5,84 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
-	"github.com/wachrusz/Back-End-API/internal/service/user"
-	"github.com/wachrusz/Back-End-API/pkg/json_response"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/util"
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
 	"net/http"
-	"time"
 )
 
-// RegisterUserHandler registers a new user in the system.
-//
-// @Summary Register a new user
-// @Description Register a new user in the system.
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param username query string true "Username"
-// @Param password query string true "Password"
-// @Param name query string true "Name"
-// @Success 200 {string} string "User registered successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 409 {string} string "User already exists"
-// @Router /auth/register [post]
-func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
-	h.l.Debug("Received request to register a new user.")
-
-	// Check Content-Type header
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := fmt.Errorf("empty 'Content-Type' header")
-		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	// Decode the request body into registrationRequest
-	var registrationRequest user.UserAuthenticationRequest
-	if err := json.NewDecoder(r.Body).Decode(&registrationRequest); err != nil {
-		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	// Validate the email format
-	if !validator.IsValidEmail(registrationRequest.Email) {
-		h.errResp(w, fmt.Errorf("invalid email: %s", registrationRequest.Email), http.StatusBadRequest)
-		return
-	}
-
-	// Validate the password strength
-	if !validator.IsValidPassword(registrationRequest.Password) {
-		h.l.Warn("Invalid password provided.")
-		h.errResp(w, fmt.Errorf("password must be at least 7 characters long"), http.StatusBadRequest)
-		return
-	}
-
-	// Generate registration token
-	token, err := h.s.Tokens.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
-	if err != nil {
-		switch err {
-		case myerrors.ErrDuplicated:
-			h.errResp(w, fmt.Errorf("error registering user: already exists"), http.StatusConflict)
-		default:
-			h.errResp(w, fmt.Errorf("error registering user: invalid request payload: %v", err), http.StatusBadRequest)
-		}
-		return
-	}
-
-	// Send success response
-	response := map[string]interface{}{
-		"message":     "Confirm your email",
-		"token":       token,
-		"status_code": http.StatusOK,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		h.l.Error("Failed to send response", zap.Error(err))
-	}
-
-	h.l.Debug("User registered successfully", zap.String("email", registrationRequest.Email))
+type RefreshToken struct {
+	RefreshToken string `json:"refresh_token"`
 }
 
-// Login authenticates a user and returns an authentication token.
+// RefreshTokenHandler handles the refresh of authentication tokens.
 //
-// @Summary Login to the system
-// @Description Login to the system and get an authentication token.
+// @Summary Refresh authentication tokens
+// @Description This endpoint allows users to refresh their access and refresh tokens using an existing refresh RefreshToken.
 // @Tags Auth
-// @Accept json
-// @Produce json
-// @Param loginRequest body user.UserAuthenticationRequest true "UserAuthenticationRequest object"
-// @Success 200 {string} string "Login successful"
-// @Failure 400 {string} string "Bad Request"
-// @Failure 401 {string} string "Unauthorized"
-// @Failure 500 {string} string "Internal Server Error"
-// @Router /auth/login [post]
-func (h *MyHandler) Login(w http.ResponseWriter, r *http.Request) {
-	h.l.Debug("Login attempt initiated...")
-
-	// Check Content-Type header
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json"), http.StatusBadRequest)
-		return
-	}
-
-	// Decode the login request payload
-	var loginRequest user.UserAuthenticationRequest
-	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
-		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
-		return
-	}
-
-	email := loginRequest.Email
-	password := loginRequest.Password
-
-	// Attempt to log in and retrieve the authentication token
-	token, err := h.s.Tokens.Login(email, password)
-	if err != nil {
-		switch {
-		case errors.Is(err, myerrors.ErrEmpty), errors.Is(err, myerrors.ErrInvalidCreds):
-			h.errResp(w, fmt.Errorf("invalid email or password: %w", err), http.StatusUnauthorized)
-		case errors.Is(err, myerrors.ErrInternal), errors.Is(err, myerrors.ErrEmailing):
-			h.errResp(w, fmt.Errorf("internal error during login: %w", err), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	// Send success response with token
-	response := map[string]interface{}{
-		"message":     "Confirm your email",
-		"token":       token,
-		"status_code": http.StatusOK,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response["status_code"].(int))
-	json.NewEncoder(w).Encode(response)
-
-	h.l.Debug("Login successful", zap.String("email", email))
-}
-
+// @Accept  json
+// @Produce  json
+// @Param   token  body   RefreshToken   true  "Refresh Token"
+// @Success 200 {object} jsonresponse.DoubleTokenResponse "Successfully refreshed tokens"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid Content-Type or request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error"
+// @Security JWT
+// @Router /auth/refresh [post]
 func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "), http.StatusBadRequest)
 		return
 	}
 	//! Заставляет задуматься
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
-	//! Сомнительно
-	type token struct {
-		RefreshToken string `json:"refresh_token"`
-	}
 
-	var tmpToken token
+	var tmpToken RefreshToken
 
 	err := json.NewDecoder(r.Body).Decode(&tmpToken)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	access, refresh, err := h.s.Tokens.RefreshToken(tmpToken.RefreshToken, userID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+		h.errResp(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":                 "Successfully refreshed tokens",
-		"access_token":            access,
-		"refresh_token":           refresh,
-		"access_token_life_time":  time.Minute * 15,
-		"refresh_token_life_time": 30 * 24 * time.Hour,
-		"status_code":             http.StatusOK,
+	response := jsonresponse.DoubleTokenResponse{
+		Message:              "Successfully refreshed tokens",
+		AccessToken:          access,
+		RefreshToken:         refresh,
+		AccessTokenLifeTime:  60 * 15,
+		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
+		StatusCode:           http.StatusOK,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
-// Logout handles user logout and terminates the session.
+// LogoutUserHandler handles user logout and terminates the session.
 //
-// @Summary Logout the user
+// @Summary LogoutUserHandler the user
 // @Description Logs out the user, terminating the session.
 // @Tags Auth
 // @Produce json
-// @Success 200 {string} string "Logout successful"
-// @Failure 401 {string} string "User not authenticated"
-// @Failure 500 {string} string "Internal Server Error"
+// @Success 200 {object} jsonresponse.SuccessResponse "LogoutUserHandler successful"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Internal Server Error"
 // @Security JWT
 // @Router /auth/logout [post]
-func (h *MyHandler) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *MyHandler) LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("User logout initiated...")
 
 	// Retrieve the current device ID from the context
@@ -225,110 +106,125 @@ func (h *MyHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send successful logout response
-	response := map[string]interface{}{
-		"message":     "Logout successful",
-		"status_code": http.StatusOK,
+	response := jsonresponse.SuccessResponse{
+		Message:    "Logout successful",
+		StatusCode: http.StatusOK,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("User logged out successfully", zap.String("userID", userID))
 }
 
+// DeleteTokensHandler handles the deletion of authentication tokens.
+//
+// @Summary Delete authentication tokens
+// @Description This endpoint allows users to delete authentication tokens either by email or device ID. Only one of the parameters should be provided.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   email    query  string  false  "User email"
+// @Param   deviceID query  string  false  "Device ID"
+// @Success 204 {object} jsonresponse.SuccessResponse "Successfully deleted tokens"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request: blank fields or both email and deviceID provided"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error"
+// @Router /auth/tokens [delete]
 func (h *MyHandler) DeleteTokensHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting tokens...")
 	email := r.URL.Query().Get("email")
 	deviceID := r.URL.Query().Get("deviceID")
 	if (email == "" && deviceID == "") || (email != "" && deviceID != "") {
-		jsonresponse.SendErrorResponse(w, errors.New("blank fields and two methods are not allowed"), http.StatusBadRequest)
+		h.errResp(w, errors.New("blank fields and two methods are not allowed"), http.StatusBadRequest)
 		return
 	}
 
 	err := h.s.Users.DeleteTokens(email, deviceID)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
+		h.errResp(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	response := map[string]interface{}{
-		"message":     "Successfuly deleted tokens",
-		"status_code": http.StatusOK,
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted tokens",
+		StatusCode: http.StatusNoContent,
 	}
+
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
+// GetTokenPairsAmountHandler retrieves the number of token pairs for a user.
+//
+// @Summary Get token pairs amount
+// @Description This endpoint returns the number of token pairs (active sessions) associated with the provided email.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   email  query  string  true  "User email"
+// @Success 200 {object} jsonresponse.AmountResponse "Successfully got the amount of token pairs"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request: blank fields are not allowed"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error"
+// @Router /auth/tokens/amount [get]
 func (h *MyHandler) GetTokenPairsAmountHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Getting pairs amount")
 	email := r.URL.Query().Get("email")
 	if email == "" {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("blank fields are not allowed"), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("blank fields are not allowed"), http.StatusBadRequest)
 		return
 	}
 	amount, err := h.s.Users.GetTokenPairsAmount(email)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("error while counting sessions: %v", err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("error while counting sessions: %v", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	response := map[string]interface{}{
-		"message":     "Successfuly got ammount",
-		"ammount":     amount,
-		"status_code": http.StatusOK,
+	response := jsonresponse.AmountResponse{
+		Message:    "Successfully got amount",
+		Amount:     amount,
+		StatusCode: http.StatusOK,
 	}
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *MyHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	var resetRequest user.ResetPasswordRequest
-
-	err := json.NewDecoder(r.Body).Decode(&resetRequest)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	email := resetRequest.Email
-	if !validator.IsValidEmail(email) {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
-		return
-	}
-
-	err = h.s.Tokens.ResetPassword(email)
-	if err != nil {
-		jsonresponse.SendErrorResponse(w, err, http.StatusInternalServerError)
-	}
-}
-
+// ChangePasswordForRecoverHandler allows users to reset their password using a reset token.
+//
+// @Summary Change password for recovery
+// @Description This endpoint enables users to change their password by providing their email, new password, and a valid reset token.
+// @Tags Auth
+// @Accept  json
+// @Produce  json
+// @Param   body  body  UserPasswordReset  true  "Password reset request with email, new password, and reset token"
+// @Success 200 {object} jsonresponse.SuccessResponse "Password reset successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request: empty fields, invalid email, or password too short"
+// @Failure 401 {object} jsonresponse.ErrorResponse "Invalid or expired reset token"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error"
+// @Router /auth/password [put]
 func (h *MyHandler) ChangePasswordForRecoverHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Changing password...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		err := errors.New("empty 'Content-Type' HEADER")
+		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	var resetRequest user.UserPasswordReset
+	var resetRequest UserPasswordReset
 
 	err := json.NewDecoder(r.Body).Decode(&resetRequest)
 	if err != nil {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
 	email := resetRequest.Email
 	password := resetRequest.Password
 	if !validator.IsValidPassword(password) {
-		jsonresponse.SendErrorResponse(w, errors.New("password must be at least 7 digits long: "), http.StatusBadRequest)
+		h.errResp(w, errors.New("password must be at least 7 digits long: "), http.StatusBadRequest)
 		return
 	}
 
 	if !validator.IsValidEmail(email) {
-		jsonresponse.SendErrorResponse(w, errors.New("Invalid email: "), http.StatusBadRequest)
+		h.errResp(w, errors.New("Invalid email: "), http.StatusBadRequest)
 		return
 	}
 
@@ -347,14 +243,20 @@ func (h *MyHandler) ChangePasswordForRecoverHandler(w http.ResponseWriter, r *ht
 			statusCode = http.StatusUnauthorized
 			break
 		}
-		jsonresponse.SendErrorResponse(w, fmt.Errorf("error changing the password: %v", err), statusCode)
+		h.errResp(w, fmt.Errorf("error changing the password: %v", err), statusCode)
 		return
 	}
 
-	response := map[string]interface{}{
-		"message":     "Successfuly reseted password",
-		"status_code": http.StatusOK,
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully reset password",
+		StatusCode: http.StatusOK,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+type UserPasswordReset struct {
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	ResetToken string `json:"reset_token"`
 }

@@ -13,7 +13,7 @@ require (
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 	github.com/xuri/excelize/v2 v2.8.0
-	github.com/zhukovrost/cadv_logger v0.0.0-20241018111210-56c45f7fd1d6
+	github.com/zhukovrost/cadv_logger v0.0.0-20241025150100-2d0ddd8f1c91
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.19.0
 	golang.org/x/oauth2 v0.17.0

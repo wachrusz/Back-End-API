@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
 	"net/http"
 
@@ -18,10 +19,11 @@ import (
 // @Accept json
 // @Produce json
 // @Param goal body models.Goal true "Goal object"
-// @Success 201 {string} string "Goal created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 401 {string} string "User not authenticated"
-// @Failure 500 {string} string "Error creating goal"
+// @Success 201 {object} jsonresponse.IdResponse "Goal created successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error creating goal"
+// @Security JWT
 // @Router /tracker/goal [post]
 func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating a new goal...")
@@ -51,12 +53,12 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send success response
-	response := map[string]interface{}{
-		"message":           "Successfully created a goal",
-		"created_object_id": goalID,
-		"status_code":       http.StatusCreated,
+	response := jsonresponse.IdResponse{
+		Message:    "Successfully created a goal",
+		Id:         goalID,
+		StatusCode: http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Goal created successfully", zap.Int64("goalID", goalID))

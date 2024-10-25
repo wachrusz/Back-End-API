@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
 
 	"github.com/wachrusz/Back-End-API/internal/models"
@@ -17,9 +18,10 @@ import (
 // @Accept json
 // @Produce json
 // @Param subscription body models.Subscription true "Subscription object"
-// @Success 201 {string} string "Subscription created successfully"
-// @Failure 400 {string} string "Invalid request payload"
-// @Failure 500 {string} string "Error creating subscription"
+// @Success 201 {object} jsonresponse.IdResponse "Subscription created successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error creating subscription"
+// @Security JWT
 // @Router /settings/subscription [post]
 func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating a new subscription...")
@@ -39,12 +41,12 @@ func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Send success response
-	response := map[string]interface{}{
-		"message":           "Successfully created a subscription",
-		"created_object_id": subscriptionID,
-		"status_code":       http.StatusCreated,
+	response := jsonresponse.IdResponse{
+		Message:    "Successfully created a subscription",
+		Id:         subscriptionID,
+		StatusCode: http.StatusCreated,
 	}
-	w.WriteHeader(response["status_code"].(int))
+	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Subscription created successfully", zap.Int64("subscriptionID", subscriptionID))
