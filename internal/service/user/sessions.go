@@ -7,7 +7,7 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
+	logger "github.com/zhukovrost/cadv_logger"
 
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 )
