@@ -7,7 +7,6 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	logger "github.com/zhukovrost/cadv_logger"
 
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 )
@@ -55,10 +54,8 @@ func (s *Service) IsUserActive(userID string) bool {
 	err := row.Scan(&dummy)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			logger.ErrorLogger.Printf("User %s is not active", userID)
 			return false
 		}
-		logger.ErrorLogger.Printf("Error executing query for user %s: %v", userID, err)
 		return false
 
 	}
