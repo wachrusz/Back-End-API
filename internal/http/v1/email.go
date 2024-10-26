@@ -4,14 +4,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/service/token"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
+
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
 	"net/http"
+
 )
 
 // ConfirmResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
