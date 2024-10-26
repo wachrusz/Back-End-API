@@ -7,10 +7,9 @@ package categories
 import (
 	//"encoding/json"
 
-	models2 "github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	"math"
 	"time"
 
@@ -33,22 +32,22 @@ func NewService(db *mydb.Database, currencyService *currency.Service) *Service {
 
 // Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
 type Analytics struct {
-	Income     []models2.Income     `json:"income"`
-	Expense    []models2.Expense    `json:"expense"`
-	WealthFund []models2.WealthFund `json:"wealth_fund"`
+	Income     []models.Income     `json:"income"`
+	Expense    []models.Expense    `json:"expense"`
+	WealthFund []models.WealthFund `json:"wealth_fund"`
 }
 
 // Tracker represents the structure for tracking data, including tracking state and goals.
 type Tracker struct {
-	TrackingState models2.TrackingState `json:"tracking_state"`
-	Goal          []models2.Goal        `json:"goal"`
-	FinHealth     models2.FinHealth     `json:"fin_health"`
+	TrackingState models.TrackingState `json:"tracking_state"`
+	Goal          []models.Goal        `json:"goal"`
+	FinHealth     models.FinHealth     `json:"fin_health"`
 }
 
 // More represents additional user information, including app and settings details.
 type More struct {
-	App      models2.App      `json:"app"`
-	Settings models2.Settings `json:"settings"`
+	App      models.App      `json:"app"`
+	Settings models.Settings `json:"settings"`
 }
 
 func round(num float64, precision int) float64 {
@@ -120,9 +119,9 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	}
 	defer rowsIncome.Close()
 
-	var incomeList []models2.Income
+	var incomeList []models.Income
 	for rowsIncome.Next() {
-		var income models2.Income
+		var income models.Income
 		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
 			return nil, err
 		}
@@ -140,9 +139,9 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	}
 	defer rowsExpense.Close()
 
-	var expenseList []models2.Expense
+	var expenseList []models.Expense
 	for rowsExpense.Next() {
-		var expense models2.Expense
+		var expense models.Expense
 		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
 			return nil, err
 		}
@@ -160,9 +159,9 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	}
 	defer rowsWealthFund.Close()
 
-	var wealthFundList []models2.WealthFund
+	var wealthFundList []models.WealthFund
 	for rowsWealthFund.Next() {
-		var wealthFund models2.WealthFund
+		var wealthFund models.WealthFund
 		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
 			return nil, err
 		}
@@ -185,14 +184,13 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	queryGoal := "SELECT id, goal, need, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
 	rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
-		logger.ErrorLogger.Print("Error getting Goal From DB: (userID, error) ", userID, err)
 		return nil, err
 	}
 	defer rowsGoal.Close()
 
-	var goalList []models2.Goal
+	var goalList []models.Goal
 	for rowsGoal.Next() {
-		var goal models2.Goal
+		var goal models.Goal
 		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.CurrentState); err != nil {
 			return nil, err
 		}
@@ -200,7 +198,7 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 		goal.Need = s.convertCurrency(goal.Need, "RUB", currencyCode)
 		goalList = append(goalList, goal)
 	}
-	trackingState := &models2.TrackingState{
+	trackingState := &models.TrackingState{
 		State:  s.getTotalState(userID, currencyCode),
 		UserID: userID,
 	}
@@ -260,7 +258,6 @@ func (s *Service) GetUserInfoFromDB(userID string) (string, string, error) {
 	row := s.repo.QueryRow(query, userID)
 	err := row.Scan(&surname, &name)
 	if err != nil {
-		logger.ErrorLogger.Print("Error getting user information from DB: ", err)
 		return "", "", err
 	}
 
@@ -276,11 +273,10 @@ func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 		return nil, err
 	}
 
-	var settings models2.Settings
+	var settings models.Settings
 
 	app, err := s.GetAppFromDB(userID)
 	if err != nil {
-		logger.ErrorLogger.Printf("Error in GetAppFromDB: %v", err)
 	}
 
 	settings.Subscriptions = *subs
@@ -291,7 +287,7 @@ func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 	return &more, nil
 }
 
-func (s *Service) GetAppFromDB(userID string) (*models2.App, error) {
+func (s *Service) GetAppFromDB(userID string) (*models.App, error) {
 	connectedAccounts, err := s.GetConnectedAccountsFromDB(userID)
 	if err != nil {
 		return nil, err
@@ -302,7 +298,7 @@ func (s *Service) GetAppFromDB(userID string) (*models2.App, error) {
 		return nil, err
 	}
 
-	app := &models2.App{
+	app := &models.App{
 		ConnectedAccounts: connectedAccounts,
 		CategorySettings:  *categorySettings,
 		//OperationArchive:  operationArchive,
@@ -311,22 +307,22 @@ func (s *Service) GetAppFromDB(userID string) (*models2.App, error) {
 	return app, nil
 }
 
-func (s *Service) GetSubscriptionFromDB(userID string) (*models2.Subscription, error) {
-	var subscription models2.Subscription
+func (s *Service) GetSubscriptionFromDB(userID string) (*models.Subscription, error) {
+	var subscription models.Subscription
 
 	query := "SELECT id, user_id, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1"
 	row := s.repo.QueryRow(query, userID)
 
 	err := row.Scan(&subscription.ID, &subscription.UserID, &subscription.StartDate, &subscription.EndDate, &subscription.IsActive)
 	if err != nil {
-		return &models2.Subscription{}, nil
+		return &models.Subscription{}, nil
 	}
 
 	return &subscription, nil
 }
 
-func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error) {
-	var connectedAccounts []models2.ConnectedAccount
+func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error) {
+	var connectedAccounts []models.ConnectedAccount
 
 	// Запрос к базе данных для выбора подключенных аккаунтов по идентификатору пользователя.
 	query := `
@@ -342,7 +338,7 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models2.Connected
 	defer rows.Close()
 
 	for rows.Next() {
-		var connectedAccount models2.ConnectedAccount
+		var connectedAccount models.ConnectedAccount
 		err := rows.Scan(
 			&connectedAccount.ID,
 			&connectedAccount.UserID,
@@ -364,8 +360,8 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models2.Connected
 	return connectedAccounts, nil
 }
 
-func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error) {
-	var categorySettings models2.CategorySettings
+func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error) {
+	var categorySettings models.CategorySettings
 
 	// Запрос для получения конфигурации доходов
 	queryIncome := "SELECT id, name, icon, is_fixed, user_id FROM income_categories WHERE user_id = $1"
@@ -377,7 +373,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 	defer rowsIncome.Close()
 
 	for rowsIncome.Next() {
-		var config models2.IncomeCategory
+		var config models.IncomeCategory
 		err := rowsIncome.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning income category configuration:", err)
@@ -396,7 +392,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 	defer rowsExpense.Close()
 
 	for rowsExpense.Next() {
-		var config models2.ExpenseCategory
+		var config models.ExpenseCategory
 		err := rowsExpense.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning expense category configuration:", err)
@@ -414,7 +410,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 	defer rowsInvestment.Close()
 
 	for rowsInvestment.Next() {
-		var config models2.InvestmentCategory
+		var config models.InvestmentCategory
 		err := rowsInvestment.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning investment category configuration:", err)
@@ -425,14 +421,14 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models2.CategorySet
 
 	// Проверка, что были получены данные
 	if len(categorySettings.ExpenseCategories) == 0 && len(categorySettings.IncomeCategories) == 0 && len(categorySettings.InvestmentCategories) == 0 {
-		return &models2.CategorySettings{}, nil
+		return &models.CategorySettings{}, nil
 	}
 
 	return &categorySettings, nil
 }
 
-func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error) {
-	var operations []models2.Operation
+func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation, error) {
+	var operations []models.Operation
 
 	query := `
 		SELECT id, description, amount, date, category, operation_type
@@ -449,7 +445,7 @@ func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]mod
 	defer rows.Close()
 
 	for rows.Next() {
-		var operation models2.Operation
+		var operation models.Operation
 		err := rows.Scan(
 			&operation.ID,
 			&operation.Description,
@@ -477,9 +473,9 @@ type Categories interface {
 	GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error)
 	GetUserInfoFromDB(userID string) (string, string, error)
 	GetMoreFromDB(userID string) (*More, error)
-	GetAppFromDB(userID string) (*models2.App, error)
-	GetSubscriptionFromDB(userID string) (*models2.Subscription, error)
-	GetConnectedAccountsFromDB(userID string) ([]models2.ConnectedAccount, error)
-	GetCategorySettingsFromDB(userID string) (*models2.CategorySettings, error)
-	GetOperationArchiveFromDB(userID, limit, offset string) ([]models2.Operation, error)
+	GetAppFromDB(userID string) (*models.App, error)
+	GetSubscriptionFromDB(userID string) (*models.Subscription, error)
+	GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error)
+	GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error)
+	GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation, error)
 }

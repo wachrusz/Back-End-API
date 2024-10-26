@@ -10,3 +10,9 @@ db/psql:
 .PHONY: run/api
 run/api:
 	@go run cmd/api/main.go
+
+## build/docs: generate API documentation using Swagger
+.PHONY: build/docs
+build/docs:
+	@echo 'Building docs'
+	swag init -g ./cmd/api/main.go
