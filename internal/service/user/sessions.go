@@ -45,9 +45,6 @@ func (s *Service) IsUserActive(userID string) bool {
 	s.activeMu.Lock()
 	defer s.activeMu.Unlock()
 
-	_, ok := s.ActiveUsers[userID]
-	if !ok {
-
 	query := `
 		SELECT 1 FROM sessions
 		WHERE user_id = $1;
