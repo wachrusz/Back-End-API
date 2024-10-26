@@ -9,7 +9,6 @@ import (
 	"fmt"
 
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 )
 
 type ActiveUser struct {
@@ -23,19 +22,17 @@ func (s *Service) InitActiveUsers() {
 	var query = "SELECT user_id, email, device_id, token FROM sessions"
 	rows, err := s.repo.Query(query)
 	if err != nil {
-		logger.ErrorLogger.Printf("Unnable to check DB DUE TO: %v", err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var userID, email, deviceID, token string
 		if err := rows.Scan(&userID, &email, &deviceID, &token); err != nil {
-			logger.ErrorLogger.Printf("Strange error at: %v", err)
 		}
 
 		decryptedToken, err := enc.DecryptToken(token)
+		_ = decryptedToken // FIXME: хз что тут
 		if err != nil {
-			logger.ErrorLogger.Printf("Failed to decrypt token for UserID: %v", userID, ", token: %v", decryptedToken)
 		}
 	}
 }
@@ -47,6 +44,9 @@ func (s *Service) GetActiveUser(userID string) ActiveUser {
 func (s *Service) IsUserActive(userID string) bool {
 	s.activeMu.Lock()
 	defer s.activeMu.Unlock()
+
+	_, ok := s.ActiveUsers[userID]
+	if !ok {
 
 	query := `
 		SELECT 1 FROM sessions
@@ -62,6 +62,7 @@ func (s *Service) IsUserActive(userID string) bool {
 		}
 		logger.ErrorLogger.Printf("Error executing query for user %s: %v", userID, err)
 		return false
+
 	}
 	return true
 }

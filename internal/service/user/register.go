@@ -3,24 +3,11 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"github.com/wachrusz/Back-End-API/pkg/logger"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
-// UserAuthenticationRequest is for auth requests
-type UserAuthenticationRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 type ResetPasswordRequest struct {
 	Email string `json:"email"`
-}
-
-type UserPasswordReset struct {
-	Email      string `json:"email"`
-	Password   string `json:"password"`
-	ResetToken string `json:"reset_token"`
 }
 
 type IdentificationData struct {
@@ -37,7 +24,6 @@ func (s *Service) GetUserByEmail(email string) (IdentificationData, bool) {
 	if errors.Is(err, sql.ErrNoRows) {
 		return userData, false
 	} else if err != nil {
-		logger.ErrorLogger.Println("Error querying user:", err)
 		return userData, false
 	}
 	return userData, true
@@ -48,8 +34,6 @@ func (s *Service) Register(email, password string) error {
 	defer s.mutex.Unlock()
 
 	if _, exists := s.GetUserByEmail(email); exists {
-		errMsg := "User with email " + email + " already exists"
-		logger.ErrorLogger.Println(errMsg)
 		return errors.New("Already exists")
 	}
 
@@ -64,11 +48,8 @@ func (s *Service) Register(email, password string) error {
 
 	_, err = s.repo.Exec("INSERT INTO users (email, hashed_password) VALUES ($1, $2)", email, hashedPassword)
 	if err != nil {
-		logger.ErrorLogger.Println("Error inserting user:", err)
 		return err
 	}
-
-	logger.InfoLogger.Printf("New user registered: %s\n", email)
 
 	return nil
 }

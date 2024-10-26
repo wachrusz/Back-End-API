@@ -16,9 +16,9 @@ package v1
 //		return
 //	}
 //
-//	err := h.s.Reports.ExportHandler(userID)
-//	if err != nil {
-//		http.Error(w, err.Error(), http.StatusInternalServerError)
+//	errResp := h.s.Reports.ExportHandler(userID)
+//	if errResp != nil {
+//		http.Error(w, errResp.Error(), http.StatusInternalServerError)
 //		return
 //	}
 //	excelFilename := "report.xlsx"

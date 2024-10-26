@@ -9,72 +9,16 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
+        "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "Mikhail Vakhrushin",
-            "email": "lstwrd@yandex.com"
+            "email": "wachrusz@gmail.com"
         },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/analytics/expense": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Create a new expense.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Analytics"
-                ],
-                "summary": "Create an expense",
-                "parameters": [
-                    {
-                        "description": "Expense object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Expense"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Expense created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
         "/analytics/income": {
             "post": {
                 "security": [
@@ -82,7 +26,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Create a new income.",
+                "description": "Create a new income record.",
                 "consumes": [
                     "application/json"
                 ],
@@ -108,25 +52,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Income created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating income",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -165,25 +109,131 @@ const docTemplate = `{
                     "201": {
                         "description": "Wealth fund created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating wealth fund",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/accounts": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new connected account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Create a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Connected account created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error adding connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete an existing connected account.",
+                "tags": [
+                    "App"
+                ],
+                "summary": "Delete a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Connected account deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -196,7 +246,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Create a new expense category.",
+                "description": "Creates a new expense category in the database and returns its ID.",
                 "consumes": [
                     "application/json"
                 ],
@@ -206,7 +256,7 @@ const docTemplate = `{
                 "tags": [
                     "App"
                 ],
-                "summary": "Create an expense category",
+                "summary": "CreateExpenseCategoryHandler an expense category",
                 "parameters": [
                     {
                         "description": "Expense category object",
@@ -222,19 +272,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Expense category created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating expense category",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -273,19 +323,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Income category created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating income category",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -324,160 +374,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Investment category created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating investment category",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/app/connected-accounts/add": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Create a new connected account.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "App"
-                ],
-                "summary": "Create a connected account",
-                "parameters": [
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "ConnectedAccount",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Connected account created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error adding connected account",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/app/connected-accounts/delete": {
-            "delete": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Delete an existing connected account.",
-                "tags": [
-                    "App"
-                ],
-                "summary": "Delete a connected account",
-                "parameters": [
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "ConnectedAccount",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Connected account created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error adding connected account",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/app/report": {
-            "get": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Get a financial report .",
-                "tags": [
-                    "App"
-                ],
-                "summary": "Exports report",
-                "parameters": [
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Connected account created successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Error adding connected account",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -485,7 +394,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "Login to the system and get an authentication token",
+                "description": "LoginUserHandler to the system and get an authentication RefreshToken.",
                 "consumes": [
                     "application/json"
                 ],
@@ -495,7 +404,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Login to the system",
+                "summary": "LoginUserHandler to the system",
                 "parameters": [
                     {
                         "description": "UserAuthenticationRequest object",
@@ -503,82 +412,79 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.UserAuthenticationRequest"
+                            "$ref": "#/definitions/v1.UserAuthenticationRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Login successful",
+                        "description": "LoginUserHandler successful",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.TokenResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/login/reset": {
+        "/auth/login/confirm": {
             "post": {
-                "description": "Confirm the user's email using the provided token and confirmation code.",
+                "description": "Confirms the user's email for login using a RefreshToken and confirmation code.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Confirm user email for password reset",
+                "summary": "Confirm email for login",
                 "parameters": [
                     {
-                        "description": "Confirm Email Request",
-                        "name": "confirmEmailRequest",
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Email confirmed successfully",
+                        "description": "Successfully confirmed email for login",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/v1.ConfirmResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request payload or Content-Type",
+                        "description": "Invalid request or missing RefreshToken",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid or expired token",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Error confirming email or reseting password",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -598,26 +504,32 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Logout the user",
+                "summary": "LogoutUserHandler the user",
                 "responses": {
                     "200": {
-                        "description": "Logout successful",
+                        "description": "LogoutUserHandler successful",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/register": {
-            "post": {
-                "description": "Register a new user.",
+        "/auth/password": {
+            "put": {
+                "description": "This endpoint enables users to change their password by providing their email, new password, and a valid reset token.",
                 "consumes": [
                     "application/json"
                 ],
@@ -627,7 +539,206 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Register user",
+                "summary": "Change password for recovery",
+                "parameters": [
+                    {
+                        "description": "Password reset request with email, new password, and reset token",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UserPasswordReset"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request: empty fields, invalid email, or password too short",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid or expired reset token",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "This endpoint allows users to request a password reset by providing their email. If the email is valid, a reset token will be sent to it.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Reset password",
+                "parameters": [
+                    {
+                        "description": "Reset password request with email",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/user.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully sent email with reset password token",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Content-Type or invalid email",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/password/confirm": {
+            "post": {
+                "description": "Confirms the password reset process using a RefreshToken and code.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Confirm password reset",
+                "parameters": [
+                    {
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully confirmed password reset",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or missing RefreshToken",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows users to refresh their access and refresh tokens using an existing refresh RefreshToken.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh authentication tokens",
+                "parameters": [
+                    {
+                        "description": "Refresh Token",
+                        "name": "token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.RefreshToken"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully refreshed tokens",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.DoubleTokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Content-Type or request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "Register a new user in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register a new user",
                 "parameters": [
                     {
                         "type": "string",
@@ -655,88 +766,215 @@ const docTemplate = `{
                     "200": {
                         "description": "User registered successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.TokenResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
-                    "500": {
-                        "description": "Error registering user",
+                    "409": {
+                        "description": "User already exists",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/register/confirm-email": {
+        "/auth/register/confirm": {
             "post": {
-                "description": "Confirm the user's email using the provided token and confirmation code.",
+                "description": "Confirms the user's email using a RefreshToken and confirmation code during registration.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Confirm user email",
+                "summary": "Confirm email",
                 "parameters": [
                     {
-                        "description": "Confirm Email Request",
-                        "name": "confirmEmailRequest",
+                        "description": "Confirmation request",
+                        "name": "confirmRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.ConfirmEmailRequest"
+                            "$ref": "#/definitions/token.ConfirmEmailRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Email confirmed successfully",
+                        "description": "Successfully confirmed email",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/v1.ConfirmResponse"
                         }
                     },
                     "400": {
-                        "description": "Invalid request payload or Content-Type",
+                        "description": "Invalid request or missing RefreshToken",
                         "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid or expired token",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
-                        "description": "Error confirming email or registering user",
+                        "description": "Internal server error",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/docs/swagger.json": {
-            "get": {
-                "description": "Get the Swagger JSON file.",
+        "/auth/tokens": {
+            "delete": {
+                "description": "This endpoint allows users to delete authentication tokens either by email or device ID. Only one of the parameters should be provided.",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Swagger"
+                    "Auth"
                 ],
-                "summary": "Get Swagger JSON",
+                "summary": "Delete authentication tokens",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Device ID",
+                        "name": "deviceID",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Successfully deleted tokens",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request: blank fields or both email and deviceID provided",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/tokens/amount": {
+            "get": {
+                "description": "This endpoint returns the number of token pairs (active sessions) associated with the provided email.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get token pairs amount",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Swagger JSON retrieved successfully",
+                        "description": "Successfully got the amount of token pairs",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.AmountResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request: blank fields are not allowed",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/expenses": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new expense record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Create an expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Expense"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created an expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -788,7 +1026,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/get": {
+        "/profile": {
             "get": {
                 "security": [
                     {
@@ -807,32 +1045,199 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile retrieved successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/v1.ProfileResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error getting user profile",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/profile/update-name": {
+        "/profile/analytics": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to retrieve profile analytics data, filtered by date range and pagination parameters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get profile analytics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Currency code for analytics data (e.g., USD, EUR)",
+                        "name": "X-Currency",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit for pagination",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date for analytics data (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date for analytics data (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved analytics data",
+                        "schema": {
+                            "$ref": "#/definitions/v1.ProfileAnalyticsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while fetching analytics data",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/archive": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to retrieve their archived operations with optional pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get operation archive",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit for pagination",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved operation archive",
+                        "schema": {
+                            "$ref": "#/definitions/v1.ProfileArchiveResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while fetching operation archive",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/more": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to retrieve additional profile data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get profile additional data",
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved additional profile data",
+                        "schema": {
+                            "$ref": "#/definitions/v1.ProfileMoreResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while fetching additional data",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/name": {
             "put": {
                 "security": [
                     {
                         "JWT": []
                     }
                 ],
-                "description": "Update the user profile for the authenticated user with a new name.",
+                "description": "Update the user profile for the authenticated user with a new name and surname.",
                 "consumes": [
                     "application/json"
                 ],
@@ -858,19 +1263,80 @@ const docTemplate = `{
                     "200": {
                         "description": "User profile updated successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error updating user profile",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profile/tracker": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to retrieve tracker data, with optional pagination parameters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Get profile tracker",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Currency code for tracker data (e.g., USD, EUR)",
+                        "name": "X-Currency",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit for pagination",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved tracker data",
+                        "schema": {
+                            "$ref": "#/definitions/v1.ProfileTrackerResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while fetching tracker data",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -878,7 +1344,12 @@ const docTemplate = `{
         },
         "/settings/subscription": {
             "post": {
-                "description": "Create a new subscription.",
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new subscription record.",
                 "consumes": [
                     "application/json"
                 ],
@@ -904,19 +1375,19 @@ const docTemplate = `{
                     "201": {
                         "description": "Subscription created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating subscription",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -924,6 +1395,11 @@ const docTemplate = `{
         },
         "/support/request": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Send a support request to the technical support team.",
                 "consumes": [
                     "application/json"
@@ -942,7 +1418,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.SupportRequest"
+                            "$ref": "#/definitions/v1.SupportRequest"
                         }
                     }
                 ],
@@ -950,79 +1426,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Support request sent successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error sending support request",
                         "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/index.html": {
-            "get": {
-                "description": "Get the Swagger UI.",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger UI",
-                "responses": {
-                    "200": {
-                        "description": "Swagger UI retrieved successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/json": {
-            "get": {
-                "description": "Get the Swagger JSON file.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger JSON",
-                "responses": {
-                    "200": {
-                        "description": "Swagger JSON retrieved successfully",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/swagger/ui": {
-            "get": {
-                "description": "Get the Swagger UI.",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "Swagger"
-                ],
-                "summary": "Get Swagger UI",
-                "responses": {
-                    "200": {
-                        "description": "Swagger UI retrieved successfully",
-                        "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -1030,6 +1452,11 @@ const docTemplate = `{
         },
         "/tracker/goal": {
             "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
                 "description": "Create a new goal.",
                 "consumes": [
                     "application/json"
@@ -1056,25 +1483,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Goal created successfully",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request payload",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Error creating goal",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -1082,45 +1509,178 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.ConfirmEmailRequest": {
+        "categories.Analytics": {
             "type": "object",
             "properties": {
-                "code": {
+                "expense": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Expense"
+                    }
+                },
+                "income": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Income"
+                    }
+                },
+                "wealth_fund": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.WealthFund"
+                    }
+                }
+            }
+        },
+        "categories.More": {
+            "type": "object",
+            "properties": {
+                "app": {
+                    "$ref": "#/definitions/models.App"
+                },
+                "settings": {
+                    "$ref": "#/definitions/models.Settings"
+                }
+            }
+        },
+        "categories.Tracker": {
+            "type": "object",
+            "properties": {
+                "fin_health": {
+                    "$ref": "#/definitions/models.FinHealth"
+                },
+                "goal": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Goal"
+                    }
+                },
+                "tracking_state": {
+                    "$ref": "#/definitions/models.TrackingState"
+                }
+            }
+        },
+        "jsonresponse.AmountResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "message": {
                     "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.DoubleTokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "access_token_life_time": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "refresh_token_life_time": {
+                    "type": "integer"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.IdResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
                 },
                 "token": {
                     "type": "string"
                 }
             }
         },
-        "auth.UserAuthenticationRequest": {
+        "models.App": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
+                "category_settings": {
+                    "$ref": "#/definitions/models.CategorySettings"
                 },
-                "password": {
-                    "type": "string"
+                "connected_accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ConnectedAccount"
+                    }
                 }
             }
         },
-        "handlers.SupportRequest": {
+        "models.CategorySettings": {
             "type": "object",
             "properties": {
-                "email": {
-                    "type": "string"
+                "expense_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ExpenseCategory"
+                    }
                 },
-                "message": {
-                    "type": "string"
+                "income_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.IncomeCategory"
+                    }
                 },
-                "name": {
-                    "type": "string"
-                },
-                "subject": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
+                "investment_category": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.InvestmentCategory"
+                    }
                 }
             }
         },
@@ -1150,7 +1710,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "bank_account": {
+                    "type": "string"
+                },
                 "category_id": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "date": {
@@ -1161,6 +1727,9 @@ const docTemplate = `{
                 },
                 "planned": {
                     "type": "boolean"
+                },
+                "sent_to": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -1181,6 +1750,35 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.FinHealth": {
+            "type": "object",
+            "properties": {
+                "expense_score": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "income_score": {
+                    "type": "integer"
+                },
+                "investment_score": {
+                    "type": "integer"
+                },
+                "obligation_score": {
+                    "type": "integer"
+                },
+                "plan_score": {
+                    "type": "integer"
+                },
+                "total_score": {
+                    "type": "integer"
                 },
                 "user_id": {
                     "type": "string"
@@ -1213,7 +1811,13 @@ const docTemplate = `{
                 "amount": {
                     "type": "number"
                 },
+                "bank_account": {
+                    "type": "string"
+                },
                 "category_id": {
+                    "type": "string"
+                },
+                "currency": {
                     "type": "string"
                 },
                 "date": {
@@ -1224,6 +1828,9 @@ const docTemplate = `{
                 },
                 "planned": {
                     "type": "boolean"
+                },
+                "sender": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -1270,6 +1877,37 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Operation": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Settings": {
+            "type": "object",
+            "properties": {
+                "subscriptions": {
+                    "$ref": "#/definitions/models.Subscription"
+                }
+            }
+        },
         "models.Subscription": {
             "type": "object",
             "properties": {
@@ -1290,11 +1928,31 @@ const docTemplate = `{
                 }
             }
         },
+        "models.TrackingState": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "number"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "models.WealthFund": {
             "type": "object",
             "properties": {
                 "amount": {
                     "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
                 },
                 "date": {
                     "type": "string"
@@ -1320,18 +1978,230 @@ const docTemplate = `{
                 "Planned",
                 "Unplanned"
             ]
+        },
+        "token.ConfirmEmailRequest": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "token.Details": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.ResetPasswordRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "user.UserProfile": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "surname": {
+                    "description": "*changed",
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ConfirmResponse": {
+            "type": "object",
+            "properties": {
+                "access_token_life_time": {
+                    "type": "integer"
+                },
+                "device_id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "refresh_token_life_time": {
+                    "type": "integer"
+                },
+                "status_code": {
+                    "type": "integer"
+                },
+                "token_details": {
+                    "$ref": "#/definitions/token.Details"
+                }
+            }
+        },
+        "v1.ProfileAnalyticsResponse": {
+            "type": "object",
+            "properties": {
+                "analytics": {
+                    "$ref": "#/definitions/categories.Analytics"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.ProfileArchiveResponse": {
+            "type": "object",
+            "properties": {
+                "archive": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Operation"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.ProfileMoreResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "more": {
+                    "$ref": "#/definitions/categories.More"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/user.UserProfile"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.ProfileTrackerResponse": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                },
+                "tracker": {
+                    "$ref": "#/definitions/categories.Tracker"
+                }
+            }
+        },
+        "v1.RefreshToken": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.SupportRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "request_id": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UserAuthenticationRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UserPasswordReset": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "reset_token": {
+                    "type": "string"
+                }
+            }
         }
     },
-    "security": [
-        {
-            "JWT": []
+    "securityDefinitions": {
+        "JWT": {
+            "description": "To authorize,",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
-    ]
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "0.1",
 	Host:             "localhost:8080",
 	BasePath:         "/v1",
 	Schemes:          []string{"https"},
