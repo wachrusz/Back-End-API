@@ -9,7 +9,6 @@ COPY cmd/api ./cmd/api
 COPY internal ./internal
 COPY pkg ./pkg
 COPY config ./config
-COPY docs ./docs
 COPY secret ./secret
 COPY Makefile .
 
@@ -20,7 +19,7 @@ FROM golang:latest
 WORKDIR /app
 
 COPY --from=builder /app/main .
-
+COPY --from=builder /docs ./docs
 COPY --from=builder /app/config ./config
 COPY --from=builder /app/secret ./secret
 COPY --from=builder /app/secret/.env ./secret/.env
