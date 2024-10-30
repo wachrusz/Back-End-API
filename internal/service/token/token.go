@@ -38,8 +38,8 @@ type Tokens interface {
 	Login(email, password string) (string, error)
 	RefreshToken(rt, userID string) (string, string, error)
 	GenerateToken(userID string, deviceID string, duration time.Duration) (*Details, error)
-	ConfirmEmail(token, code, deviceID string) (*Details, error)
-	ConfirmEmailLogin(token, code, deviceID string) (*Details, error)
+	ConfirmEmailRegister(token, code, deviceID string) (*Details, int, int, error)
+	ConfirmEmailLogin(token, code, deviceID string) (*Details, int, int, error)
 }
 
 func (s *Service) PrimaryRegistration(email, password string) (string, error) {
@@ -283,77 +283,71 @@ func (s *Service) GenerateToken(userID string, device_id string, duration time.D
 	}, nil
 }
 
-func (s *Service) ConfirmEmail(token, code, deviceID string) (*Details, error) {
+func (s *Service) ConfirmEmailRegister(token, code, deviceID string) (*Details, int, int, error) {
 	registerRequest, err := utility.GetAuthFromJWT(token)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 
-	codeCheckResponse := s.email.CheckConfirmationCode(registerRequest.Email, token, code) // TODO:убрать эту хуйню
-	if codeCheckResponse.Err != "nil" {
-		return nil, myerrors.ErrInternal
+	codeCheckResponse, err := s.email.CheckConfirmationCode(registerRequest.Email, token, code)
+	if err != nil {
+		return nil, codeCheckResponse.RemainingAttempts, codeCheckResponse.LockDuration, myerrors.ErrInternal
 	}
-	/*
-		err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-		}
-	*/
+
+	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+	}
+
 	err = s.user.Register(registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		return nil, fmt.Errorf("%w: error registring user: %v", myerrors.ErrInternal, err)
+		return nil, 0, 0, fmt.Errorf("%w: error registring user: %v", myerrors.ErrInternal, err)
 	}
 	//! SESSIONS
 
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
-		// FIXME: тут не было ретурна, но по идее должен быть
-		// return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
-		return nil, myerrors.ErrInternal
-	}
-
-	if s.user.IsUserActive(userID) {
-		currentUser := s.user.GetActiveUser(userID)
-
-		s.user.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID) // TODO: handle error + concurrency safety
-		currentUser.DeviceID = deviceID
-		s.user.AddActiveUser(currentUser)
+		return nil, 0, 0, myerrors.ErrInternal
 	}
 
 	//! SAVE SESSIONS
-	s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
+	err = s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+	}
 
-	return tokenDetails, nil
+	return tokenDetails, 0, 0, nil
 }
 
-func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, error) {
+func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, int, int, error) {
 	registerRequest, err := utility.GetAuthFromJWT(token)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 	err = utility.VerifyRegisterJWTToken(token, registerRequest.Email, registerRequest.Password)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInvalidToken, err)
 	}
 
-	codeCheckResponse := s.email.CheckConfirmationCode(registerRequest.Email, token, code)
-	if codeCheckResponse.Err != "nil" {
-		return nil, myerrors.ErrInternal
+	codeCheckResponse, err := s.email.CheckConfirmationCode(registerRequest.Email, token, code)
+	if err != nil {
+		return nil, codeCheckResponse.RemainingAttempts, codeCheckResponse.LockDuration, myerrors.ErrInternal
 	}
-	/*
-		err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-		}
-	*/
+
+	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
+	}
+
 	//! SESSIONS
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
@@ -361,20 +355,15 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, err
 
 	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
-		return nil, myerrors.ErrInternal
+		return nil, 0, 0, myerrors.ErrInternal
 	}
 
-	if s.user.IsUserActive(userID) {
-		currentUser := s.user.GetActiveUser(userID)
-
-		s.user.RemoveSessionFromDatabase(currentUser.DeviceID, currentUser.UserID) // TODO: handle error + concurrency safety
-		currentUser.DeviceID = deviceID
-		s.user.AddActiveUser(currentUser)
+	err = s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
+	if err != nil {
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
-
-	return tokenDetails, nil
+	return tokenDetails, 0, 0, nil
 }
 
 type ConfirmEmailRequest struct {

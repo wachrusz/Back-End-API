@@ -64,3 +64,10 @@ type CodeResponse struct {
 	Code       string `json:"code"`
 	StatusCode int    `json:"status_code"`
 }
+
+type CodeError struct {
+	Error        string `json:"error"`
+	Attempts     int    `json:"remaining_attempts"`
+	LockDuration int    `json:"lock_duration"`
+	StatusCode   int    `json:"status_code"`
+}
