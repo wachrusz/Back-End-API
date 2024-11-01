@@ -10,5 +10,7 @@ var (
 	ErrInvalidCreds   = errors.New("invalid credentials")
 	ErrInternal       = errors.New("internal error")
 	ErrDeletingTokens = errors.New("error deleting tokens")
-	ErrSession        = errors.New("session error")
+	ErrLocked         = errors.New("locked")
+	ErrCode           = errors.New("invalid code")
+	ErrExpired        = errors.New("expired code")
 )

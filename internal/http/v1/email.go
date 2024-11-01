@@ -14,7 +14,6 @@ import (
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
 	"net/http"
-
 )
 
 // ConfirmResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
@@ -37,6 +36,7 @@ type ConfirmResponse struct {
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse "Successfully confirmed email"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
+// @Failure 401 {object} jsonresponse.CodeError "Invalid code"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
 // @Router /auth/register/confirm [post]
 func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -68,14 +68,17 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	details, err := h.s.Tokens.ConfirmEmail(token, confirmRequest.EnteredCode, deviceID)
+	details, attempts, lDur, err := h.s.Tokens.ConfirmEmailRegister(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
 			h.errResp(w, err, http.StatusInternalServerError)
 			break
 		case errors.Is(err, myerrors.ErrInvalidToken):
-			h.errResp(w, err, http.StatusUnauthorized)
+			h.errResp(w, err, http.StatusBadRequest)
+			break
+		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
+			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
 			break
 		}
 		return
@@ -104,6 +107,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse             "Successfully confirmed email for login"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
+// @Failure 401 {object} jsonresponse.CodeError     "Invalid code"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
 // @Router /auth/login/confirm [post]
 func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -134,14 +138,17 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	token_details, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
+	details, attempts, lDur, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
 			h.errResp(w, err, http.StatusInternalServerError)
 			break
 		case errors.Is(err, myerrors.ErrInvalidToken):
-			h.errResp(w, err, http.StatusUnauthorized)
+			h.errResp(w, err, http.StatusBadRequest)
+			break
+		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
+			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
 			break
 		}
 		return
@@ -150,7 +157,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	response := ConfirmResponse{
 		Message:              "Successfully confirmed email",
-		TokenDetails:         *token_details,
+		TokenDetails:         *details,
 		AccessTokenLifeTime:  60 * 15,
 		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
 		StatusCode:           http.StatusOK,
@@ -167,10 +174,11 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
-// @Success 200 {object} jsonresponse.SuccessResponse "Successfully confirmed password reset"
-// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
-// @Failure 500 {object} jsonresponse.ErrorResponse "Internal server error"
+// @Param confirmRequest body token.ConfirmEmailRequest true 	"Confirmation request"
+// @Success 200 {object} jsonresponse.SuccessResponse 			"Successfully confirmed password reset"
+// @Failure 400 {object} jsonresponse.ErrorResponse 			"Unauthorized"
+// @Failure 401 {object} jsonresponse.CodeError 				"Unauthorized with remaining attempts"
+// @Failure 500 {object} jsonresponse.ErrorResponse 			"Internal server error"
 // @Router /auth/password/confirm [post]
 func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming password reset...")
@@ -194,14 +202,17 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err := h.s.Emails.ResetPasswordConfirm(token, confirmRequest.EnteredCode)
+	attempts, lDur, err := h.s.Emails.ResetPasswordConfirm(token, confirmRequest.EnteredCode)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
 			h.errResp(w, err, http.StatusInternalServerError)
 			break
-		case errors.Is(err, myerrors.ErrInvalidToken):
-			h.errResp(w, err, http.StatusUnauthorized)
+		case errors.Is(err, myerrors.ErrInvalidToken) || errors.Is(err, myerrors.ErrExpired):
+			h.errResp(w, err, http.StatusBadRequest)
+			break
+		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
+			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
 			break
 		}
 		return

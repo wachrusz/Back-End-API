@@ -481,6 +481,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Invalid code",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.CodeError"
+                        }
+                    },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
@@ -655,9 +661,15 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request or missing RefreshToken",
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized with remaining attempts",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.CodeError"
                         }
                     },
                     "500": {
@@ -819,6 +831,12 @@ const docTemplate = `{
                         "description": "Invalid request or missing RefreshToken",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid code",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.CodeError"
                         }
                     },
                     "500": {
@@ -1568,6 +1586,23 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.CodeError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "lock_duration": {
+                    "type": "integer"
+                },
+                "remaining_attempts": {
+                    "type": "integer"
                 },
                 "status_code": {
                     "type": "integer"
