@@ -5,6 +5,7 @@ import (
 
 	"github.com/wachrusz/Back-End-API/internal/config"
 	api "github.com/wachrusz/Back-End-API/internal/http"
+	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service"
@@ -34,17 +35,18 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
-	handler := v1.NewHandler(services, l)
+	handlerV1 := v1.NewHandler(services, l)
+	handlerOB := obhttp.NewHandler(services, l)
 
 	l.Info("Initializing routers...")
-	router, docRouter, errR := api.InitRouters(handler, l)
+	router, docRouter, errR := api.InitRouters(handlerV1, handlerOB, l)
 	services.Users.InitActiveUsers()
 
 	if errR != nil {
 		return errR
 	}
 
-	http.Handle("/", handler.ContentTypeMiddleware(router))
+	http.Handle("/", handlerV1.ContentTypeMiddleware(router))
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 
