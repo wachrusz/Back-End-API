@@ -1,14 +1,16 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/wachrusz/Back-End-API/docs"
+	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
 	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	"go.uber.org/zap"
-	"net/http"
 )
 
-func newRouter(h *v1.MyHandler) chi.Router {
+func newRouter(h *v1.MyHandler, obh *obhttp.MyHandler) chi.Router {
 	r := chi.NewRouter()
 	r.Route("/v1", func(r chi.Router) {
 		h.RegisterHandler(r)
@@ -16,11 +18,16 @@ func newRouter(h *v1.MyHandler) chi.Router {
 		//history.RegisterHandlers(r)
 		h.RegisterProfileHandlers(r)
 	})
+
+	//Open Banking Group
+	r.Route("/open-banking", func(r chi.Router) {
+		obh.RegisterOBHandlers(r)
+	})
 	return r
 }
 
-func InitRouters(h *v1.MyHandler, l *zap.Logger) (chi.Router, chi.Router, error) {
-	mainRouter := newRouter(h)
+func InitRouters(h *v1.MyHandler, obh *obhttp.MyHandler, l *zap.Logger) (chi.Router, chi.Router, error) {
+	mainRouter := newRouter(h, obh)
 	docRouter := docs.NewRouter()
 
 	// Группа для изображений профиля
