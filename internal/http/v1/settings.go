@@ -3,12 +3,17 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	"go.uber.org/zap"
-
 	"github.com/wachrusz/Back-End-API/internal/models"
+	"go.uber.org/zap"
 	"net/http"
 )
+
+type EndTimeResponse struct {
+	Message    string `json:"message"`
+	Id         int64  `json:"id"`
+	EndTime    string `json:"end_date"`
+	StatusCode int    `json:"status_code"`
+}
 
 // CreateSubscriptionHandler creates a new subscription in the database.
 //
@@ -18,7 +23,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param subscription body models.Subscription true "Subscription object"
-// @Success 201 {object} jsonresponse.IdResponse "Subscription created successfully"
+// @Success 201 {object} EndTimeResponse "Subscription created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating subscription"
 // @Security JWT
@@ -41,9 +46,10 @@ func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Send success response
-	response := jsonresponse.IdResponse{
+	response := EndTimeResponse{
 		Message:    "Successfully created a subscription",
 		Id:         subscriptionID,
+		EndTime:    subscription.EndDate,
 		StatusCode: http.StatusCreated,
 	}
 	w.WriteHeader(response.StatusCode)
