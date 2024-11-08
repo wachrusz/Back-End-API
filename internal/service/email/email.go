@@ -179,10 +179,12 @@ func (s *Service) checkToken(token, email string) error {
 }
 
 func (s *Service) DeleteConfirmationCode(email string, code string) error {
+	/*
 	err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
 	if err != nil {
 		return fmt.Errorf("error deleting confirmation")
 	}
+	*/
 	return nil
 }
 
