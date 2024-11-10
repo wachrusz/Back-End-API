@@ -7,6 +7,7 @@ import (
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 
 	"time"
@@ -14,7 +15,8 @@ import (
 )
 
 type Service struct {
-	repo *mydb.Database
+	repo   *mydb.Database
+	mailer rabbit.Mailer
 }
 
 type Emails interface {
@@ -29,9 +31,10 @@ type Emails interface {
 	ResetPassword(email, password string) error
 }
 
-func NewService(db *mydb.Database) *Service {
+func NewService(db *mydb.Database, mailer rabbit.Mailer) *Service {
 	return &Service{
-		repo: db,
+		repo:   db,
+		mailer: mailer,
 	}
 }
 
@@ -180,10 +183,10 @@ func (s *Service) checkToken(token, email string) error {
 
 func (s *Service) DeleteConfirmationCode(email string, code string) error {
 	/*
-	err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
-	if err != nil {
-		return fmt.Errorf("error deleting confirmation")
-	}
+		err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
+		if err != nil {
+			return fmt.Errorf("error deleting confirmation")
+		}
 	*/
 	return nil
 }
