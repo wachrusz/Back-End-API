@@ -3,20 +3,22 @@ package config
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	"gopkg.in/yaml.v3"
 	"os"
 	"strconv"
 )
 
 type Config struct {
-	Host             string `yaml:"host"`
-	Port             int    `yaml:"port"`
-	DBPassword       string `yaml:"db_password"`
-	CrtPath          string `yaml:"crt_path"`
-	KeyPath          string `yaml:"key_path"`
-	SecretKey        []byte `yaml:"secret_key"`
-	SecretRefreshKey []byte `yaml:"secret_refresh_key"`
-	CurrencyURL      string `yaml:"currency_url"`
+	Host             string        `yaml:"host"`
+	Port             int           `yaml:"port"`
+	DBPassword       string        `yaml:"db_password"`
+	CrtPath          string        `yaml:"crt_path"`
+	KeyPath          string        `yaml:"key_path"`
+	SecretKey        []byte        `yaml:"secret_key"`
+	SecretRefreshKey []byte        `yaml:"secret_refresh_key"`
+	CurrencyURL      string        `yaml:"currency_url"`
+	Rabbit           rabbit.Config `yaml:"rabbit"`
 }
 
 func New() (*Config, error) {
@@ -81,6 +83,10 @@ func processEnvironment(cfg *Config) error {
 	}
 	if currencyURL, exists := os.LookupEnv("CURRENCY_URL"); exists {
 		cfg.CurrencyURL = currencyURL
+	}
+
+	if rabbitUrl, exists := os.LookupEnv("RABBIT_URL"); exists {
+		cfg.Rabbit.URL = rabbitUrl
 	}
 
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {

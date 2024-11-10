@@ -3,13 +3,15 @@ package app
 import (
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/config"
 	api "github.com/wachrusz/Back-End-API/internal/http"
-	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
-	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
-	"github.com/wachrusz/Back-End-API/internal/service"
 	logger "github.com/zhukovrost/cadv_logger"
+
+	"github.com/wachrusz/Back-End-API/internal/config"
+	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
+	"github.com/wachrusz/Back-End-API/internal/http/v1"
+	"github.com/wachrusz/Back-End-API/internal/service"
+	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 )
 
 func Run(cfg *config.Config) error {
@@ -25,8 +27,15 @@ func Run(cfg *config.Config) error {
 
 	mydb.SetDB(db) // TODO: Избавиться от этой хуйни окончательно!
 
+	l.Info("Connecting to RabbitMQ...")
+	mailer, err := rabbit.New(cfg.Rabbit, l)
+	if err != nil {
+		return err
+	}
+
 	deps := service.Dependencies{
-		Repo: db,
+		Repo:   db,
+		Mailer: mailer,
 	}
 
 	l.Info("Initializing services...")

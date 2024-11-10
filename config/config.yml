@@ -2,3 +2,8 @@ host: "localhost"
 port: 8080
 crt_path: "secret/ok_server.crt"
 key_path: "secret/ok_server.key"
+rabbit:
+  url: "amqp://guest:guest@localhost:5672/"
+  exchange: "emails"
+  exchange_type: "direct"
+  queue: "user_emails"
