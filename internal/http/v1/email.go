@@ -226,23 +226,20 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(response)
 }
 
-// RegisterUserHandler registers a new user in the system.
+// RegisterUserHandler register a new user and send confirmation email.
 //
-// @Summary Register a new user
-// @Description Register a new user in the system.
+// @Summary Register user
+// @Description Register a new user and send confirmation email.
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Param username query string true "Username"
-// @Param password query string true "Password"
-// @Param name query string true "Name"
+// @Param confirmRequest body UserAuthenticationRequest true 	"Credentials"
 // @Success 200 {object} jsonresponse.TokenResponse "User registered successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 409 {object} jsonresponse.ErrorResponse "User already exists"
 // @Router /auth/register [post]
 func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Received request to register a new user.")
-
 	// Check Content-Type header
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {

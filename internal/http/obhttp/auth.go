@@ -19,7 +19,7 @@ import (
 // @Param GetTokenRequest body models.GetTokenRequest true "Request object containing client credentials"
 // @Success 200 {object} openbanking.Auth "Token retrieved successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
-// @Failure 500 {object} jsonresponse.Error
+// @Failure 500 {object} jsonresponse.ErrorResponse "Invalid request payload"
 func (h *MyHandler) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Getting Token from external bank")
 
