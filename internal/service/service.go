@@ -29,9 +29,9 @@ func NewServices(deps Dependencies) (*Services, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := user.NewService(deps.Repo)
 	e := email.NewService(deps.Repo, deps.Mailer)
 	cat := categories.NewService(deps.Repo, cur)
+	u := user.NewService(deps.Repo, cat)
 	t := token.NewService(deps.Repo, e, u)
 	return &Services{
 		Users:      u,

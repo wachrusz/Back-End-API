@@ -78,10 +78,10 @@ func (s *Service) SendConfirmationEmail(email, token string) error {
 		return err
 	}
 
-	//err = s.SendEmail(email, "CADV: confirm your email.", fmt.Sprintf("Hello! You've registered the account with your email. Confirm your email. Here is your token: %s", token))
-	//if err != nil {
-	//	return err
-	//}
+	err = s.SendEmail(email, "CADV: confirm your email.", fmt.Sprintf("Hello! You've logged in / registered the account with your email. Confirm your email. Here is your code is %s", confirmationCode))
+	if err != nil {
+		return err
+	}
 
 	return s.SaveConfirmationCode(email, confirmationCode, token)
 }

@@ -1,7 +1,3 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
-// Package profile provides profile information and it's functionality.
 package user
 
 import (
@@ -25,7 +21,6 @@ func (s *Service) GetProfile(userID string) (*UserProfile, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user information")
 	}
-
 	avatarURL, err := s.getAvatarInfo(userID)
 	if err != nil {
 		avatarURL = "null"
