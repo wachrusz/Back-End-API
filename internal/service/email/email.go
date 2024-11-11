@@ -1,9 +1,12 @@
 package email
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
@@ -51,20 +54,21 @@ type CheckResult struct {
 	LockDuration      int `json:"lock_duration"`
 }
 
-func (s *Service) SendEmail(to, subject, body string) error { /*
-		message := mail.NewMessage()
-		message.SetHeader("From", config.Username)
-		message.SetHeader("To", to)
-		message.SetHeader("Subject", subject)
-		message.SetBody("text/plain", body)
-
-		dialer := mail.NewDialer(config.Host, config.Port, config.Username, config.Password)
-
-		// Send the email
-		if err := dialer.DialAndSend(message); err != nil {
-			return fmt.Errorf("failed to send email: %v", err)
-		}
-	*/
+func (s *Service) SendEmail(to, subject, body string) error {
+	email := models.Email{
+		To:      to,
+		Subject: subject,
+		Body:    body,
+	}
+	jsonData, err := json.Marshal(email)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	if err := s.mailer.PublishMessage(ctx, "application/json", jsonData); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -74,7 +78,10 @@ func (s *Service) SendConfirmationEmail(email, token string) error {
 		return err
 	}
 
-	// TODO: email sending
+	//err = s.SendEmail(email, "CADV: confirm your email.", fmt.Sprintf("Hello! You've registered the account with your email. Confirm your email. Here is your token: %s", token))
+	//if err != nil {
+	//	return err
+	//}
 
 	return s.SaveConfirmationCode(email, confirmationCode, token)
 }
