@@ -740,7 +740,7 @@ const docTemplate = `{
         },
         "/auth/register": {
             "post": {
-                "description": "Register a new user in the system.",
+                "description": "Register a new user and send confirmation email.",
                 "consumes": [
                     "application/json"
                 ],
@@ -750,28 +750,16 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Register a new user",
+                "summary": "Register user",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Username",
-                        "name": "username",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password",
-                        "name": "password",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Name",
-                        "name": "name",
-                        "in": "query",
-                        "required": true
+                        "description": "Credentials",
+                        "name": "confirmRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UserAuthenticationRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1039,6 +1027,236 @@ const docTemplate = `{
                             "items": {
                                 "type": "string"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/openbanking/accounts/get": {
+            "get": {
+                "description": "Fetches a list of user accounts from the Open Banking API using the provided authorization token and API URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenBanking"
+                ],
+                "summary": "Retrieve user accounts",
+                "parameters": [
+                    {
+                        "description": "Authorization token for Open Banking",
+                        "name": "Auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/openbanking.Auth"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "API base URL for Open Banking",
+                        "name": "api_url",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully fetched accounts",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or missing URL parameter",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal service error while fetching accounts",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/openbanking/consent/create": {
+            "post": {
+                "description": "Initiates the consent process for accessing user accounts using the provided authorization token and API URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenBanking"
+                ],
+                "summary": "Create consent",
+                "parameters": [
+                    {
+                        "description": "Authorization token for Open Banking",
+                        "name": "Auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/openbanking.Auth"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "API base URL for Open Banking",
+                        "name": "api_url",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully created consent",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload or missing URL parameter",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal service error while creating consent",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/openbanking/consent/delete": {
+            "delete": {
+                "description": "Deletes existing consent for accessing user accounts using the provided authorization token, consent ID, and API URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenBanking"
+                ],
+                "summary": "Delete consent",
+                "parameters": [
+                    {
+                        "description": "Authorization token for Open Banking",
+                        "name": "Auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/openbanking.Auth"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "API base URL for Open Banking",
+                        "name": "api_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Consent ID to delete",
+                        "name": "consent_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully deleted consent",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload, missing parameters, or incorrect ID",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal service error while deleting consent",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/openbanking/consent/get": {
+            "get": {
+                "description": "Fetches consent information using the provided authorization token, consent ID, and API URL.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OpenBanking"
+                ],
+                "summary": "Retrieve consent",
+                "parameters": [
+                    {
+                        "description": "Authorization token for Open Banking",
+                        "name": "Auth",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/openbanking.Auth"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "API base URL for Open Banking",
+                        "name": "api_url",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Consent ID to retrieve",
+                        "name": "consent_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully fetched consent",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload, missing parameters, or incorrect ID",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal service error while fetching consent",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
                     }
                 }
@@ -1393,7 +1611,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Subscription created successfully",
                         "schema": {
-                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                            "$ref": "#/definitions/v1.EndTimeResponse"
                         }
                     },
                     "400": {
@@ -1820,6 +2038,20 @@ const docTemplate = `{
                 }
             }
         },
+        "models.GetTokenRequest": {
+            "type": "object",
+            "properties": {
+                "auth_url": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_secret": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Goal": {
             "type": "object",
             "properties": {
@@ -2014,6 +2246,14 @@ const docTemplate = `{
                 "Unplanned"
             ]
         },
+        "openbanking.Auth": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "token.ConfirmEmailRequest": {
             "type": "object",
             "properties": {
@@ -2085,6 +2325,23 @@ const docTemplate = `{
                 },
                 "token_details": {
                     "$ref": "#/definitions/token.Details"
+                }
+            }
+        },
+        "v1.EndTimeResponse": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
                 }
             }
         },

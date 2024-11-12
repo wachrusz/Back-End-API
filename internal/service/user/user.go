@@ -15,10 +15,11 @@ type Service struct {
 	activeMu    sync.Mutex
 }
 
-func NewService(repo *mydatabase.Database) *Service {
+func NewService(repo *mydatabase.Database, cats categories.Categories) *Service {
 	return &Service{
 		repo:        repo,
 		ActiveUsers: make(map[string]ActiveUser),
+		categories:  cats,
 		mutex:       sync.Mutex{},
 		activeMu:    sync.Mutex{},
 	}
