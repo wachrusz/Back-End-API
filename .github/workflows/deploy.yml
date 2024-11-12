@@ -29,6 +29,8 @@ jobs:
           echo "HOST=${{ secrets.HOST }}" >> secret/.env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> secret/.env
           echo "SECRT_REFRESH_KEY=${{ secrets.SECRT_REFRESH_KEY }}" >> secret/.env
+          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> secret/.env
+          echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> secret/.env
           
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
