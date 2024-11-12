@@ -7,6 +7,7 @@ import (
 	"github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/internal/service/token"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
+	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 )
 
 type Services struct {
@@ -19,7 +20,8 @@ type Services struct {
 }
 
 type Dependencies struct {
-	Repo *mydatabase.Database
+	Repo   *mydatabase.Database
+	Mailer rabbit.Mailer
 }
 
 func NewServices(deps Dependencies) (*Services, error) {
@@ -27,9 +29,9 @@ func NewServices(deps Dependencies) (*Services, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := user.NewService(deps.Repo)
-	e := email.NewService(deps.Repo)
+	e := email.NewService(deps.Repo, deps.Mailer)
 	cat := categories.NewService(deps.Repo, cur)
+	u := user.NewService(deps.Repo, cat)
 	t := token.NewService(deps.Repo, e, u)
 	return &Services{
 		Users:      u,

@@ -190,6 +190,15 @@ definitions:
       user_id:
         type: string
     type: object
+  models.GetTokenRequest:
+    properties:
+      auth_url:
+        type: string
+      client_id:
+        type: string
+      client_secret:
+        type: string
+    type: object
   models.Goal:
     properties:
       current_state:
@@ -317,6 +326,11 @@ definitions:
     x-enum-varnames:
     - Planned
     - Unplanned
+  openbanking.Auth:
+    properties:
+      token:
+        type: string
+    type: object
   token.ConfirmEmailRequest:
     properties:
       code:
@@ -364,6 +378,17 @@ definitions:
         type: integer
       token_details:
         $ref: '#/definitions/token.Details'
+    type: object
+  v1.EndTimeResponse:
+    properties:
+      end_date:
+        type: string
+      id:
+        type: integer
+      message:
+        type: string
+      status_code:
+        type: integer
     type: object
   v1.ProfileAnalyticsResponse:
     properties:
@@ -932,23 +957,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Register a new user in the system.
+      description: Register a new user and send confirmation email.
       parameters:
-      - description: Username
-        in: query
-        name: username
+      - description: Credentials
+        in: body
+        name: confirmRequest
         required: true
-        type: string
-      - description: Password
-        in: query
-        name: password
-        required: true
-        type: string
-      - description: Name
-        in: query
-        name: name
-        required: true
-        type: string
+        schema:
+          $ref: '#/definitions/v1.UserAuthenticationRequest'
       produces:
       - application/json
       responses:
@@ -964,7 +980,7 @@ paths:
           description: User already exists
           schema:
             $ref: '#/definitions/jsonresponse.ErrorResponse'
-      summary: Register a new user
+      summary: Register user
       tags:
       - Auth
   /auth/register/confirm:
@@ -1131,6 +1147,164 @@ paths:
       summary: Get history entries
       tags:
       - History
+  /openbanking/accounts/get:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a list of user accounts from the Open Banking API using
+        the provided authorization token and API URL.
+      parameters:
+      - description: Authorization token for Open Banking
+        in: body
+        name: Auth
+        required: true
+        schema:
+          $ref: '#/definitions/openbanking.Auth'
+      - description: API base URL for Open Banking
+        in: query
+        name: api_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully fetched accounts
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request payload or missing URL parameter
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal service error while fetching accounts
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Retrieve user accounts
+      tags:
+      - OpenBanking
+  /openbanking/consent/create:
+    post:
+      consumes:
+      - application/json
+      description: Initiates the consent process for accessing user accounts using
+        the provided authorization token and API URL.
+      parameters:
+      - description: Authorization token for Open Banking
+        in: body
+        name: Auth
+        required: true
+        schema:
+          $ref: '#/definitions/openbanking.Auth'
+      - description: API base URL for Open Banking
+        in: query
+        name: api_url
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created consent
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request payload or missing URL parameter
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal service error while creating consent
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Create consent
+      tags:
+      - OpenBanking
+  /openbanking/consent/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes existing consent for accessing user accounts using the
+        provided authorization token, consent ID, and API URL.
+      parameters:
+      - description: Authorization token for Open Banking
+        in: body
+        name: Auth
+        required: true
+        schema:
+          $ref: '#/definitions/openbanking.Auth'
+      - description: API base URL for Open Banking
+        in: query
+        name: api_url
+        required: true
+        type: string
+      - description: Consent ID to delete
+        in: query
+        name: consent_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted consent
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request payload, missing parameters, or incorrect ID
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal service error while deleting consent
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Delete consent
+      tags:
+      - OpenBanking
+  /openbanking/consent/get:
+    get:
+      consumes:
+      - application/json
+      description: Fetches consent information using the provided authorization token,
+        consent ID, and API URL.
+      parameters:
+      - description: Authorization token for Open Banking
+        in: body
+        name: Auth
+        required: true
+        schema:
+          $ref: '#/definitions/openbanking.Auth'
+      - description: API base URL for Open Banking
+        in: query
+        name: api_url
+        required: true
+        type: string
+      - description: Consent ID to retrieve
+        in: query
+        name: consent_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully fetched consent
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request payload, missing parameters, or incorrect ID
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal service error while fetching consent
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Retrieve consent
+      tags:
+      - OpenBanking
   /profile:
     get:
       description: Get the user profile for the authenticated user.
@@ -1354,7 +1528,7 @@ paths:
         "201":
           description: Subscription created successfully
           schema:
-            $ref: '#/definitions/jsonresponse.IdResponse'
+            $ref: '#/definitions/v1.EndTimeResponse'
         "400":
           description: Invalid request payload
           schema:
