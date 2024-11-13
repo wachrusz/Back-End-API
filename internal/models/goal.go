@@ -16,13 +16,15 @@ type Goal struct {
 	Need         float64 `json:"need"`
 	CurrentState float64 `json:"current_state"`
 	Currency     string  `json:"currency"`
+	StartDate    string  `json:"start_date"`
+	EndDate      string  `json:"end_date"`
 	UserID       string  `json:"user_id"`
 }
 
 func CreateGoal(goal *Goal) (int64, error) {
 	var goalID int64
-	err := mydb.GlobalDB.QueryRow("INSERT INTO goal (goal, need, current_state, currency, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-		goal.Goal, goal.Need, goal.CurrentState, goal.Currency, goal.UserID).Scan(&goalID)
+	err := mydb.GlobalDB.QueryRow("INSERT INTO goal (goal, need, current_state, end_date, currency, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+		goal.Goal, goal.Need, goal.CurrentState, goal.EndDate, goal.Currency, goal.UserID).Scan(&goalID)
 	if err != nil {
 		log.Println("Error creating goal:", err)
 		return 0, err
@@ -31,7 +33,7 @@ func CreateGoal(goal *Goal) (int64, error) {
 }
 
 func GetGoalsByUserID(userID string) ([]Goal, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, goal, need, current_state, currency FROM goal WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, goal, need, current_state, start_date, end_date, currency FROM goal WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying goals:", err)
 		return nil, err
@@ -41,7 +43,7 @@ func GetGoalsByUserID(userID string) ([]Goal, error) {
 	var goals []Goal
 	for rows.Next() {
 		var goal Goal
-		if err := rows.Scan(&goal.ID, &goal.Need, &goal.CurrentState, &goal.Goal); err != nil {
+		if err := rows.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.CurrentState, goal.StartDate, &goal.EndDate, &goal.Currency); err != nil {
 			log.Println("Error scanning goal row:", err)
 			return nil, err
 		}
