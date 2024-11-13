@@ -186,7 +186,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 }
 
 func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
-	queryGoal := "SELECT id, goal, need, currency, current_state FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
+	queryGoal := "SELECT id, goal, need, currency, current_state, start_date, end_date FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
 	rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,7 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	var goalList []models.Goal
 	for rowsGoal.Next() {
 		var goal models.Goal
-		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState); err != nil {
+		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState, &goal.StartDate, &goal.EndDate); err != nil {
 			return nil, err
 		}
 		goal.UserID = userID
