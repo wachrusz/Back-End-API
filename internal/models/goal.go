@@ -5,8 +5,9 @@
 package models
 
 import (
-	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"log"
+
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 )
 
 type Goal struct {
@@ -14,13 +15,14 @@ type Goal struct {
 	Goal         string  `json:"goal"`
 	Need         float64 `json:"need"`
 	CurrentState float64 `json:"current_state"`
+	Currency     string  `json:"currency"`
 	UserID       string  `json:"user_id"`
 }
 
 func CreateGoal(goal *Goal) (int64, error) {
 	var goalID int64
-	err := mydb.GlobalDB.QueryRow("INSERT INTO goal (goal, need, current_state, user_id) VALUES ($1, $2, $3, $4) RETURNING id",
-		goal.Goal, goal.Need, goal.CurrentState, goal.UserID).Scan(&goalID)
+	err := mydb.GlobalDB.QueryRow("INSERT INTO goal (goal, need, current_state, currency, user_id) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		goal.Goal, goal.Need, goal.CurrentState, goal.Currency, goal.UserID).Scan(&goalID)
 	if err != nil {
 		log.Println("Error creating goal:", err)
 		return 0, err
@@ -29,7 +31,7 @@ func CreateGoal(goal *Goal) (int64, error) {
 }
 
 func GetGoalsByUserID(userID string) ([]Goal, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, goal, need, current_state FROM goal WHERE user_id = $1", userID)
+	rows, err := mydb.GlobalDB.Query("SELECT id, goal, need, current_state, currency FROM goal WHERE user_id = $1", userID)
 	if err != nil {
 		log.Println("Error querying goals:", err)
 		return nil, err

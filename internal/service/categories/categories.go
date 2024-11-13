@@ -7,11 +7,12 @@ package categories
 import (
 	//"encoding/json"
 
+	"math"
+	"time"
+
 	"github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
-	"math"
-	"time"
 
 	"log"
 )
@@ -191,11 +192,11 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	var goalList []models.Goal
 	for rowsGoal.Next() {
 		var goal models.Goal
-		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.CurrentState); err != nil {
+		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState); err != nil {
 			return nil, err
 		}
 		goal.UserID = userID
-		goal.Need = s.convertCurrency(goal.Need, "RUB", currencyCode)
+		goal.Need = s.convertCurrency(goal.Need, goal.Currency, currencyCode)
 		goalList = append(goalList, goal)
 	}
 	trackingState := &models.TrackingState{
