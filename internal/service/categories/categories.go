@@ -61,46 +61,50 @@ func (s *Service) convertCurrency(amount float64, fromCurrencyCode string, toCur
 	if fromCurrencyCode == "" || toCurrencyCode == "" {
 		return round(amount, 2)
 	}
+
 	if fromCurrencyCode == toCurrencyCode {
 		return round(amount, 2)
 	}
+
 	if len(s.exchangeRates) == 0 {
 		s.exchangeRates = s.curr.CurrentCurrencyData.Valute
 	}
 
-	if fromCurrencyCode == "RUB" {
-		rate, ok := s.exchangeRates[toCurrencyCode]
-		if !ok {
-			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
-			return amount
-		}
-		return round(amount/(rate.Value/float64(rate.Nominal)), 2)
-	} else {
-		rubleRateFrom, ok := s.exchangeRates[fromCurrencyCode]
-		if !ok {
-			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
-			return amount
-		}
-		rubleRateTo, ok := s.exchangeRates[toCurrencyCode]
-		if !ok {
-			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
-			return amount
-		}
-		return round((amount*(rubleRateFrom.Value/float64(rubleRateFrom.Nominal)))/(rubleRateTo.Value/float64(rubleRateTo.Nominal)), 2)
-	}
-
-	// TODO: refactor: unreachable code
-
-	if toCurrencyCode == "RUB" {
+	switch {
+	case toCurrencyCode == "RUB":
+		// To RUB
 		rate, ok := s.exchangeRates[fromCurrencyCode]
 		if !ok {
-			log.Printf("Couldn't find value to convert from: %v to: %v", fromCurrencyCode, toCurrencyCode)
+			log.Printf("Couldn't find exchange rate for %v", fromCurrencyCode)
 			return amount
 		}
 		return round(amount*(rate.Value/float64(rate.Nominal)), 2)
-	}
 
-	return round(amount, 2)
+	case fromCurrencyCode == "RUB":
+		// From RUB
+		rate, ok := s.exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find exchange rate for %v", toCurrencyCode)
+			return amount
+		}
+		return round(amount/(rate.Value/float64(rate.Nominal)), 2)
+
+	default:
+		// Convert non RUB valutes
+		rubleRateFrom, ok := s.exchangeRates[fromCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find exchange rate for %v", fromCurrencyCode)
+			return amount
+		}
+
+		rubleRateTo, ok := s.exchangeRates[toCurrencyCode]
+		if !ok {
+			log.Printf("Couldn't find exchange rate for %v", toCurrencyCode)
+			return amount
+		}
+
+		return round((amount*(rubleRateFrom.Value/float64(rubleRateFrom.Nominal)))/(rubleRateTo.Value/float64(rubleRateTo.Nominal)), 2)
+	}
 }
 
 func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error) {
