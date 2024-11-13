@@ -6,19 +6,20 @@ package models
 
 import (
 	"log"
+	"time"
 
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 )
 
 type Goal struct {
-	ID           string  `json:"id"`
-	Goal         string  `json:"goal"`
-	Need         float64 `json:"need"`
-	CurrentState float64 `json:"current_state"`
-	Currency     string  `json:"currency"`
-	StartDate    string  `json:"start_date"`
-	EndDate      string  `json:"end_date"`
-	UserID       string  `json:"user_id"`
+	ID           string    `json:"id"`
+	Goal         string    `json:"goal"`
+	Need         float64   `json:"need"`
+	CurrentState float64   `json:"current_state"`
+	Currency     string    `json:"currency"`
+	StartDate    time.Time `json:"start_date"`
+	EndDate      time.Time `json:"end_date"`
+	UserID       string    `json:"user_id"`
 }
 
 func CreateGoal(goal *Goal) (int64, error) {
