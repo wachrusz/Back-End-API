@@ -239,7 +239,7 @@ func (s *Service) getTotalState(userID string, convertionCode string) float64 {
 			expense.user_id = $1
 	)                             
 	SELECT
-		SUM(converted_amount) AS total_balance_in_rubles
+		COALESCE(SUM(converted_amount), 0) AS total_balance_in_rubles
 	FROM                                                                                                             
 		all_transactions;
 	
