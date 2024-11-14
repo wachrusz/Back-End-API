@@ -135,12 +135,12 @@ func (s *Service) Login(email, password string) (string, error) {
 
 	token, err := utility.GenerateRegisterJWTToken(email, password)
 	if err != nil {
-		return "", myerrors.ErrInternal
+		return "", fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	err = s.email.SendConfirmationEmail(email, token)
 	if err != nil {
-		return "", myerrors.ErrEmailing
+		return "", fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
 	}
 
 	return token, nil
@@ -340,7 +340,7 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, int
 
 	codeCheckResponse, err := s.email.CheckConfirmationCode(registerRequest.Email, token, code)
 	if err != nil {
-		return nil, codeCheckResponse.RemainingAttempts, codeCheckResponse.LockDuration, myerrors.ErrInternal
+		return nil, codeCheckResponse.RemainingAttempts, codeCheckResponse.LockDuration, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	err = s.email.DeleteConfirmationCode(registerRequest.Email, code)
@@ -351,11 +351,12 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (*Details, int
 	//! SESSIONS
 	userID, err := s.user.GetUserIDFromUsersDatabase(registerRequest.Email)
 	if err != nil {
+
 	}
 
 	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)
 	if err != nil {
-		return nil, 0, 0, myerrors.ErrInternal
+		return nil, 0, 0, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
 	err = s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)

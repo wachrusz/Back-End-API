@@ -22,6 +22,9 @@ type Service struct {
 	mailer rabbit.Mailer
 }
 
+const subject = "Cash Advisor App – Код для входа в приложение"
+const message = "%v - код подтверждения для входа в приложение Cash Advisor App"
+
 type Emails interface {
 	SendEmail(to, subject, body string) error
 	SendConfirmationEmail(email, token string) error
@@ -78,7 +81,7 @@ func (s *Service) SendConfirmationEmail(email, token string) error {
 		return err
 	}
 
-	err = s.SendEmail(email, "CADV: confirm your email.", fmt.Sprintf("Hello! You've logged in / registered the account with your email. Confirm your email. Here is your code is %s", confirmationCode))
+	err = s.SendEmail(email, subject, fmt.Sprintf(message, confirmationCode))
 	if err != nil {
 		return err
 	}
@@ -189,12 +192,10 @@ func (s *Service) checkToken(token, email string) error {
 }
 
 func (s *Service) DeleteConfirmationCode(email string, code string) error {
-	/*
-		err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
-		if err != nil {
-			return fmt.Errorf("error deleting confirmation")
-		}
-	*/
+	//err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
+	//if err != nil {
+	//	return fmt.Errorf("error deleting confirmation: %v", err)
+	//}
 	return nil
 }
 
