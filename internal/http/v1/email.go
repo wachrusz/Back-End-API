@@ -114,21 +114,19 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	h.l.Debug("Confirming email for login...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid content type"), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		err := errors.New("Empty RefreshToken")
-		h.errResp(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("empty refresh token"), http.StatusBadRequest)
 		return
 	}
 
