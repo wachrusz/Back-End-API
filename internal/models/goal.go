@@ -33,6 +33,24 @@ func CreateGoal(goal *Goal) (int64, error) {
 	return goalID, nil
 }
 
+func UpdateGoal(goal *Goal) (int64, error) {
+	var goalID int64
+	err := mydb.GlobalDB.QueryRow(`
+		UPDATE goal 
+		SET 
+			goal = $1,
+			need = $2,
+			end_date = $3
+		WHERE id = $4
+		RETURNING id;
+	`, goal.Goal, goal.Need, goal.EndDate, goal.ID).Scan(&goalID)
+
+	if err != nil {
+		log.Println("Error updating goal:", err)
+		return 0, err
+	}
+	return goalID, nil
+}
 func GetGoalsByUserID(userID string) ([]Goal, error) {
 	rows, err := mydb.GlobalDB.Query("SELECT id, goal, need, current_state, start_date, end_date, currency FROM goal WHERE user_id = $1", userID)
 	if err != nil {

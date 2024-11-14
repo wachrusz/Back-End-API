@@ -25,6 +25,7 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 	})
 
 	r.Post("/tracker/goal", h.AuthMiddleware(h.CreateGoalHandler))
+	r.Put("/tracker/goal", h.AuthMiddleware(h.UpdateGoalHandler))
 	r.Post("/settings/subscription", h.AuthMiddleware(h.CreateSubscriptionHandler))
 	r.Post("/support/request", h.AuthMiddleware(h.SendSupportRequestHandler))
 }
