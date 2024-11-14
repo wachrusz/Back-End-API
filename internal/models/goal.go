@@ -40,10 +40,11 @@ func UpdateGoal(goal *Goal) (int64, error) {
 		SET 
 			goal = $1,
 			need = $2,
-			end_date = $3
-		WHERE id = $4
+			end_date = $3,
+			currency = $4
+		WHERE id = $5
 		RETURNING id;
-	`, goal.Goal, goal.Need, goal.EndDate, goal.ID).Scan(&goalID)
+	`, goal.Goal, goal.Need, goal.EndDate, goal.Currency, goal.ID).Scan(&goalID)
 
 	if err != nil {
 		log.Println("Error updating goal:", err)
