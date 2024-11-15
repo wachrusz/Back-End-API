@@ -12,7 +12,6 @@ import (
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-
 	"time"
 	//"github.com/go-gomail/gomail"
 )
@@ -33,7 +32,6 @@ type Emails interface {
 	CheckConfirmationCode(email, token, enteredCode string) (CheckResult, error)
 	DeleteConfirmationCode(email string, code string) error
 	GetConfirmationCode(email string) (string, error)
-	ResetPasswordConfirm(token string, code string) (int, int, error)
 	ResetPassword(email, password string) error
 }
 
@@ -254,32 +252,6 @@ func (s *Service) GetConfirmationCode(email string) (string, error) {
 		return "", err
 	}
 	return code, nil
-}
-
-func (s *Service) ResetPasswordConfirm(token string, code string) (int, int, error) {
-	claims, err := utility.ParseResetToken(token)
-	if err != nil {
-		return 0, 0, myerrors.ErrInternal
-	}
-
-	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err = utility.VerifyResetJWTToken(token)
-	if err != nil {
-		return 0, 0, myerrors.ErrInvalidToken
-	}
-
-	details, err := s.CheckConfirmationCode(registerRequest.Email, token, code)
-	if err != nil {
-		return details.RemainingAttempts, details.LockDuration, err
-	}
-
-	err = s.DeleteConfirmationCode(registerRequest.Email, code)
-	if err != nil {
-		return 0, 0, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-	}
-
-	claims["confirmed"] = true
-	return 0, 0, nil
 }
 
 func (s *Service) ResetPassword(email, password string) error {
