@@ -12,7 +12,6 @@ import (
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-
 	"time"
 	//"github.com/go-gomail/gomail"
 )
@@ -22,6 +21,9 @@ type Service struct {
 	mailer rabbit.Mailer
 }
 
+const subject = "Cash Advisor App – Код для входа в приложение"
+const message = "%v - код подтверждения для входа в приложение Cash Advisor App"
+
 type Emails interface {
 	SendEmail(to, subject, body string) error
 	SendConfirmationEmail(email, token string) error
@@ -30,7 +32,6 @@ type Emails interface {
 	CheckConfirmationCode(email, token, enteredCode string) (CheckResult, error)
 	DeleteConfirmationCode(email string, code string) error
 	GetConfirmationCode(email string) (string, error)
-	ResetPasswordConfirm(token string, code string) (int, int, error)
 	ResetPassword(email, password string) error
 }
 
@@ -78,7 +79,7 @@ func (s *Service) SendConfirmationEmail(email, token string) error {
 		return err
 	}
 
-	err = s.SendEmail(email, "CADV: confirm your email.", fmt.Sprintf("Hello! You've logged in / registered the account with your email. Confirm your email. Here is your code is %s", confirmationCode))
+	err = s.SendEmail(email, subject, fmt.Sprintf(message, confirmationCode))
 	if err != nil {
 		return err
 	}
@@ -189,12 +190,10 @@ func (s *Service) checkToken(token, email string) error {
 }
 
 func (s *Service) DeleteConfirmationCode(email string, code string) error {
-	/*
-		err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
-		if err != nil {
-			return fmt.Errorf("error deleting confirmation")
-		}
-	*/
+	//err := s.repo.QueryRow("DELETE FROM confirmation_codes WHERE email = $1 AND code = $2", email, code)
+	//if err != nil {
+	//	return fmt.Errorf("error deleting confirmation: %v", err)
+	//}
 	return nil
 }
 
@@ -253,32 +252,6 @@ func (s *Service) GetConfirmationCode(email string) (string, error) {
 		return "", err
 	}
 	return code, nil
-}
-
-func (s *Service) ResetPasswordConfirm(token string, code string) (int, int, error) {
-	claims, err := utility.ParseResetToken(token)
-	if err != nil {
-		return 0, 0, myerrors.ErrInternal
-	}
-
-	var registerRequest utility.UserAuthenticationRequest
-	registerRequest, err = utility.VerifyResetJWTToken(token)
-	if err != nil {
-		return 0, 0, myerrors.ErrInvalidToken
-	}
-
-	details, err := s.CheckConfirmationCode(registerRequest.Email, token, code)
-	if err != nil {
-		return details.RemainingAttempts, details.LockDuration, err
-	}
-
-	err = s.DeleteConfirmationCode(registerRequest.Email, code)
-	if err != nil {
-		return 0, 0, fmt.Errorf("%w: %v", myerrors.ErrEmailing, err)
-	}
-
-	claims["confirmed"] = true
-	return 0, 0, nil
 }
 
 func (s *Service) ResetPassword(email, password string) error {
