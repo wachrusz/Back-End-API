@@ -68,7 +68,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	details, attempts, lDur, err := h.s.Tokens.ConfirmEmailRegister(token, confirmRequest.EnteredCode, deviceID)
+	details, err := h.s.Tokens.ConfirmEmailRegister(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
@@ -78,7 +78,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 			h.errResp(w, err, http.StatusBadRequest)
 			break
 		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
-			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
+			h.errAuthResp(w, err, details.RemainingAttempts, details.LockDuration, http.StatusUnauthorized)
 			break
 		}
 		return
@@ -87,7 +87,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	response := ConfirmResponse{
 		Message:              "Successfully confirmed email",
-		TokenDetails:         *details,
+		TokenDetails:         details,
 		AccessTokenLifeTime:  60 * 15,
 		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
 		StatusCode:           http.StatusOK,
@@ -114,21 +114,19 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	h.l.Debug("Confirming email for login...")
 	contentType := r.Header.Get("Content-Type")
 	if contentType != "application/json" {
-		err := errors.New("Empty 'Content-Type' HEADER")
-		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid content type"), http.StatusBadRequest)
 		return
 	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
-		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	token := confirmRequest.Token
 	if token == "" {
-		err := errors.New("Empty RefreshToken")
-		h.errResp(w, errors.New("Token is required: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, fmt.Errorf("empty refresh token"), http.StatusBadRequest)
 		return
 	}
 
@@ -138,7 +136,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	details, attempts, lDur, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
+	details, err := h.s.Tokens.ConfirmEmailLogin(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
@@ -148,7 +146,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 			h.errResp(w, err, http.StatusBadRequest)
 			break
 		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
-			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
+			h.errAuthResp(w, err, details.RemainingAttempts, details.LockDuration, http.StatusUnauthorized)
 			break
 		}
 		return
@@ -157,7 +155,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 	response := ConfirmResponse{
 		Message:              "Successfully confirmed email",
-		TokenDetails:         *details,
+		TokenDetails:         details,
 		AccessTokenLifeTime:  60 * 15,
 		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
 		StatusCode:           http.StatusOK,
@@ -165,6 +163,15 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 	}
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
+}
+
+// ConfirmResetResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
+type ConfirmResetResponse struct {
+	Message            string                  `json:"message"`
+	TokenDetails       token.ResetTokenDetails `json:"token_details"`
+	ResetTokenLifeTime int64                   `json:"reset_token_life_time"`
+	StatusCode         int                     `json:"status_code"`
+	DeviceId           string                  `json:"device_id"`
 }
 
 // ResetPasswordConfirmHandler confirms the password reset process.
@@ -202,7 +209,13 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	attempts, lDur, err := h.s.Emails.ResetPasswordConfirm(token, confirmRequest.EnteredCode)
+	deviceID, err := utility.GetDeviceIDFromRequest(r)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	details, err := h.s.Tokens.ResetPasswordConfirm(token, confirmRequest.EnteredCode, deviceID)
 	if err != nil {
 		switch {
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
@@ -212,16 +225,20 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 			h.errResp(w, err, http.StatusBadRequest)
 			break
 		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
-			h.errAuthResp(w, err, attempts, lDur, http.StatusUnauthorized)
+			h.errAuthResp(w, err, details.RemainingAttempts, details.LockDuration, http.StatusUnauthorized)
 			break
 		}
 		return
 	}
 
-	response := jsonresponse.SuccessResponse{
-		Message:    "Successfully confirmed email",
-		StatusCode: http.StatusOK,
+	response := ConfirmResetResponse{
+		Message:            "Successfully confirmed email",
+		TokenDetails:       details,
+		ResetTokenLifeTime: 60 * 15,
+		StatusCode:         http.StatusOK,
+		DeviceId:           deviceID,
 	}
+
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
@@ -389,14 +406,22 @@ func (h *MyHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.s.Tokens.ResetPassword(email)
+	token, err := h.s.Tokens.ResetPassword(email)
 	if err != nil {
-		h.errResp(w, err, http.StatusInternalServerError)
+		switch {
+		case errors.Is(err, myerrors.ErrInvalidCreds):
+			h.errResp(w, err, http.StatusBadRequest)
+			break
+		case errors.Is(err, myerrors.ErrEmailing) || errors.Is(err, myerrors.ErrInternal):
+			h.errResp(w, err, http.StatusInternalServerError)
+			break
+		}
 		return
 	}
 
-	response := jsonresponse.SuccessResponse{
+	response := jsonresponse.TokenResponse{
 		Message:    "Successfully sent email with reset password token",
+		Token:      token,
 		StatusCode: http.StatusOK,
 	}
 	w.WriteHeader(response.StatusCode)
