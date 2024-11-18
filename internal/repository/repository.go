@@ -17,6 +17,6 @@ func New(db mydb.Database) *Models {
 
 type Accounts interface {
 	Create(account *models.ConnectedAccount) (int64, error)
-	Delete(userID string) error
+	Delete(id, userID string) error
 	Edit(id string, editedAccount *models.ConnectedAccount) error
 }

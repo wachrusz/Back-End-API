@@ -572,37 +572,6 @@ paths:
       tags:
       - Analytics
   /app/accounts:
-    delete:
-      description: Delete an existing connected account.
-      parameters:
-      - description: ConnectedAccount object
-        in: body
-        name: ConnectedAccount
-        required: true
-        schema:
-          $ref: '#/definitions/v1.ConnectedAccountRequest'
-      responses:
-        "204":
-          description: Connected account deleted successfully
-          schema:
-            $ref: '#/definitions/jsonresponse.SuccessResponse'
-        "400":
-          description: Invalid request payload
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-        "401":
-          description: User not authenticated
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-        "500":
-          description: Error deleting connected account
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-      security:
-      - JWT: []
-      summary: Delete a connected account
-      tags:
-      - App
     post:
       consumes:
       - application/json
@@ -639,6 +608,42 @@ paths:
       tags:
       - App
   /app/accounts/{id}:
+    delete:
+      description: Delete an existing connected account.
+      parameters:
+      - description: Connected Account ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ConnectedAccount object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ConnectedAccountRequest'
+      responses:
+        "204":
+          description: Connected account deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting connected account
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete a connected account
+      tags:
+      - App
     put:
       consumes:
       - application/json

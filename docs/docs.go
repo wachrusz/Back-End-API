@@ -188,55 +188,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Delete an existing connected account.",
-                "tags": [
-                    "App"
-                ],
-                "summary": "Delete a connected account",
-                "parameters": [
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "ConnectedAccount",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "Connected account deleted successfully",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Error deleting connected account",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    }
-                }
             }
         },
         "/app/accounts/{id}": {
@@ -302,6 +253,62 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error updating connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete an existing connected account.",
+                "tags": [
+                    "App"
+                ],
+                "summary": "Delete a connected account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Connected Account ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Connected account deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting connected account",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }

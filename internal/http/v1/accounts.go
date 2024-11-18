@@ -61,15 +61,22 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 // @Summary Delete a connected account
 // @Description Delete an existing connected account.
 // @Tags App
+// @Param id path string true "Connected Account ID"
 // @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
 // @Success 204 {object} jsonresponse.SuccessResponse "Connected account deleted successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting connected account"
 // @Security JWT
-// @Router /app/accounts [delete]
+// @Router /app/accounts/{id} [delete]
 func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Deleting connected account...")
+
+	id := utility.GetParamFromRequest(r, "id")
+	if id == "" {
+		h.errResp(w, fmt.Errorf("connected account ID is required"), http.StatusBadRequest)
+		return
+	}
 
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -77,9 +84,12 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	err := h.m.Accounts.Delete(userID)
-	if err != nil {
-		h.errResp(w, fmt.Errorf("error deleting connected account: %v", err), http.StatusInternalServerError)
+	if err := h.m.Accounts.Delete(id, userID); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating connected account: %v", err), http.StatusInternalServerError)
+		}
 		return
 	}
 
