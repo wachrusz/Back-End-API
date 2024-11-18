@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
@@ -18,7 +18,7 @@ import (
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param expense body models.Expense true "Expense object"
+// @Param expense body repository.Expense true "Expense object"
 // @Success 201 {object} jsonresponse.IdResponse "Successfully created an expense"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -29,7 +29,7 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 	h.l.Debug("Creating a new expense...")
 
 	// Decode the request payload
-	var expense models.Expense
+	var expense repository.Expense
 	if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
@@ -46,7 +46,7 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 	expense.UserID = userID
 
 	// Create a new expense in the database
-	expenseID, err := models.CreateExpense(&expense)
+	expenseID, err := repository.CreateExpense(&expense)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating expense: %v", err), http.StatusInternalServerError)
 		return
@@ -71,7 +71,7 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param income body models.Income true "Income object"
+// @Param income body repository.Income true "Income object"
 // @Success 201 {object} jsonresponse.IdResponse "Income created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -82,7 +82,7 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	h.l.Debug("Creating a new income...")
 
 	// Decode the request payload
-	var income models.Income
+	var income repository.Income
 	if err := json.NewDecoder(r.Body).Decode(&income); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
@@ -99,7 +99,7 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	income.UserID = userID
 
 	// Create a new income in the database
-	incomeID, err := models.CreateIncome(&income)
+	incomeID, err := repository.CreateIncome(&income)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating income: %v", err), http.StatusInternalServerError)
 		return
@@ -124,7 +124,7 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param wealthFund body models.WealthFund true "Wealth fund object"
+// @Param wealthFund body repository.WealthFund true "Wealth fund object"
 // @Success 201 {object} jsonresponse.IdResponse "Wealth fund created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -135,7 +135,7 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	h.l.Debug("Creating a new wealth fund...")
 
 	// Decode the request payload
-	var wealthFund models.WealthFund
+	var wealthFund repository.WealthFund
 	if err := json.NewDecoder(r.Body).Decode(&wealthFund); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
@@ -152,7 +152,7 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	wealthFund.UserID = userID
 
 	// Create a new wealth fund in the database
-	wealthFundID, err := models.CreateWealthFund(&wealthFund)
+	wealthFundID, err := repository.CreateWealthFund(&wealthFund)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating wealth fund: %v", err), http.StatusInternalServerError)
 		return

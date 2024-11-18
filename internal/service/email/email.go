@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
@@ -56,7 +56,7 @@ type CheckResult struct {
 }
 
 func (s *Service) SendEmail(to, subject, body string) error {
-	email := models.Email{
+	email := repository.Email{
 		To:      to,
 		Subject: subject,
 		Body:    body,

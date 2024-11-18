@@ -1,4 +1,4 @@
-package models
+package repository
 
 type Email struct {
 	To      string `json:"to"`      // Адрес получателя

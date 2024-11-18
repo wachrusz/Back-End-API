@@ -14,9 +14,8 @@ type Services struct {
 	Users      user.Users
 	Categories categories.Categories
 	Emails     email.Emails
-	//Reports    *report.Service
-	Currency currency.CurrencyService
-	Tokens   token.Tokens
+	Currency   currency.CurrencyService
+	Tokens     token.Tokens
 }
 
 type Dependencies struct {

@@ -2,8 +2,10 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net/http"
@@ -16,7 +18,7 @@ import (
 // @Tags App
 // @Accept json
 // @Produce json
-// @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
+// @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
 // @Success 201 {object} jsonresponse.IdResponse "Connected account created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -39,7 +41,7 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 	}
 	account.UserID = userID
 
-	connectedAccountID, err := models.AddConnectedAccount(&account)
+	connectedAccountID, err := h.m.Accounts.Create(&account)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error adding connected account: %v", err), http.StatusInternalServerError)
 		return
@@ -59,7 +61,7 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 // @Summary Delete a connected account
 // @Description Delete an existing connected account.
 // @Tags App
-// @Param ConnectedAccount body models.ConnectedAccount true "ConnectedAccount object"
+// @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
 // @Success 204 {object} jsonresponse.SuccessResponse "Connected account deleted successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -75,7 +77,7 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	err := models.DeleteConnectedAccount(userID)
+	err := h.m.Accounts.Delete(userID)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error deleting connected account: %v", err), http.StatusInternalServerError)
 		return
@@ -84,6 +86,70 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 	response := jsonresponse.SuccessResponse{
 		Message:    "Successfully deleted connected account",
 		StatusCode: http.StatusNoContent,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+type ConnectedAccountRequest struct {
+	Account models.ConnectedAccount `json:"account"`
+}
+
+// UpdateConnectedAccountHandler handles the update of an existing connected account.
+//
+// @Summary Update a connected account
+// @Description Update an existing connected account.
+// @Tags App
+// @Accept json
+// @Produce json
+// @Param id path string true "Connected Account ID"
+// @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
+// @Success 200 {object} jsonresponse.SuccessResponse "Connected account updated successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 404 {object} jsonresponse.ErrorResponse "Connected account not found"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error updating connected account"
+// @Security JWT
+// @Router /app/accounts/{id} [put]
+func (h *MyHandler) UpdateConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Updating connected account...")
+
+	// Extract the ID from the URL path
+	id := utility.GetParamFromRequest(r, "id")
+	if id == "" {
+		h.errResp(w, fmt.Errorf("connected account ID is required"), http.StatusBadRequest)
+		return
+	}
+
+	// Decode the request body
+	var editedAccount models.ConnectedAccount
+	if err := json.NewDecoder(r.Body).Decode(&editedAccount); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Check if user is authenticated
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+	editedAccount.UserID = userID
+
+	// Attempt to update the account
+	if err := h.m.Accounts.Edit(id, &editedAccount); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating connected account: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Respond with success
+	response := jsonresponse.SuccessResponse{
+		Message:    "Connected account updated successfully",
+		StatusCode: http.StatusOK,
 	}
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)

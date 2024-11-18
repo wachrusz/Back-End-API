@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service/categories"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
@@ -203,9 +203,9 @@ func (h *MyHandler) GetProfileMore(w http.ResponseWriter, r *http.Request) {
 }
 
 type ProfileArchiveResponse struct {
-	Message    string             `json:"message"`
-	Archive    []models.Operation `json:"archive"`
-	StatusCode int                `json:"status_code"`
+	Message    string                 `json:"message"`
+	Archive    []repository.Operation `json:"archive"`
+	StatusCode int                    `json:"status_code"`
 }
 
 // GetOperationArchive retrieves the archived operations for the user's profile.
