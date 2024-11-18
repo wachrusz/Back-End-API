@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 )
 
 type ConsentRequest struct {
@@ -42,7 +42,7 @@ func GetConsentRequest(auth Auth, apiURL string) (*ConsentRequest, error) {
 	return &consentRequest, nil
 }
 
-func CreateConsent(auth Auth, apiURL string, consentReq ConsentRequest) (*models.ConsentResponse, error) {
+func CreateConsent(auth Auth, apiURL string, consentReq ConsentRequest) (*repository.ConsentResponse, error) {
 	body, _ := json.Marshal(map[string]interface{}{
 		"Data": consentReq,
 	})
@@ -59,12 +59,12 @@ func CreateConsent(auth Auth, apiURL string, consentReq ConsentRequest) (*models
 	}
 	defer resp.Body.Close()
 
-	var consentResp models.ConsentResponse
+	var consentResp repository.ConsentResponse
 	json.NewDecoder(resp.Body).Decode(&consentResp)
 	return &consentResp, nil
 }
 
-func GetConsent(auth Auth, consentId, apiURL string) (*models.ConsentResponse, error) {
+func GetConsent(auth Auth, consentId, apiURL string) (*repository.ConsentResponse, error) {
 	// Логика для получения согласия
 	return nil, nil
 }

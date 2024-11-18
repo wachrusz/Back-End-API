@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -22,7 +22,7 @@ type EndTimeResponse struct {
 // @Tags Settings
 // @Accept json
 // @Produce json
-// @Param subscription body models.Subscription true "Subscription object"
+// @Param subscription body repository.Subscription true "Subscription object"
 // @Success 201 {object} EndTimeResponse "Subscription created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating subscription"
@@ -32,14 +32,14 @@ func (h *MyHandler) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Req
 	h.l.Debug("Creating a new subscription...")
 
 	// Decode the request payload
-	var subscription models.Subscription
+	var subscription repository.Subscription
 	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	// Create a new subscription in the database
-	subscriptionID, err := models.CreateSubscription(&subscription)
+	subscriptionID, err := repository.CreateSubscription(&subscription)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating subscription: %v", err), http.StatusInternalServerError)
 		return

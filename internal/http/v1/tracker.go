@@ -8,7 +8,7 @@ import (
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
@@ -19,7 +19,7 @@ import (
 // @Tags Tracker
 // @Accept json
 // @Produce json
-// @Param goal body models.Goal true "Goal object"
+// @Param goal body repository.Goal true "Goal object"
 // @Success 201 {object} jsonresponse.IdResponse "Goal created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -30,7 +30,7 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating a new goal...")
 
 	// Decode the request payload
-	var goal models.Goal
+	var goal repository.Goal
 	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
@@ -47,7 +47,7 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal.UserID = userID
 
 	// Create a new goal in the database
-	goalID, err := models.CreateGoal(&goal)
+	goalID, err := repository.CreateGoal(&goal)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating goal: %v", err), http.StatusInternalServerError)
 		return
@@ -72,7 +72,7 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 // @Tags Tracker
 // @Accept json
 // @Produce json
-// @Param goal body models.Goal true "Goal object"
+// @Param goal body repository.Goal true "Goal object"
 // @Success 201 {object} jsonresponse.IdResponse "Goal updated successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -83,7 +83,7 @@ func (h *MyHandler) UpdateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Updating a goal...")
 
 	// Decode the request payload
-	var goal models.Goal
+	var goal repository.Goal
 	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
@@ -100,7 +100,7 @@ func (h *MyHandler) UpdateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal.UserID = userID
 
 	// Create a new goal in the database
-	goalID, err := models.UpdateGoal(&goal)
+	goalID, err := repository.UpdateGoal(&goal)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error updating goal: %v", err), http.StatusInternalServerError)
 		return

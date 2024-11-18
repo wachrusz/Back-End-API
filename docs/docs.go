@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Income"
+                            "$ref": "#/definitions/repository.Income"
                         }
                     }
                 ],
@@ -101,7 +101,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.WealthFund"
+                            "$ref": "#/definitions/repository.WealthFund"
                         }
                     }
                 ],
@@ -158,7 +158,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
                         }
                     }
                 ],
@@ -207,7 +207,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
                         }
                     }
                 ],
@@ -232,6 +232,76 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error deleting connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/app/accounts/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing connected account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Update a connected account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Connected Account ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Connected account updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connected account not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating connected account",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -264,7 +334,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ExpenseCategory"
+                            "$ref": "#/definitions/repository.ExpenseCategory"
                         }
                     }
                 ],
@@ -315,7 +385,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.IncomeCategory"
+                            "$ref": "#/definitions/repository.IncomeCategory"
                         }
                     }
                 ],
@@ -366,7 +436,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.InvestmentCategory"
+                            "$ref": "#/definitions/repository.InvestmentCategory"
                         }
                     }
                 ],
@@ -954,7 +1024,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Expense"
+                            "$ref": "#/definitions/repository.Expense"
                         }
                     }
                 ],
@@ -988,7 +1058,7 @@ const docTemplate = `{
         },
         "/history/add": {
             "post": {
-                "description": "Add a new entry to the history.",
+                "description": "Create a new entry to the history.",
                 "consumes": [
                     "application/json"
                 ],
@@ -998,7 +1068,7 @@ const docTemplate = `{
                 "tags": [
                     "History"
                 ],
-                "summary": "Add history entry",
+                "summary": "Create history entry",
                 "responses": {
                     "200": {
                         "description": "History entry added successfully",
@@ -1603,7 +1673,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Subscription"
+                            "$ref": "#/definitions/repository.Subscription"
                         }
                     }
                 ],
@@ -1687,6 +1757,61 @@ const docTemplate = `{
             }
         },
         "/tracker/goal": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates an existing goal.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Update a goal",
+                "parameters": [
+                    {
+                        "description": "Goal object",
+                        "name": "goal",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/repository.Goal"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Goal updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating goal",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1711,7 +1836,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Goal"
+                            "$ref": "#/definitions/repository.Goal"
                         }
                     }
                 ],
@@ -1751,19 +1876,19 @@ const docTemplate = `{
                 "expense": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Expense"
+                        "$ref": "#/definitions/repository.Expense"
                     }
                 },
                 "income": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Income"
+                        "$ref": "#/definitions/repository.Income"
                     }
                 },
                 "wealth_fund": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.WealthFund"
+                        "$ref": "#/definitions/repository.WealthFund"
                     }
                 }
             }
@@ -1772,10 +1897,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "app": {
-                    "$ref": "#/definitions/models.App"
+                    "$ref": "#/definitions/repository.App"
                 },
                 "settings": {
-                    "$ref": "#/definitions/models.Settings"
+                    "$ref": "#/definitions/repository.Settings"
                 }
             }
         },
@@ -1783,16 +1908,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "fin_health": {
-                    "$ref": "#/definitions/models.FinHealth"
+                    "$ref": "#/definitions/repository.FinHealth"
                 },
                 "goal": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Goal"
+                        "$ref": "#/definitions/repository.Goal"
                     }
                 },
                 "tracking_state": {
-                    "$ref": "#/definitions/models.TrackingState"
+                    "$ref": "#/definitions/repository.TrackingState"
                 }
             }
         },
@@ -1900,43 +2025,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.App": {
-            "type": "object",
-            "properties": {
-                "category_settings": {
-                    "$ref": "#/definitions/models.CategorySettings"
-                },
-                "connected_accounts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ConnectedAccount"
-                    }
-                }
-            }
-        },
-        "models.CategorySettings": {
-            "type": "object",
-            "properties": {
-                "expense_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExpenseCategory"
-                    }
-                },
-                "income_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IncomeCategory"
-                    }
-                },
-                "investment_category": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.InvestmentCategory"
-                    }
-                }
-            }
-        },
         "models.ConnectedAccount": {
             "type": "object",
             "properties": {
@@ -1957,7 +2045,52 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Expense": {
+        "openbanking.Auth": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.App": {
+            "type": "object",
+            "properties": {
+                "category_settings": {
+                    "$ref": "#/definitions/repository.CategorySettings"
+                },
+                "connected_accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ConnectedAccount"
+                    }
+                }
+            }
+        },
+        "repository.CategorySettings": {
+            "type": "object",
+            "properties": {
+                "expense_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.ExpenseCategory"
+                    }
+                },
+                "income_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.IncomeCategory"
+                    }
+                },
+                "investment_category": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.InvestmentCategory"
+                    }
+                }
+            }
+        },
+        "repository.Expense": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -1989,7 +2122,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ExpenseCategory": {
+        "repository.ExpenseCategory": {
             "type": "object",
             "properties": {
                 "icon": {
@@ -2009,7 +2142,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.FinHealth": {
+        "repository.FinHealth": {
             "type": "object",
             "properties": {
                 "expense_score": {
@@ -2038,7 +2171,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.GetTokenRequest": {
+        "repository.GetTokenRequest": {
             "type": "object",
             "properties": {
                 "auth_url": {
@@ -2052,11 +2185,17 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Goal": {
+        "repository.Goal": {
             "type": "object",
             "properties": {
+                "currency": {
+                    "type": "string"
+                },
                 "current_state": {
                     "type": "number"
+                },
+                "end_date": {
+                    "type": "string"
                 },
                 "goal": {
                     "type": "string"
@@ -2067,12 +2206,15 @@ const docTemplate = `{
                 "need": {
                     "type": "number"
                 },
+                "start_date": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "string"
                 }
             }
         },
-        "models.Income": {
+        "repository.Income": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -2104,7 +2246,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.IncomeCategory": {
+        "repository.IncomeCategory": {
             "type": "object",
             "properties": {
                 "icon": {
@@ -2124,7 +2266,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.InvestmentCategory": {
+        "repository.InvestmentCategory": {
             "type": "object",
             "properties": {
                 "icon": {
@@ -2144,7 +2286,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Operation": {
+        "repository.Operation": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -2167,15 +2309,15 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Settings": {
+        "repository.Settings": {
             "type": "object",
             "properties": {
                 "subscriptions": {
-                    "$ref": "#/definitions/models.Subscription"
+                    "$ref": "#/definitions/repository.Subscription"
                 }
             }
         },
-        "models.Subscription": {
+        "repository.Subscription": {
             "type": "object",
             "properties": {
                 "end_date": {
@@ -2195,7 +2337,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.TrackingState": {
+        "repository.TrackingState": {
             "type": "object",
             "properties": {
                 "state": {
@@ -2206,7 +2348,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.WealthFund": {
+        "repository.WealthFund": {
             "type": "object",
             "properties": {
                 "amount": {
@@ -2228,14 +2370,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "planned": {
-                    "$ref": "#/definitions/models.WelfareFund"
+                    "$ref": "#/definitions/repository.WelfareFund"
                 },
                 "user_id": {
                     "type": "string"
                 }
             }
         },
-        "models.WelfareFund": {
+        "repository.WelfareFund": {
             "type": "integer",
             "enum": [
                 0,
@@ -2245,14 +2387,6 @@ const docTemplate = `{
                 "Planned",
                 "Unplanned"
             ]
-        },
-        "openbanking.Auth": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
         },
         "token.ConfirmEmailRequest": {
             "type": "object",
@@ -2328,6 +2462,14 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ConnectedAccountRequest": {
+            "type": "object",
+            "properties": {
+                "account": {
+                    "$ref": "#/definitions/models.ConnectedAccount"
+                }
+            }
+        },
         "v1.EndTimeResponse": {
             "type": "object",
             "properties": {
@@ -2368,7 +2510,7 @@ const docTemplate = `{
                 "archive": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Operation"
+                        "$ref": "#/definitions/repository.Operation"
                     }
                 },
                 "message": {

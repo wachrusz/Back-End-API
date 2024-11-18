@@ -1,8 +1,8 @@
 //go:build !exclude_swagger
 // +build !exclude_swagger
 
-// Package models provides basic financial models functionality.
-package models
+// Package repository provides basic financial repository functionality.
+package repository
 
 type User struct {
 	ID       int

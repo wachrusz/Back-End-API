@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
@@ -11,6 +12,7 @@ import (
 type MyHandler struct {
 	s *service.Services
 	l *zap.Logger
+	m repository.Models
 }
 
 func NewHandler(services *service.Services, logger *zap.Logger) *MyHandler {

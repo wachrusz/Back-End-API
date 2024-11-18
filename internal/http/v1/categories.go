@@ -3,7 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
 	"net/http"
@@ -16,7 +16,7 @@ import (
 // @Tags	App
 // @Accept 	json
 // @Produce json
-// @Param 	category body models.ExpenseCategory true "Expense category object"
+// @Param 	category body repository.ExpenseCategory true "Expense category object"
 // @Success 201 {object} jsonresponse.IdResponse "Expense category created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating expense category"
@@ -24,14 +24,14 @@ import (
 // @Router /app/category/expense [post]
 func (h *MyHandler) CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating category...")
-	var category models.ExpenseCategory
+	var category repository.ExpenseCategory
 
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	expenseCategoryID, err := models.CreateExpenseCategory(&category)
+	expenseCategoryID, err := repository.CreateExpenseCategory(&category)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating expense category: %v", err), http.StatusInternalServerError)
 		return
@@ -55,7 +55,7 @@ func (h *MyHandler) CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.
 // @Tags App
 // @Accept json
 // @Produce json
-// @Param category body models.IncomeCategory true "Income category object"
+// @Param category body repository.IncomeCategory true "Income category object"
 // @Success 201 {object} jsonresponse.IdResponse "Income category created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating income category"
@@ -64,13 +64,13 @@ func (h *MyHandler) CreateExpenseCategoryHandler(w http.ResponseWriter, r *http.
 func (h *MyHandler) CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating income category...")
 
-	var category models.IncomeCategory
+	var category repository.IncomeCategory
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	incomeCategoryID, err := models.CreateIncomeCategory(&category)
+	incomeCategoryID, err := repository.CreateIncomeCategory(&category)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating income category: %v", err), http.StatusInternalServerError)
 		return
@@ -94,7 +94,7 @@ func (h *MyHandler) CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.R
 // @Tags App
 // @Accept json
 // @Produce json
-// @Param category body models.InvestmentCategory true "Investment category object"
+// @Param category body repository.InvestmentCategory true "Investment category object"
 // @Success 201 {object} jsonresponse.IdResponse "Investment category created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating investment category"
@@ -103,13 +103,13 @@ func (h *MyHandler) CreateIncomeCategoryHandler(w http.ResponseWriter, r *http.R
 func (h *MyHandler) CreateInvestmentCategoryHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating investment category...")
 
-	var category models.InvestmentCategory
+	var category repository.InvestmentCategory
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	investmentCategoryID, err := models.CreateInvestmentCategory(&category)
+	investmentCategoryID, err := repository.CreateInvestmentCategory(&category)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating investment category: %v", err), http.StatusInternalServerError)
 		return
