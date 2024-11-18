@@ -22,11 +22,25 @@ func (m *AccountModel) Create(account *models.ConnectedAccount) (int64, error) {
 
 }
 
-func (m *AccountModel) Delete(userID string) error {
-	_, err := m.DB.Exec("DELETE FROM connected_accounts WHERE user_id = $1", userID)
+func (m *AccountModel) Delete(id, userID string) error {
+	result, err := m.DB.Exec("DELETE FROM connected_accounts WHERE id = $1 AND user_id = $2", id, userID)
 	if err != nil {
-		return err
+		// Возвращаем обернутую ошибку, если запрос завершился с ошибкой
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
+
+	// Проверяем количество затронутых строк
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// Возвращаем обернутую ошибку при невозможности получить количество строк
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+	}
+
+	if rowsAffected == 0 {
+		// Возвращаем ошибку, если запись не найдена или не принадлежит пользователю
+		return fmt.Errorf("%w: no account found with id %s for user %s", myerrors.ErrNotFound, id, userID)
+	}
+
 	return nil
 }
 

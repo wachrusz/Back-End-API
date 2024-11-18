@@ -12,9 +12,11 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 			r.Post("/investment", h.AuthMiddleware(h.CreateInvestmentCategoryHandler))
 		})
 
-		r.Post("/accounts", h.AuthMiddleware(h.AddConnectedAccountHandler))
-		r.Delete("/accounts", h.AuthMiddleware(h.DeleteConnectedAccountHandler))
-
+		r.Route("/accounts", func(r chi.Router) {
+			r.Post("/", h.AuthMiddleware(h.AddConnectedAccountHandler))
+			r.Delete("/{id}", h.AuthMiddleware(h.DeleteConnectedAccountHandler))
+			r.Put("/{id}", h.AuthMiddleware(h.UpdateConnectedAccountHandler))
+		})
 		//r.Get("/report", h.AuthMiddleware(h.ExportHandler))
 	})
 
