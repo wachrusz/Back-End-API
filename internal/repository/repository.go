@@ -15,6 +15,7 @@ type Models struct {
 func New(db *mydb.Database) *Models {
 	return &Models{
 		Accounts: &AccountModel{db},
+		Expenses: &ExpenseModel{db},
 	}
 }
 
