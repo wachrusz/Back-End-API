@@ -9,7 +9,7 @@ type Models struct {
 	Accounts Accounts
 }
 
-func New(db mydb.Database) *Models {
+func New(db *mydb.Database) *Models {
 	return &Models{
 		Accounts: &AccountModel{db},
 	}
