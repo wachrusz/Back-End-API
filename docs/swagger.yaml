@@ -4,7 +4,7 @@ definitions:
     properties:
       expense:
         items:
-          $ref: '#/definitions/repository.Expense'
+          $ref: '#/definitions/models.Expense'
         type: array
       income:
         items:
@@ -118,6 +118,27 @@ definitions:
       user_id:
         type: string
     type: object
+  models.Expense:
+    properties:
+      amount:
+        type: number
+      bank_account:
+        type: string
+      category_id:
+        type: string
+      currency:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      planned:
+        type: boolean
+      sent_to:
+        type: string
+      user_id:
+        type: string
+    type: object
   openbanking.Auth:
     properties:
       token:
@@ -146,27 +167,6 @@ definitions:
         items:
           $ref: '#/definitions/repository.InvestmentCategory'
         type: array
-    type: object
-  repository.Expense:
-    properties:
-      amount:
-        type: number
-      bank_account:
-        type: string
-      category_id:
-        type: string
-      currency:
-        type: string
-      date:
-        type: string
-      id:
-        type: string
-      planned:
-        type: boolean
-      sent_to:
-        type: string
-      user_id:
-        type: string
     type: object
   repository.ExpenseCategory:
     properties:
@@ -406,6 +406,11 @@ definitions:
       status_code:
         type: integer
     type: object
+  v1.ExpenseRequest:
+    properties:
+      expense:
+        $ref: '#/definitions/models.Expense'
+    type: object
   v1.ProfileAnalyticsResponse:
     properties:
       analytics:
@@ -504,6 +509,113 @@ info:
   title: Cash Advisor API
   version: "0.1"
 paths:
+  /analytics/expense:
+    delete:
+      description: Delete the existing expense.
+      parameters:
+      - description: Expense id
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/jsonresponse.IdRequest'
+      responses:
+        "204":
+          description: Expense deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting expense
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete the expense
+      tags:
+      - Analytics
+    put:
+      consumes:
+      - application/json
+      description: Update an existing expense. There is no need to fill user_id field.
+      parameters:
+      - description: Expense object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: expense updated successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "404":
+          description: expense not found
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error updating expense
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Update the expense
+      tags:
+      - Analytics
+  /analytics/expenses:
+    post:
+      consumes:
+      - application/json
+      description: Create a new expense record.
+      parameters:
+      - description: Expense object
+        in: body
+        name: expense
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ExpenseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created an expense
+          schema:
+            $ref: '#/definitions/jsonresponse.IdResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error creating expense
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Create a expense
+      tags:
+      - Analytics
   /analytics/income:
     post:
       consumes:
@@ -580,12 +692,7 @@ paths:
     delete:
       description: Delete an existing connected account.
       parameters:
-      - description: Connected Account ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: ConnectedAccount object
+      - description: ConnectedAccount id
         in: body
         name: ConnectedAccount
         required: true
@@ -1142,42 +1249,6 @@ paths:
       summary: Get token pairs amount
       tags:
       - Auth
-  /expenses:
-    post:
-      consumes:
-      - application/json
-      description: Create a new expense record.
-      parameters:
-      - description: Expense object
-        in: body
-        name: expense
-        required: true
-        schema:
-          $ref: '#/definitions/repository.Expense'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successfully created an expense
-          schema:
-            $ref: '#/definitions/jsonresponse.IdResponse'
-        "400":
-          description: Invalid request payload
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-        "401":
-          description: User not authenticated
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-        "500":
-          description: Error creating expense
-          schema:
-            $ref: '#/definitions/jsonresponse.ErrorResponse'
-      security:
-      - JWT: []
-      summary: Create an expense
-      tags:
-      - Analytics
   /history/add:
     post:
       consumes:

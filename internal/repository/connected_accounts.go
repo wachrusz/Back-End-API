@@ -44,7 +44,7 @@ func (m *AccountModel) Delete(id, userID string) error {
 	return nil
 }
 
-func (m *AccountModel) Edit(editedAccount *models.ConnectedAccount) error {
+func (m *AccountModel) Update(editedAccount *models.ConnectedAccount) error {
 	result, err := m.DB.Exec("UPDATE connected_accounts SET bank_id=$1, account_number=$2, account_type=$3, updated_at=NOW() WHERE id = $4 AND user_id = $5",
 		editedAccount.BankID, editedAccount.AccountNumber, editedAccount.AccountType, editedAccount.ID, editedAccount.UserID)
 

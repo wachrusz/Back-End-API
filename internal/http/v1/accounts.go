@@ -11,6 +11,10 @@ import (
 	"net/http"
 )
 
+type ConnectedAccountRequest struct {
+	Account models.ConnectedAccount `json:"account"`
+}
+
 // AddConnectedAccountHandler handles the creation of a new connected account.
 //
 // @Summary Create a connected account
@@ -28,11 +32,13 @@ import (
 func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Adding a new connected account...")
 
-	var account models.ConnectedAccount
-	if err := json.NewDecoder(r.Body).Decode(&account); err != nil {
+	var accountR ConnectedAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&accountR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	account := accountR.Account
 
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -61,8 +67,7 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 // @Summary Delete a connected account
 // @Description Delete an existing connected account.
 // @Tags App
-// @Param id path string true "Connected Account ID"
-// @Param ConnectedAccount body jsonresponse.IdRequest true "ConnectedAccount object"
+// @Param ConnectedAccount body jsonresponse.IdRequest true "ConnectedAccount id"
 // @Success 204 {object} jsonresponse.SuccessResponse "Connected account deleted successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -88,7 +93,7 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 		if errors.Is(err, myerrors.ErrNotFound) {
 			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
 		} else {
-			h.errResp(w, fmt.Errorf("error updating connected account: %v", err), http.StatusInternalServerError)
+			h.errResp(w, fmt.Errorf("error deleting connected account: %v", err), http.StatusInternalServerError)
 		}
 		return
 	}
@@ -99,10 +104,6 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 	}
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
-}
-
-type ConnectedAccountRequest struct {
-	Account models.ConnectedAccount `json:"account"`
 }
 
 // UpdateConnectedAccountHandler handles the update of an existing connected account.
@@ -124,11 +125,13 @@ func (h *MyHandler) UpdateConnectedAccountHandler(w http.ResponseWriter, r *http
 	h.l.Debug("Updating connected account...")
 
 	// Decode the request body
-	var editedAccount models.ConnectedAccount
-	if err := json.NewDecoder(r.Body).Decode(&editedAccount); err != nil {
+	var accountR ConnectedAccountRequest
+	if err := json.NewDecoder(r.Body).Decode(&accountR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	editedAccount := accountR.Account
 
 	// Check if user is authenticated
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -139,7 +142,7 @@ func (h *MyHandler) UpdateConnectedAccountHandler(w http.ResponseWriter, r *http
 	editedAccount.UserID = userID
 
 	// Attempt to update the account
-	if err := h.m.Accounts.Edit(&editedAccount); err != nil {
+	if err := h.m.Accounts.Update(&editedAccount); err != nil {
 		if errors.Is(err, myerrors.ErrNotFound) {
 			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
 		} else {

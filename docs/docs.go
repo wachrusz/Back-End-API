@@ -19,6 +19,175 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/expense": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing expense. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ExpenseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "expense updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "expense not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing expense.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the expense",
+                "parameters": [
+                    {
+                        "description": "Expense id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Expense deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/expenses": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new expense record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Create a expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ExpenseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created an expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/analytics/income": {
             "post": {
                 "security": [
@@ -263,14 +432,7 @@ const docTemplate = `{
                 "summary": "Delete a connected account",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Connected Account ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "ConnectedAccount object",
+                        "description": "ConnectedAccount id",
                         "name": "ConnectedAccount",
                         "in": "body",
                         "required": true,
@@ -990,63 +1152,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Server error",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/expenses": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Create a new expense record.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Analytics"
-                ],
-                "summary": "Create an expense",
-                "parameters": [
-                    {
-                        "description": "Expense object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/repository.Expense"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully created an expense",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.IdResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -1874,7 +1979,7 @@ const docTemplate = `{
                 "expense": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.Expense"
+                        "$ref": "#/definitions/models.Expense"
                     }
                 },
                 "income": {
@@ -2051,6 +2156,38 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Expense": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "type": "boolean"
+                },
+                "sent_to": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "openbanking.Auth": {
             "type": "object",
             "properties": {
@@ -2093,38 +2230,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/repository.InvestmentCategory"
                     }
-                }
-            }
-        },
-        "repository.Expense": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "bank_account": {
-                    "type": "string"
-                },
-                "category_id": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "planned": {
-                    "type": "boolean"
-                },
-                "sent_to": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
                 }
             }
         },
@@ -2490,6 +2595,14 @@ const docTemplate = `{
                 },
                 "status_code": {
                     "type": "integer"
+                }
+            }
+        },
+        "v1.ExpenseRequest": {
+            "type": "object",
+            "properties": {
+                "expense": {
+                    "$ref": "#/definitions/models.Expense"
                 }
             }
         },
