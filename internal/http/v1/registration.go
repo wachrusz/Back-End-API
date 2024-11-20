@@ -14,8 +14,8 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 
 		r.Route("/accounts", func(r chi.Router) {
 			r.Post("/", h.AuthMiddleware(h.AddConnectedAccountHandler))
-			r.Delete("/{id}", h.AuthMiddleware(h.DeleteConnectedAccountHandler))
-			r.Put("/{id}", h.AuthMiddleware(h.UpdateConnectedAccountHandler))
+			r.Delete("/", h.AuthMiddleware(h.DeleteConnectedAccountHandler))
+			r.Put("/", h.AuthMiddleware(h.UpdateConnectedAccountHandler))
 		})
 		//r.Get("/report", h.AuthMiddleware(h.ExportHandler))
 	})

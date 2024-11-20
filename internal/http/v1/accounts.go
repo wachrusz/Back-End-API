@@ -62,19 +62,19 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 // @Description Delete an existing connected account.
 // @Tags App
 // @Param id path string true "Connected Account ID"
-// @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
+// @Param ConnectedAccount body jsonresponse.IdRequest true "ConnectedAccount object"
 // @Success 204 {object} jsonresponse.SuccessResponse "Connected account deleted successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting connected account"
 // @Security JWT
-// @Router /app/accounts/{id} [delete]
+// @Router /app/accounts [delete]
 func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Deleting connected account...")
 
-	id := utility.GetParamFromRequest(r, "id")
-	if id == "" {
-		h.errResp(w, fmt.Errorf("connected account ID is required"), http.StatusBadRequest)
+	var id jsonresponse.IdRequest
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (h *MyHandler) DeleteConnectedAccountHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	if err := h.m.Accounts.Delete(id, userID); err != nil {
+	if err := h.m.Accounts.Delete(id.ID, userID); err != nil {
 		if errors.Is(err, myerrors.ErrNotFound) {
 			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
 		} else {
@@ -108,11 +108,10 @@ type ConnectedAccountRequest struct {
 // UpdateConnectedAccountHandler handles the update of an existing connected account.
 //
 // @Summary Update a connected account
-// @Description Update an existing connected account.
+// @Description Update an existing connected account. There is no need to fill user_id field.
 // @Tags App
 // @Accept json
 // @Produce json
-// @Param id path string true "Connected Account ID"
 // @Param ConnectedAccount body ConnectedAccountRequest true "ConnectedAccount object"
 // @Success 200 {object} jsonresponse.SuccessResponse "Connected account updated successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
@@ -120,16 +119,9 @@ type ConnectedAccountRequest struct {
 // @Failure 404 {object} jsonresponse.ErrorResponse "Connected account not found"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error updating connected account"
 // @Security JWT
-// @Router /app/accounts/{id} [put]
+// @Router /app/accounts [put]
 func (h *MyHandler) UpdateConnectedAccountHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Updating connected account...")
-
-	// Extract the ID from the URL path
-	id := utility.GetParamFromRequest(r, "id")
-	if id == "" {
-		h.errResp(w, fmt.Errorf("connected account ID is required"), http.StatusBadRequest)
-		return
-	}
 
 	// Decode the request body
 	var editedAccount models.ConnectedAccount
@@ -147,7 +139,7 @@ func (h *MyHandler) UpdateConnectedAccountHandler(w http.ResponseWriter, r *http
 	editedAccount.UserID = userID
 
 	// Attempt to update the account
-	if err := h.m.Accounts.Edit(id, &editedAccount); err != nil {
+	if err := h.m.Accounts.Edit(&editedAccount); err != nil {
 		if errors.Is(err, myerrors.ErrNotFound) {
 			h.errResp(w, fmt.Errorf("connected account not found: %v", err), http.StatusNotFound)
 		} else {
