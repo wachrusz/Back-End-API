@@ -12,13 +12,14 @@ import (
 type MyHandler struct {
 	s *service.Services
 	l *zap.Logger
-	m repository.Models
+	m *repository.Models
 }
 
-func NewHandler(services *service.Services, logger *zap.Logger) *MyHandler {
+func NewHandler(services *service.Services, logger *zap.Logger, models *repository.Models) *MyHandler {
 	return &MyHandler{
 		s: services,
 		l: logger,
+		m: models,
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 type AccountModel struct {
-	DB mydb.Database
+	DB *mydb.Database
 }
 
 func (m *AccountModel) Create(account *models.ConnectedAccount) (int64, error) {
