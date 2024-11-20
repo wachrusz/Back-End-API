@@ -64,7 +64,7 @@ func FinHealthCalculations(userID string) (*FinHealth, error) {
 		return &finHealth, err
 	}
 
-	expenseTemp, expensePerc, err := GetMonthlyExpenseIncrease(userID)
+	expenseTemp, expensePerc, err := GetMonthlyIncrease(userID)
 	if err != nil {
 		return &finHealth, err
 	}

@@ -2,38 +2,47 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/repository"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"go.uber.org/zap"
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/repository"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
+type ExpenseRequest struct {
+	Expense models.Expense `json:"expense"`
+}
+
 // CreateExpenseHandler creates a new expense record in the database.
 //
-// @Summary Create an expense
+// @Summary Create a expense
 // @Description Create a new expense record.
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param expense body repository.Expense true "Expense object"
+// @Param expense body ExpenseRequest true "Expense object"
 // @Success 201 {object} jsonresponse.IdResponse "Successfully created an expense"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error creating expense"
 // @Security JWT
-// @Router /expenses [post]
+// @Router /analytics/expenses [post]
 func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating a new expense...")
 
 	// Decode the request payload
-	var expense repository.Expense
-	if err := json.NewDecoder(r.Body).Decode(&expense); err != nil {
+	var expenseR ExpenseRequest
+	if err := json.NewDecoder(r.Body).Decode(&expenseR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	expense := expenseR.Expense
 
 	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -46,7 +55,7 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 	expense.UserID = userID
 
 	// Create a new expense in the database
-	expenseID, err := repository.CreateExpense(&expense)
+	expenseID, err := h.m.Expenses.Create(&expense)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating expense: %v", err), http.StatusInternalServerError)
 		return
@@ -62,6 +71,104 @@ func (h *MyHandler) CreateExpenseHandler(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Expense created successfully", zap.Int64("expenseID", expenseID))
+}
+
+// UpdateExpenseHandler handles the update of an existing expense.
+//
+// @Summary Update the expense
+// @Description Update an existing expense. There is no need to fill user_id field.
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Param ConnectedAccount body ExpenseRequest true "Expense object"
+// @Success 200 {object} jsonresponse.SuccessResponse "expense updated successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 404 {object} jsonresponse.ErrorResponse "expense not found"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error updating expense"
+// @Security JWT
+// @Router /analytics/expense [put]
+func (h *MyHandler) UpdateExpenseHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Updating expense...")
+
+	// Decode the request body
+	var expenseR ExpenseRequest
+	if err := json.NewDecoder(r.Body).Decode(&expenseR); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	expense := expenseR.Expense
+
+	// Check if user is authenticated
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+	expense.UserID = userID
+
+	// Attempt to update the account
+	if err := h.m.Expenses.Update(&expense); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("expense not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating expense: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Respond with success
+	response := jsonresponse.SuccessResponse{
+		Message:    "expense updated successfully",
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteExpenseHandler handles the deletion of an existing expense.
+//
+// @Summary Delete the expense
+// @Description Delete the existing expense.
+// @Tags Analytics
+// @Param ConnectedAccount body jsonresponse.IdRequest true "Expense id"
+// @Success 204 {object} jsonresponse.SuccessResponse "Expense deleted successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting expense"
+// @Security JWT
+// @Router /analytics/expense [delete]
+func (h *MyHandler) DeleteExpenseHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting expense...")
+
+	var id jsonresponse.IdRequest
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.m.Expenses.Delete(id.ID, userID); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("expense not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error deleting expense: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted expense",
+		StatusCode: http.StatusNoContent,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
 }
 
 // CreateIncomeHandler creates a new income record in the database.
