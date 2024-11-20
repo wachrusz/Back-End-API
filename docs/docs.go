@@ -134,6 +134,67 @@ const docTemplate = `{
             }
         },
         "/app/accounts": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing connected account. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Update a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Connected account updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connected account not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -188,76 +249,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/app/accounts/{id}": {
-            "put": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Update an existing connected account.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "App"
-                ],
-                "summary": "Update a connected account",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Connected Account ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "ConnectedAccount object",
-                        "name": "ConnectedAccount",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Connected account updated successfully",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Connected account not found",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Error updating connected account",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    }
-                }
             },
             "delete": {
                 "security": [
@@ -284,7 +275,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
                         }
                     }
                 ],
@@ -1990,6 +1981,14 @@ const docTemplate = `{
                 },
                 "status_code": {
                     "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.IdRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
                 }
             }
         },
