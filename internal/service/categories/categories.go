@@ -42,7 +42,7 @@ type Analytics struct {
 // Tracker represents the structure for tracking data, including tracking state and goals.
 type Tracker struct {
 	TrackingState repository.TrackingState `json:"tracking_state"`
-	Goal          []repository.Goal        `json:"goal"`
+	Goal          []models.Goal            `json:"goal"`
 	FinHealth     repository.FinHealth     `json:"fin_health"`
 }
 
@@ -194,9 +194,9 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 	}
 	defer rowsGoal.Close()
 
-	var goalList []repository.Goal
+	var goalList []models.Goal
 	for rowsGoal.Next() {
-		var goal repository.Goal
+		var goal models.Goal
 		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState, &goal.StartDate, &goal.EndDate); err != nil {
 			return nil, err
 		}

@@ -28,7 +28,7 @@ definitions:
         $ref: '#/definitions/repository.FinHealth'
       goal:
         items:
-          $ref: '#/definitions/repository.Goal'
+          $ref: '#/definitions/models.Goal'
         type: array
       tracking_state:
         $ref: '#/definitions/repository.TrackingState'
@@ -139,6 +139,25 @@ definitions:
       user_id:
         type: string
     type: object
+  models.Goal:
+    properties:
+      currency:
+        type: string
+      current_state:
+        type: number
+      end_date:
+        type: string
+      goal:
+        type: string
+      id:
+        type: integer
+      need:
+        type: number
+      start_date:
+        type: string
+      user_id:
+        type: string
+    type: object
   openbanking.Auth:
     properties:
       token:
@@ -207,25 +226,6 @@ definitions:
       client_id:
         type: string
       client_secret:
-        type: string
-    type: object
-  repository.Goal:
-    properties:
-      currency:
-        type: string
-      current_state:
-        type: number
-      end_date:
-        type: string
-      goal:
-        type: string
-      id:
-        type: string
-      need:
-        type: number
-      start_date:
-        type: string
-      user_id:
         type: string
     type: object
   repository.Income:
@@ -410,6 +410,11 @@ definitions:
     properties:
       expense:
         $ref: '#/definitions/models.Expense'
+    type: object
+  v1.GoalRequest:
+    properties:
+      goal:
+        $ref: '#/definitions/models.Goal'
     type: object
   v1.ProfileAnalyticsResponse:
     properties:
@@ -1711,6 +1716,37 @@ paths:
       tags:
       - Support
   /tracker/goal:
+    delete:
+      description: Delete the existing goal.
+      parameters:
+      - description: goal id
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/jsonresponse.IdRequest'
+      responses:
+        "204":
+          description: goal deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting goal
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete the goal
+      tags:
+      - Tracker
     post:
       consumes:
       - application/json
@@ -1721,7 +1757,7 @@ paths:
         name: goal
         required: true
         schema:
-          $ref: '#/definitions/repository.Goal'
+          $ref: '#/definitions/v1.GoalRequest'
       produces:
       - application/json
       responses:
@@ -1749,14 +1785,14 @@ paths:
     put:
       consumes:
       - application/json
-      description: Updates an existing goal.
+      description: Updates an existing goal. There is no need to fill user_id field.
       parameters:
       - description: Goal object
         in: body
         name: goal
         required: true
         schema:
-          $ref: '#/definitions/repository.Goal'
+          $ref: '#/definitions/v1.GoalRequest'
       produces:
       - application/json
       responses:
@@ -1772,13 +1808,17 @@ paths:
           description: User not authenticated
           schema:
             $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "404":
+          description: Goal not found
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
         "500":
           description: Error updating goal
           schema:
             $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
-      summary: Update a goal
+      summary: Update the goal
       tags:
       - Tracker
 schemes:

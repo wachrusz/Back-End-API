@@ -32,8 +32,12 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 		r.Post("/wealth_fund", h.AuthMiddleware(h.CreateWealthFundHandler))
 	})
 
-	r.Post("/tracker/goal", h.AuthMiddleware(h.CreateGoalHandler))
-	r.Put("/tracker/goal", h.AuthMiddleware(h.UpdateGoalHandler))
+	r.Route("/tracker/goal", func(r chi.Router) {
+		r.Post("/", h.AuthMiddleware(h.CreateGoalHandler))
+		r.Put("/", h.AuthMiddleware(h.UpdateGoalHandler))
+		r.Delete("/", h.AuthMiddleware(h.DeleteGoalHandler))
+	})
+
 	r.Post("/settings/subscription", h.AuthMiddleware(h.CreateSubscriptionHandler))
 	r.Post("/support/request", h.AuthMiddleware(h.SendSupportRequestHandler))
 }
