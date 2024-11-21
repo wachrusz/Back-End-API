@@ -4,6 +4,8 @@
 // Package repository provides basic financial repository functionality.
 package repository
 
+import "github.com/wachrusz/Back-End-API/internal/repository/models"
+
 type Settings struct {
-	Subscriptions Subscription `json:"subscriptions"`
+	Subscriptions models.Subscription `json:"subscriptions"`
 }

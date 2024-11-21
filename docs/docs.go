@@ -1972,6 +1972,67 @@ const docTemplate = `{
             }
         },
         "/settings/subscription": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates an existing subscription. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update the subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription object",
+                        "name": "subscription",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.SubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "subscription updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating subscription",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1996,7 +2057,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.Subscription"
+                            "$ref": "#/definitions/v1.SubscriptionRequest"
                         }
                     }
                 ],
@@ -2015,6 +2076,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating subscription",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing subscription.",
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete the subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Subscription deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting subscription",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -2524,6 +2634,26 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Subscription": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "models.WealthFund": {
             "type": "object",
             "properties": {
@@ -2739,27 +2869,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "subscriptions": {
-                    "$ref": "#/definitions/repository.Subscription"
-                }
-            }
-        },
-        "repository.Subscription": {
-            "type": "object",
-            "properties": {
-                "end_date": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_active": {
-                    "type": "boolean"
-                },
-                "start_date": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
+                    "$ref": "#/definitions/models.Subscription"
                 }
             }
         },
@@ -2981,6 +3091,14 @@ const docTemplate = `{
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.SubscriptionRequest": {
+            "type": "object",
+            "properties": {
+                "subscription": {
+                    "$ref": "#/definitions/models.Subscription"
                 }
             }
         },

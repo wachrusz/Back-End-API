@@ -45,7 +45,12 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 		r.Delete("/", h.AuthMiddleware(h.DeleteGoalHandler))
 	})
 
-	r.Post("/settings/subscription", h.AuthMiddleware(h.CreateSubscriptionHandler))
+	r.Route("/settings/subscription", func(r chi.Router) {
+		r.Post("/", h.AuthMiddleware(h.CreateSubscriptionHandler))
+		r.Put("/", h.AuthMiddleware(h.UpdateSubscriptionHandler))
+		r.Delete("/", h.AuthMiddleware(h.DeleteSubscriptionHandler))
+	})
+
 	r.Post("/support/request", h.AuthMiddleware(h.SendSupportRequestHandler))
 }
 
