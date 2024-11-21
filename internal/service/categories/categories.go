@@ -34,9 +34,9 @@ func NewService(db *mydb.Database, currencyService *currency.Service) *Service {
 
 // Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
 type Analytics struct {
-	Income     []models.Income         `json:"income"`
-	Expense    []models.Expense        `json:"expense"`
-	WealthFund []repository.WealthFund `json:"wealth_fund"`
+	Income     []models.Income     `json:"income"`
+	Expense    []models.Expense    `json:"expense"`
+	WealthFund []models.WealthFund `json:"wealth_fund"`
 }
 
 // Tracker represents the structure for tracking data, including tracking state and goals.
@@ -165,9 +165,9 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	}
 	defer rowsWealthFund.Close()
 
-	var wealthFundList []repository.WealthFund
+	var wealthFundList []models.WealthFund
 	for rowsWealthFund.Next() {
-		var wealthFund repository.WealthFund
+		var wealthFund models.WealthFund
 		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
 			return nil, err
 		}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
-	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"go.uber.org/zap"
 	"net/http"
@@ -14,12 +13,19 @@ import (
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
+// ExpenseRequest is used for deserialization
 type ExpenseRequest struct {
 	Expense models.Expense `json:"expense"`
 }
 
+// IncomeRequest is used for deserialization
 type IncomeRequest struct {
 	Income models.Income `json:"income"`
+}
+
+// WealthFundRequest is used for deserialization
+type WealthFundRequest struct {
+	WealthFund models.WealthFund `json:"wealth_fund"`
 }
 
 // CreateExpenseHandler creates a new expense record in the database.
@@ -335,7 +341,7 @@ func (h *MyHandler) DeleteIncomeHandler(w http.ResponseWriter, r *http.Request) 
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param wealthFund body repository.WealthFund true "Wealth fund object"
+// @Param wealthFund body WealthFundRequest true "Wealth fund object"
 // @Success 201 {object} jsonresponse.IdResponse "Wealth fund created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -346,11 +352,13 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	h.l.Debug("Creating a new wealth fund...")
 
 	// Decode the request payload
-	var wealthFund repository.WealthFund
-	if err := json.NewDecoder(r.Body).Decode(&wealthFund); err != nil {
+	var wealthFundR WealthFundRequest
+	if err := json.NewDecoder(r.Body).Decode(&wealthFundR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	wealthFund := wealthFundR.WealthFund
 
 	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -363,7 +371,7 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	wealthFund.UserID = userID
 
 	// Create a new wealth fund in the database
-	wealthFundID, err := repository.CreateWealthFund(&wealthFund)
+	wealthFundID, err := h.m.WealthFunds.Create(&wealthFund)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating wealth fund: %v", err), http.StatusInternalServerError)
 		return
@@ -379,4 +387,102 @@ func (h *MyHandler) CreateWealthFundHandler(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Wealth fund created successfully", zap.Int64("wealthFundID", wealthFundID))
+}
+
+// UpdateWealthFundHandler handles the update of an existing expense.
+//
+// @Summary Update the wealth fund
+// @Description Update an existing wealth fund. There is no need to fill user_id field.
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Param ConnectedAccount body WealthFundRequest true "wealth fund object"
+// @Success 200 {object} jsonresponse.SuccessResponse "wealth fund updated successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 404 {object} jsonresponse.ErrorResponse "wealth fund not found"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error updating wealth fund"
+// @Security JWT
+// @Router /analytics/wealth_fund [put]
+func (h *MyHandler) UpdateWealthFundHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Updating wealth fund...")
+
+	// Decode the request body
+	var wealthFundR WealthFundRequest
+	if err := json.NewDecoder(r.Body).Decode(&wealthFundR); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	wealthFund := wealthFundR.WealthFund
+
+	// Check if user is authenticated
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+	wealthFund.UserID = userID
+
+	// Attempt to update the account
+	if err := h.m.WealthFunds.Update(&wealthFund); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("wealth fund not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating wealth fund: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Respond with success
+	response := jsonresponse.SuccessResponse{
+		Message:    "Wealth fund updated successfully",
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteWealthFundHandler handles the deletion of an existing wealth fund.
+//
+// @Summary Delete the wealth fund
+// @Description Delete the existing wealth fund.
+// @Tags Analytics
+// @Param ConnectedAccount body jsonresponse.IdRequest true "wealth fund id"
+// @Success 204 {object} jsonresponse.SuccessResponse "wealth fund deleted successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting wealth fund"
+// @Security JWT
+// @Router /analytics/wealth_fund [delete]
+func (h *MyHandler) DeleteWealthFundHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting wealth fund...")
+
+	var id jsonresponse.IdRequest
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.m.WealthFunds.Delete(id.ID, userID); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("wealth fund not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error deleting wealth fund: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted wealth fund",
+		StatusCode: http.StatusNoContent,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
 }

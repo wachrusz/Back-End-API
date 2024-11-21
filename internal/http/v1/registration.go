@@ -17,7 +17,6 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 			r.Delete("/", h.AuthMiddleware(h.DeleteConnectedAccountHandler))
 			r.Put("/", h.AuthMiddleware(h.UpdateConnectedAccountHandler))
 		})
-		//r.Get("/report", h.AuthMiddleware(h.ExportHandler))
 	})
 
 	r.Route("/analytics", func(r chi.Router) {
@@ -33,7 +32,11 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 			r.Delete("/", h.AuthMiddleware(h.DeleteExpenseHandler))
 		})
 
-		r.Post("/wealth_fund", h.AuthMiddleware(h.CreateWealthFundHandler))
+		r.Route("/wealth_fund", func(r chi.Router) {
+			r.Post("/", h.AuthMiddleware(h.CreateWealthFundHandler))
+			r.Put("/", h.AuthMiddleware(h.UpdateWealthFundHandler))
+			r.Delete("/", h.AuthMiddleware(h.DeleteWealthFundHandler))
+		})
 	})
 
 	r.Route("/tracker/goal", func(r chi.Router) {
@@ -55,9 +58,11 @@ func (h *MyHandler) RegisterUserHandlers(router chi.Router) {
 		r.Post("/register/confirm", h.ConfirmEmailRegisterHandler)
 
 		// Password reset routes
-		r.Post("/password", h.ResetPasswordHandler)
-		r.Post("/password/confirm", h.ResetPasswordConfirmHandler)
-		r.Put("/password", h.ChangePasswordForRecoverHandler)
+		r.Route("/password", func(r chi.Router) {
+			r.Post("/", h.ResetPasswordHandler)
+			r.Post("/confirm", h.ResetPasswordConfirmHandler)
+			r.Put("/", h.ChangePasswordForRecoverHandler)
+		})
 
 		// Token routes
 		r.Post("/refresh", h.AuthMiddleware(h.RefreshTokenHandler))
