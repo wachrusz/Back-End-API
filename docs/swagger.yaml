@@ -8,7 +8,7 @@ definitions:
         type: array
       income:
         items:
-          $ref: '#/definitions/repository.Income'
+          $ref: '#/definitions/models.Income'
         type: array
       wealth_fund:
         items:
@@ -158,6 +158,27 @@ definitions:
       user_id:
         type: string
     type: object
+  models.Income:
+    properties:
+      amount:
+        type: number
+      bank_account:
+        type: string
+      category_id:
+        type: string
+      currency:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      planned:
+        type: boolean
+      sender:
+        type: string
+      user_id:
+        type: string
+    type: object
   openbanking.Auth:
     properties:
       token:
@@ -226,27 +247,6 @@ definitions:
       client_id:
         type: string
       client_secret:
-        type: string
-    type: object
-  repository.Income:
-    properties:
-      amount:
-        type: number
-      bank_account:
-        type: string
-      category_id:
-        type: string
-      currency:
-        type: string
-      date:
-        type: string
-      id:
-        type: string
-      planned:
-        type: boolean
-      sender:
-        type: string
-      user_id:
         type: string
     type: object
   repository.IncomeCategory:
@@ -415,6 +415,11 @@ definitions:
     properties:
       goal:
         $ref: '#/definitions/models.Goal'
+    type: object
+  v1.IncomeRequest:
+    properties:
+      income:
+        $ref: '#/definitions/models.Income'
     type: object
   v1.ProfileAnalyticsResponse:
     properties:
@@ -622,6 +627,37 @@ paths:
       tags:
       - Analytics
   /analytics/income:
+    delete:
+      description: Delete the existing income.
+      parameters:
+      - description: income id
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/jsonresponse.IdRequest'
+      responses:
+        "204":
+          description: income deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting income
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete the income
+      tags:
+      - Analytics
     post:
       consumes:
       - application/json
@@ -632,7 +668,7 @@ paths:
         name: income
         required: true
         schema:
-          $ref: '#/definitions/repository.Income'
+          $ref: '#/definitions/v1.IncomeRequest'
       produces:
       - application/json
       responses:
@@ -655,6 +691,45 @@ paths:
       security:
       - JWT: []
       summary: Create an income
+      tags:
+      - Analytics
+    put:
+      consumes:
+      - application/json
+      description: Update an existing income. There is no need to fill user_id field.
+      parameters:
+      - description: income object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/v1.IncomeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: income updated successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "404":
+          description: income not found
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error updating income
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Update the income
       tags:
       - Analytics
   /analytics/wealth_fund:

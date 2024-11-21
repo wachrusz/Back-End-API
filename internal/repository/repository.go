@@ -11,6 +11,7 @@ type Models struct {
 	Accounts Accounts
 	Expenses Expenses
 	Goals    Goals
+	Incomes  Incomes
 }
 
 func New(db *mydb.Database) *Models {
@@ -18,6 +19,7 @@ func New(db *mydb.Database) *Models {
 		Accounts: &AccountModel{db},
 		Expenses: &ExpenseModel{db},
 		Goals:    &GoalModel{db},
+		Incomes:  &IncomeModel{db},
 	}
 }
 
@@ -41,4 +43,13 @@ type Goals interface {
 	Update(goal *models.Goal) error
 	Delete(id, userID string) error
 	GetByUserID(userID string) ([]models.Goal, error)
+}
+
+type Incomes interface {
+	Create(income *models.Income) (int64, error)
+	GetIncomesByUserID(userID string) ([]models.Income, error)
+	GetIncomeForMonth(userID string, month time.Month, year int) (float64, float64, error)
+	GetMonthlyIncomeIncrease(userID string) (int, int, error)
+	Delete(id, userID string) error
+	Update(income *models.Income) error
 }

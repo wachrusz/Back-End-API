@@ -34,7 +34,7 @@ func NewService(db *mydb.Database, currencyService *currency.Service) *Service {
 
 // Analytics represents the structure for analytics data, including income, expense, and wealth fund information.
 type Analytics struct {
-	Income     []repository.Income     `json:"income"`
+	Income     []models.Income         `json:"income"`
 	Expense    []models.Expense        `json:"expense"`
 	WealthFund []repository.WealthFund `json:"wealth_fund"`
 }
@@ -125,9 +125,9 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	}
 	defer rowsIncome.Close()
 
-	var incomeList []repository.Income
+	var incomeList []models.Income
 	for rowsIncome.Next() {
-		var income repository.Income
+		var income models.Income
 		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
 			return nil, err
 		}

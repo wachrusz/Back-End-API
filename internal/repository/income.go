@@ -1,29 +1,21 @@
-//go:build !exclude_swagger
-// +build !exclude_swagger
-
 // Package repository provides basic financial repository functionality.
 package repository
 
 import (
 	"database/sql"
+	"fmt"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"log"
 	"time"
 )
 
-type Income struct {
-	ID          string  `json:"id"`
-	Amount      float64 `json:"amount"`
-	Date        string  `json:"date"`
-	Planned     bool    `json:"planned"`
-	UserID      string  `json:"user_id"`
-	CategoryID  string  `json:"category_id"`
-	Sender      string  `json:"sender"`
-	BankAccount string  `json:"bank_account"`
-	Currency    string  `json:"currency"`
+type IncomeModel struct {
+	DB *mydb.Database
 }
 
-func CreateIncome(income *Income) (int64, error) {
+func (m *IncomeModel) Create(income *models.Income) (int64, error) {
 	parsedDate, err := time.Parse("2006-01-02", income.Date)
 	if err != nil {
 		log.Println("Error parsing date:", err)
@@ -31,34 +23,30 @@ func CreateIncome(income *Income) (int64, error) {
 	}
 
 	var incomeID int64
-	err1 := mydb.GlobalDB.QueryRow("INSERT INTO income (amount, date, planned, user_id, category, sender, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+	err = m.DB.QueryRow("INSERT INTO income (amount, date, planned, user_id, category, sender, connected_account, currency_code) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
 		income.Amount, parsedDate, income.Planned, income.UserID, income.CategoryID, income.Sender, income.BankAccount, income.Currency).Scan(&incomeID)
-	if err1 != nil {
-		log.Println("Error creating income:", err1)
-		return 0, err1
+	if err != nil {
+		return 0, err
 	}
-	_, err = mydb.GlobalDB.Exec("INSERT INTO operations (user_id, description, amount, date, category, operation_type) VALUES ($1, $2, $3, $4, $5, $6)",
+	_, err = m.DB.Exec("INSERT INTO operations (user_id, description, amount, date, category, operation_type) VALUES ($1, $2, $3, $4, $5, $6)",
 		income.UserID, "Доход", income.Amount, parsedDate, income.CategoryID, income.CategoryID)
 	if err != nil {
-		log.Println("Error creating income operation:", err)
 		return 0, err
 	}
 	return incomeID, nil
 }
 
-func GetIncomesByUserID(userID string) ([]Income, error) {
-	rows, err := mydb.GlobalDB.Query("SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1", userID)
+func (m *IncomeModel) GetIncomesByUserID(userID string) ([]models.Income, error) {
+	rows, err := m.DB.Query("SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1", userID)
 	if err != nil {
-		log.Println("Error querying incomes:", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var incomes []Income
+	var incomes []models.Income
 	for rows.Next() {
-		var income Income
+		var income models.Income
 		if err := rows.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
-			log.Println("Error scanning income row:", err)
 			return nil, err
 		}
 		income.UserID = userID
@@ -68,7 +56,7 @@ func GetIncomesByUserID(userID string) ([]Income, error) {
 	return incomes, nil
 }
 
-func GetIncomeForMonth(userID string, month time.Month, year int) (float64, float64, error) {
+func (m *IncomeModel) GetIncomeForMonth(userID string, month time.Month, year int) (float64, float64, error) {
 	query := `
 		SELECT
 			COALESCE(SUM(amount), 0) AS total_income,
@@ -80,16 +68,15 @@ func GetIncomeForMonth(userID string, month time.Month, year int) (float64, floa
 	`
 
 	var totalIncome, plannedIncome float64
-	err := mydb.GlobalDB.QueryRow(query, userID, int(month), year).Scan(&totalIncome, &plannedIncome)
+	err := m.DB.QueryRow(query, userID, int(month), year).Scan(&totalIncome, &plannedIncome)
 	if err != nil && err != sql.ErrNoRows {
-		log.Printf("Error getting income for month: %v", err)
 		return 0, 0, err
 	}
 
 	return totalIncome, plannedIncome, nil
 }
 
-func GetMonthlyIncomeIncrease(userID string) (int, int, error) {
+func (m *IncomeModel) GetMonthlyIncomeIncrease(userID string) (int, int, error) {
 	currentDate := time.Now()
 
 	currentMonth := currentDate.Month()
@@ -103,17 +90,69 @@ func GetMonthlyIncomeIncrease(userID string) (int, int, error) {
 		previousYear--
 	}
 
-	currentMonthIncome, currentMonthPlanned, err := GetIncomeForMonth(userID, currentMonth, currentYear)
+	currentMonthIncome, currentMonthPlanned, err := m.GetIncomeForMonth(userID, currentMonth, currentYear)
 	if err != nil {
-		log.Printf("Error fetching current month income: %v", err)
 		return 0, 0, err
 	}
 
-	previousMonthIncome, _, err := GetIncomeForMonth(userID, previousMonth, previousYear)
+	previousMonthIncome, _, err := m.GetIncomeForMonth(userID, previousMonth, previousYear)
 	if err != nil {
-		log.Printf("Error fetching previous month income: %v", err)
 		return 0, 0, err
 	}
 
 	return int(((currentMonthIncome / previousMonthIncome) - 1) * 100), int(((currentMonthPlanned / currentMonthIncome) - 1) * 100), nil
+}
+
+func (m *IncomeModel) Delete(id, userID string) error {
+	result, err := m.DB.Exec("DELETE FROM income WHERE id = $1 AND user_id = $2", id, userID)
+	if err != nil {
+		// Возвращаем обернутую ошибку, если запрос завершился с ошибкой
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+	}
+
+	// Проверяем количество затронутых строк
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// Возвращаем обернутую ошибку при невозможности получить количество строк
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+	}
+
+	if rowsAffected == 0 {
+		// Возвращаем ошибку, если запись не найдена или не принадлежит пользователю
+		return fmt.Errorf("%w: no income found with id %s for user %s", myerrors.ErrNotFound, id, userID)
+	}
+
+	return nil
+}
+
+func (m *IncomeModel) Update(income *models.Income) error {
+	q := `
+		UPDATE income SET 
+			amount = $1, 
+			date = $2, 
+			planned = $3, 
+			category = $4, 
+			sender = $5, 
+			connected_account = $6, 
+			currency_code = $7
+		WHERE id = $8 AND user_id = $9`
+
+	result, err := m.DB.Exec(q, income.Amount, income.Date, income.Planned, income.CategoryID,
+		income.Sender, income.BankAccount, income.Currency, income.ID, income.UserID)
+
+	if err != nil {
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
+	}
+
+	// Проверяем, сколько строк было затронуто
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("%w: no income found with id %s for user %s", myerrors.ErrNotFound, income.ID, income.UserID)
+	}
+
+	return nil
 }

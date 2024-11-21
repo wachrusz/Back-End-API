@@ -18,6 +18,10 @@ type ExpenseRequest struct {
 	Expense models.Expense `json:"expense"`
 }
 
+type IncomeRequest struct {
+	Income models.Income `json:"income"`
+}
+
 // CreateExpenseHandler creates a new expense record in the database.
 //
 // @Summary Create a expense
@@ -178,7 +182,7 @@ func (h *MyHandler) DeleteExpenseHandler(w http.ResponseWriter, r *http.Request)
 // @Tags Analytics
 // @Accept json
 // @Produce json
-// @Param income body repository.Income true "Income object"
+// @Param income body IncomeRequest true "Income object"
 // @Success 201 {object} jsonresponse.IdResponse "Income created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -189,11 +193,13 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	h.l.Debug("Creating a new income...")
 
 	// Decode the request payload
-	var income repository.Income
-	if err := json.NewDecoder(r.Body).Decode(&income); err != nil {
+	var incomeR IncomeRequest
+	if err := json.NewDecoder(r.Body).Decode(&incomeR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	income := incomeR.Income
 
 	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -206,7 +212,7 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	income.UserID = userID
 
 	// Create a new income in the database
-	incomeID, err := repository.CreateIncome(&income)
+	incomeID, err := h.m.Incomes.Create(&income)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating income: %v", err), http.StatusInternalServerError)
 		return
@@ -222,6 +228,104 @@ func (h *MyHandler) CreateIncomeHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(response)
 
 	h.l.Debug("Income created successfully", zap.Int64("incomeID", incomeID))
+}
+
+// UpdateIncomeHandler handles the update of an existing expense.
+//
+// @Summary Update the income
+// @Description Update an existing income. There is no need to fill user_id field.
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Param ConnectedAccount body IncomeRequest true "income object"
+// @Success 200 {object} jsonresponse.SuccessResponse "income updated successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 404 {object} jsonresponse.ErrorResponse "income not found"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error updating income"
+// @Security JWT
+// @Router /analytics/income [put]
+func (h *MyHandler) UpdateIncomeHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Updating income...")
+
+	// Decode the request body
+	var incomeR IncomeRequest
+	if err := json.NewDecoder(r.Body).Decode(&incomeR); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	income := incomeR.Income
+
+	// Check if user is authenticated
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+	income.UserID = userID
+
+	// Attempt to update the account
+	if err := h.m.Incomes.Update(&income); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("income not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating income: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Respond with success
+	response := jsonresponse.SuccessResponse{
+		Message:    "income updated successfully",
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteIncomeHandler handles the deletion of an existing income.
+//
+// @Summary Delete the income
+// @Description Delete the existing income.
+// @Tags Analytics
+// @Param ConnectedAccount body jsonresponse.IdRequest true "income id"
+// @Success 204 {object} jsonresponse.SuccessResponse "income deleted successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting income"
+// @Security JWT
+// @Router /analytics/income [delete]
+func (h *MyHandler) DeleteIncomeHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting income...")
+
+	var id jsonresponse.IdRequest
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.m.Incomes.Delete(id.ID, userID); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("income not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error deleting income: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted income",
+		StatusCode: http.StatusNoContent,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
 }
 
 // CreateWealthFundHandler creates a new wealth fund in the database.
