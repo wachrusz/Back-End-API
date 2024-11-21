@@ -9,20 +9,22 @@ import (
 
 // Models is a facade for all models interfaces.
 type Models struct {
-	Accounts    Accounts
-	Expenses    Expenses
-	Goals       Goals
-	Incomes     Incomes
-	WealthFunds WealthFunds
+	Accounts      Accounts
+	Expenses      Expenses
+	Goals         Goals
+	Incomes       Incomes
+	WealthFunds   WealthFunds
+	Subscriptions Subscriptions
 }
 
 func New(db *mydb.Database) *Models {
 	return &Models{
-		Accounts:    &AccountModel{db},
-		Expenses:    &ExpenseModel{db},
-		Goals:       &GoalModel{db},
-		Incomes:     &IncomeModel{db},
-		WealthFunds: &WealthFundModel{db},
+		Accounts:      &AccountModel{db},
+		Expenses:      &ExpenseModel{db},
+		Goals:         &GoalModel{db},
+		Incomes:       &IncomeModel{db},
+		WealthFunds:   &WealthFundModel{db},
+		Subscriptions: &SubscriptionModel{db},
 	}
 }
 
@@ -62,4 +64,10 @@ type WealthFunds interface {
 	Update(wealthFund *models.WealthFund) error
 	Delete(id, userID string) error
 	GetByUserID(userID string) ([]models.WealthFund, error)
+}
+
+type Subscriptions interface {
+	Create(subscription *models.Subscription) (int64, error)
+	Update(subscription *models.Subscription) error
+	Delete(id, userID string) error
 }

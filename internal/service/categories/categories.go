@@ -313,15 +313,15 @@ func (s *Service) GetAppFromDB(userID string) (*repository.App, error) {
 	return app, nil
 }
 
-func (s *Service) GetSubscriptionFromDB(userID string) (*repository.Subscription, error) {
-	var subscription repository.Subscription
+func (s *Service) GetSubscriptionFromDB(userID string) (*models.Subscription, error) {
+	var subscription models.Subscription
 
 	query := "SELECT id, user_id, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1"
 	row := s.repo.QueryRow(query, userID)
 
 	err := row.Scan(&subscription.ID, &subscription.UserID, &subscription.StartDate, &subscription.EndDate, &subscription.IsActive)
 	if err != nil {
-		return &repository.Subscription{}, nil
+		return &models.Subscription{}, nil
 	}
 
 	return &subscription, nil
@@ -480,7 +480,7 @@ type Categories interface {
 	GetUserInfoFromDB(userID string) (string, string, error)
 	GetMoreFromDB(userID string) (*More, error)
 	GetAppFromDB(userID string) (*repository.App, error)
-	GetSubscriptionFromDB(userID string) (*repository.Subscription, error)
+	GetSubscriptionFromDB(userID string) (*models.Subscription, error)
 	GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error)
 	GetCategorySettingsFromDB(userID string) (*repository.CategorySettings, error)
 	GetOperationArchiveFromDB(userID, limit, offset string) ([]repository.Operation, error)

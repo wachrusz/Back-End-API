@@ -179,6 +179,19 @@ definitions:
       user_id:
         type: string
     type: object
+  models.Subscription:
+    properties:
+      end_date:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+      user_id:
+        type: string
+    type: object
   models.WealthFund:
     properties:
       amount:
@@ -320,20 +333,7 @@ definitions:
   repository.Settings:
     properties:
       subscriptions:
-        $ref: '#/definitions/repository.Subscription'
-    type: object
-  repository.Subscription:
-    properties:
-      end_date:
-        type: string
-      id:
-        type: string
-      is_active:
-        type: boolean
-      start_date:
-        type: string
-      user_id:
-        type: string
+        $ref: '#/definitions/models.Subscription'
     type: object
   repository.TrackingState:
     properties:
@@ -476,6 +476,11 @@ definitions:
     properties:
       refresh_token:
         type: string
+    type: object
+  v1.SubscriptionRequest:
+    properties:
+      subscription:
+        $ref: '#/definitions/models.Subscription'
     type: object
   v1.SupportRequest:
     properties:
@@ -1799,6 +1804,37 @@ paths:
       tags:
       - Profile
   /settings/subscription:
+    delete:
+      description: Delete the existing subscription.
+      parameters:
+      - description: Subscription id
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/jsonresponse.IdRequest'
+      responses:
+        "204":
+          description: Subscription deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting subscription
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete the subscription
+      tags:
+      - Settings
     post:
       consumes:
       - application/json
@@ -1809,7 +1845,7 @@ paths:
         name: subscription
         required: true
         schema:
-          $ref: '#/definitions/repository.Subscription'
+          $ref: '#/definitions/v1.SubscriptionRequest'
       produces:
       - application/json
       responses:
@@ -1828,6 +1864,46 @@ paths:
       security:
       - JWT: []
       summary: Create a subscription
+      tags:
+      - Settings
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing subscription. There is no need to fill user_id
+        field.
+      parameters:
+      - description: Subscription object
+        in: body
+        name: subscription
+        required: true
+        schema:
+          $ref: '#/definitions/v1.SubscriptionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: subscription updated successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.IdResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "404":
+          description: Subscription not found
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error updating subscription
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Update the subscription
       tags:
       - Settings
   /support/request:
