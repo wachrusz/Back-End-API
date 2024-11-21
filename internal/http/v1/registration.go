@@ -21,7 +21,11 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 	})
 
 	r.Route("/analytics", func(r chi.Router) {
-		r.Post("/income", h.AuthMiddleware(h.CreateIncomeHandler))
+		r.Route("/income", func(r chi.Router) {
+			r.Post("/", h.AuthMiddleware(h.CreateIncomeHandler))
+			r.Put("/", h.AuthMiddleware(h.UpdateIncomeHandler))
+			r.Delete("/", h.AuthMiddleware(h.DeleteIncomeHandler))
+		})
 
 		r.Route("/expense", func(r chi.Router) {
 			r.Post("/", h.AuthMiddleware(h.CreateExpenseHandler))

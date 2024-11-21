@@ -189,6 +189,67 @@ const docTemplate = `{
             }
         },
         "/analytics/income": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing income. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the income",
+                "parameters": [
+                    {
+                        "description": "income object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.IncomeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "income updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "income not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating income",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -213,7 +274,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.Income"
+                            "$ref": "#/definitions/v1.IncomeRequest"
                         }
                     }
                 ],
@@ -238,6 +299,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating income",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing income.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the income",
+                "parameters": [
+                    {
+                        "description": "income id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "income deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting income",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -2040,7 +2150,7 @@ const docTemplate = `{
                 "income": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.Income"
+                        "$ref": "#/definitions/models.Income"
                     }
                 },
                 "wealth_fund": {
@@ -2272,6 +2382,38 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Income": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "type": "boolean"
+                },
+                "sender": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "openbanking.Auth": {
             "type": "object",
             "properties": {
@@ -2376,38 +2518,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "client_secret": {
-                    "type": "string"
-                }
-            }
-        },
-        "repository.Income": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "bank_account": {
-                    "type": "string"
-                },
-                "category_id": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "planned": {
-                    "type": "boolean"
-                },
-                "sender": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
@@ -2666,6 +2776,14 @@ const docTemplate = `{
             "properties": {
                 "goal": {
                     "$ref": "#/definitions/models.Goal"
+                }
+            }
+        },
+        "v1.IncomeRequest": {
+            "type": "object",
+            "properties": {
+                "income": {
+                    "$ref": "#/definitions/models.Income"
                 }
             }
         },
