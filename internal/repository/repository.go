@@ -10,12 +10,14 @@ import (
 type Models struct {
 	Accounts Accounts
 	Expenses Expenses
+	Goals    Goals
 }
 
 func New(db *mydb.Database) *Models {
 	return &Models{
 		Accounts: &AccountModel{db},
 		Expenses: &ExpenseModel{db},
+		Goals:    &GoalModel{db},
 	}
 }
 
@@ -32,4 +34,11 @@ type Expenses interface {
 	GetMonthlyIncrease(userID string) (int, int, error)
 	Delete(id, userID string) error
 	Update(editedExpense *models.Expense) error
+}
+
+type Goals interface {
+	Create(goal *models.Goal) (int64, error)
+	Update(goal *models.Goal) error
+	Delete(id, userID string) error
+	GetByUserID(userID string) ([]models.Goal, error)
 }

@@ -1866,7 +1866,7 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Updates an existing goal.",
+                "description": "Updates an existing goal. There is no need to fill user_id field.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1876,7 +1876,7 @@ const docTemplate = `{
                 "tags": [
                     "Tracker"
                 ],
-                "summary": "Update a goal",
+                "summary": "Update the goal",
                 "parameters": [
                     {
                         "description": "Goal object",
@@ -1884,7 +1884,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.Goal"
+                            "$ref": "#/definitions/v1.GoalRequest"
                         }
                     }
                 ],
@@ -1903,6 +1903,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Goal not found",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -1939,7 +1945,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.Goal"
+                            "$ref": "#/definitions/v1.GoalRequest"
                         }
                     }
                 ],
@@ -1964,6 +1970,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating goal",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing goal.",
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Delete the goal",
+                "parameters": [
+                    {
+                        "description": "goal id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "goal deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting goal",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -2016,7 +2071,7 @@ const docTemplate = `{
                 "goal": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.Goal"
+                        "$ref": "#/definitions/models.Goal"
                     }
                 },
                 "tracking_state": {
@@ -2188,6 +2243,35 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Goal": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string"
+                },
+                "current_state": {
+                    "type": "number"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "goal": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "need": {
+                    "type": "number"
+                },
+                "start_date": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
         "openbanking.Auth": {
             "type": "object",
             "properties": {
@@ -2292,35 +2376,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "client_secret": {
-                    "type": "string"
-                }
-            }
-        },
-        "repository.Goal": {
-            "type": "object",
-            "properties": {
-                "currency": {
-                    "type": "string"
-                },
-                "current_state": {
-                    "type": "number"
-                },
-                "end_date": {
-                    "type": "string"
-                },
-                "goal": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "need": {
-                    "type": "number"
-                },
-                "start_date": {
-                    "type": "string"
-                },
-                "user_id": {
                     "type": "string"
                 }
             }
@@ -2603,6 +2658,14 @@ const docTemplate = `{
             "properties": {
                 "expense": {
                     "$ref": "#/definitions/models.Expense"
+                }
+            }
+        },
+        "v1.GoalRequest": {
+            "type": "object",
+            "properties": {
+                "goal": {
+                    "$ref": "#/definitions/models.Goal"
                 }
             }
         },
