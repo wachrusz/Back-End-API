@@ -356,6 +356,67 @@ const docTemplate = `{
             }
         },
         "/analytics/wealth_fund": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing wealth fund. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the wealth fund",
+                "parameters": [
+                    {
+                        "description": "wealth fund object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.WealthFundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "wealth fund updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "wealth fund not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating wealth fund",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -380,7 +441,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/repository.WealthFund"
+                            "$ref": "#/definitions/v1.WealthFundRequest"
                         }
                     }
                 ],
@@ -405,6 +466,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating wealth fund",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing wealth fund.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the wealth fund",
+                "parameters": [
+                    {
+                        "description": "wealth fund id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "wealth fund deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting wealth fund",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -2156,7 +2266,7 @@ const docTemplate = `{
                 "wealth_fund": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.WealthFund"
+                        "$ref": "#/definitions/models.WealthFund"
                     }
                 }
             }
@@ -2414,6 +2524,46 @@ const docTemplate = `{
                 }
             }
         },
+        "models.WealthFund": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "planned": {
+                    "$ref": "#/definitions/models.WelfareFund"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WelfareFund": {
+            "type": "integer",
+            "enum": [
+                0,
+                1
+            ],
+            "x-enum-varnames": [
+                "Planned",
+                "Unplanned"
+            ]
+        },
         "openbanking.Auth": {
             "type": "object",
             "properties": {
@@ -2623,46 +2773,6 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
-        },
-        "repository.WealthFund": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "bank_account": {
-                    "type": "string"
-                },
-                "category_id": {
-                    "type": "string"
-                },
-                "currency": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "planned": {
-                    "$ref": "#/definitions/repository.WelfareFund"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "repository.WelfareFund": {
-            "type": "integer",
-            "enum": [
-                0,
-                1
-            ],
-            "x-enum-varnames": [
-                "Planned",
-                "Unplanned"
-            ]
         },
         "token.ConfirmEmailRequest": {
             "type": "object",
@@ -2919,6 +3029,14 @@ const docTemplate = `{
                 },
                 "reset_token": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.WealthFundRequest": {
+            "type": "object",
+            "properties": {
+                "wealth_fund": {
+                    "$ref": "#/definitions/models.WealthFund"
                 }
             }
         }

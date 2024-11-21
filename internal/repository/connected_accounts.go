@@ -44,9 +44,9 @@ func (m *AccountModel) Delete(id, userID string) error {
 	return nil
 }
 
-func (m *AccountModel) Update(editedAccount *models.ConnectedAccount) error {
+func (m *AccountModel) Update(account *models.ConnectedAccount) error {
 	result, err := m.DB.Exec("UPDATE connected_accounts SET bank_id=$1, account_number=$2, account_type=$3, updated_at=NOW() WHERE id = $4 AND user_id = $5",
-		editedAccount.BankID, editedAccount.AccountNumber, editedAccount.AccountType, editedAccount.ID, editedAccount.UserID)
+		account.BankID, account.AccountNumber, account.AccountType, account.ID, account.UserID)
 
 	if err != nil {
 		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
@@ -59,7 +59,7 @@ func (m *AccountModel) Update(editedAccount *models.ConnectedAccount) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: no account found with id %s for user %s", myerrors.ErrNotFound, editedAccount.ID, editedAccount.UserID)
+		return fmt.Errorf("%w: no account found with id %s for user %s", myerrors.ErrNotFound, account.ID, account.UserID)
 	}
 
 	return nil

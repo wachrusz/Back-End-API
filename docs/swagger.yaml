@@ -12,7 +12,7 @@ definitions:
         type: array
       wealth_fund:
         items:
-          $ref: '#/definitions/repository.WealthFund'
+          $ref: '#/definitions/models.WealthFund'
         type: array
     type: object
   categories.More:
@@ -179,6 +179,33 @@ definitions:
       user_id:
         type: string
     type: object
+  models.WealthFund:
+    properties:
+      amount:
+        type: number
+      bank_account:
+        type: string
+      category_id:
+        type: string
+      currency:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      planned:
+        $ref: '#/definitions/models.WelfareFund'
+      user_id:
+        type: string
+    type: object
+  models.WelfareFund:
+    enum:
+    - 0
+    - 1
+    type: integer
+    x-enum-varnames:
+    - Planned
+    - Unplanned
   openbanking.Auth:
     properties:
       token:
@@ -315,33 +342,6 @@ definitions:
       user_id:
         type: string
     type: object
-  repository.WealthFund:
-    properties:
-      amount:
-        type: number
-      bank_account:
-        type: string
-      category_id:
-        type: string
-      currency:
-        type: string
-      date:
-        type: string
-      id:
-        type: string
-      planned:
-        $ref: '#/definitions/repository.WelfareFund'
-      user_id:
-        type: string
-    type: object
-  repository.WelfareFund:
-    enum:
-    - 0
-    - 1
-    type: integer
-    x-enum-varnames:
-    - Planned
-    - Unplanned
   token.ConfirmEmailRequest:
     properties:
       code:
@@ -507,6 +507,11 @@ definitions:
         type: string
       reset_token:
         type: string
+    type: object
+  v1.WealthFundRequest:
+    properties:
+      wealth_fund:
+        $ref: '#/definitions/models.WealthFund'
     type: object
 host: localhost:8080
 info:
@@ -733,6 +738,37 @@ paths:
       tags:
       - Analytics
   /analytics/wealth_fund:
+    delete:
+      description: Delete the existing wealth fund.
+      parameters:
+      - description: wealth fund id
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/jsonresponse.IdRequest'
+      responses:
+        "204":
+          description: wealth fund deleted successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error deleting wealth fund
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Delete the wealth fund
+      tags:
+      - Analytics
     post:
       consumes:
       - application/json
@@ -743,7 +779,7 @@ paths:
         name: wealthFund
         required: true
         schema:
-          $ref: '#/definitions/repository.WealthFund'
+          $ref: '#/definitions/v1.WealthFundRequest'
       produces:
       - application/json
       responses:
@@ -766,6 +802,46 @@ paths:
       security:
       - JWT: []
       summary: Create a wealth fund
+      tags:
+      - Analytics
+    put:
+      consumes:
+      - application/json
+      description: Update an existing wealth fund. There is no need to fill user_id
+        field.
+      parameters:
+      - description: wealth fund object
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/v1.WealthFundRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: wealth fund updated successfully
+          schema:
+            $ref: '#/definitions/jsonresponse.SuccessResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "404":
+          description: wealth fund not found
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error updating wealth fund
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Update the wealth fund
       tags:
       - Analytics
   /app/accounts:

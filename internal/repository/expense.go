@@ -126,7 +126,7 @@ func (m *ExpenseModel) Delete(id, userID string) error {
 	return nil
 }
 
-func (m *ExpenseModel) Update(editedExpense *models.Expense) error {
+func (m *ExpenseModel) Update(expense *models.Expense) error {
 	q := `
 		UPDATE expense SET 
 		   amount=$1, 
@@ -138,8 +138,8 @@ func (m *ExpenseModel) Update(editedExpense *models.Expense) error {
 		   currency_code=$7 
 	   WHERE id=$8 AND user_id=$9`
 
-	result, err := m.DB.Exec(q, editedExpense.Amount, editedExpense.Date, editedExpense.Planned, editedExpense.CategoryID,
-		editedExpense.SentTo, editedExpense.BankAccount, editedExpense.Currency, editedExpense.ID, editedExpense.UserID)
+	result, err := m.DB.Exec(q, expense.Amount, expense.Date, expense.Planned, expense.CategoryID,
+		expense.SentTo, expense.BankAccount, expense.Currency, expense.ID, expense.UserID)
 
 	if err != nil {
 		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
@@ -152,7 +152,7 @@ func (m *ExpenseModel) Update(editedExpense *models.Expense) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: no account found with id %s for user %s", myerrors.ErrNotFound, editedExpense.ID, editedExpense.UserID)
+		return fmt.Errorf("%w: no account found with id %s for user %s", myerrors.ErrNotFound, expense.ID, expense.UserID)
 	}
 
 	return nil
