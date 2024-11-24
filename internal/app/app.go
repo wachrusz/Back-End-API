@@ -35,8 +35,9 @@ func Run(cfg *config.Config) error {
 	}
 
 	deps := service.Dependencies{
-		Repo:   db,
-		Mailer: mailer,
+		Repo:                  db,
+		Mailer:                mailer,
+		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
 	}
 
 	l.Info("Initializing services...")
