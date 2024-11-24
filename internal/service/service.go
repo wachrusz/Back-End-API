@@ -19,8 +19,9 @@ type Services struct {
 }
 
 type Dependencies struct {
-	Repo   *mydatabase.Database
-	Mailer rabbit.Mailer
+	Repo                  *mydatabase.Database
+	Mailer                rabbit.Mailer
+	AccessTokenDurMinutes int
 }
 
 func NewServices(deps Dependencies) (*Services, error) {
@@ -31,7 +32,7 @@ func NewServices(deps Dependencies) (*Services, error) {
 	e := email.NewService(deps.Repo, deps.Mailer)
 	cat := categories.NewService(deps.Repo, cur)
 	u := user.NewService(deps.Repo, cat)
-	t := token.NewService(deps.Repo, e, u)
+	t := token.NewService(deps.Repo, e, u, deps.AccessTokenDurMinutes)
 	return &Services{
 		Users:      u,
 		Categories: cat,
