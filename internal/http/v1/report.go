@@ -3,7 +3,7 @@ package v1
 // @Summary Exports report
 // @Description Get a financial report .
 // @Tags App
-// @Param expense body models.ConnectedAccount true "ConnectedAccount object"
+// @Param expense body repository.ConnectedAccount true "ConnectedAccount object"
 // @Success 201 {string} string "Connected account created successfully"
 // @Failure 400 {string} string "Invalid request payload"
 // @Failure 500 {string} string "Error adding connected account"

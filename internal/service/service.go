@@ -14,14 +14,14 @@ type Services struct {
 	Users      user.Users
 	Categories categories.Categories
 	Emails     email.Emails
-	//Reports    *report.Service
-	Currency currency.CurrencyService
-	Tokens   token.Tokens
+	Currency   currency.CurrencyService
+	Tokens     token.Tokens
 }
 
 type Dependencies struct {
-	Repo   *mydatabase.Database
-	Mailer rabbit.Mailer
+	Repo                  *mydatabase.Database
+	Mailer                rabbit.Mailer
+	AccessTokenDurMinutes int
 }
 
 func NewServices(deps Dependencies) (*Services, error) {
@@ -32,7 +32,7 @@ func NewServices(deps Dependencies) (*Services, error) {
 	e := email.NewService(deps.Repo, deps.Mailer)
 	cat := categories.NewService(deps.Repo, cur)
 	u := user.NewService(deps.Repo, cat)
-	t := token.NewService(deps.Repo, e, u)
+	t := token.NewService(deps.Repo, e, u, deps.AccessTokenDurMinutes)
 	return &Services{
 		Users:      u,
 		Categories: cat,

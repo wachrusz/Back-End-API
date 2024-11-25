@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"net/http"
 
 	api "github.com/wachrusz/Back-End-API/internal/http"
@@ -34,8 +35,9 @@ func Run(cfg *config.Config) error {
 	}
 
 	deps := service.Dependencies{
-		Repo:   db,
-		Mailer: mailer,
+		Repo:                  db,
+		Mailer:                mailer,
+		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
 	}
 
 	l.Info("Initializing services...")
@@ -44,7 +46,10 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
-	handlerV1 := v1.NewHandler(services, l)
+	l.Info("Initializing models...")
+	models := repository.New(db)
+
+	handlerV1 := v1.NewHandler(services, l, models)
 	handlerOB := obhttp.NewHandler(services, l)
 
 	l.Info("Initializing routers...")

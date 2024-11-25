@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
 	"github.com/wachrusz/Back-End-API/internal/openbanking"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 )
 
 // GetTokenHandler handles requests to obtain an authorization token from the external banking service.
@@ -16,14 +16,14 @@ import (
 // @Tags OpenBanking
 // @Accept json
 // @Produce json
-// @Param GetTokenRequest body models.GetTokenRequest true "Request object containing client credentials"
+// @Param GetTokenRequest body repository.GetTokenRequest true "Request object containing client credentials"
 // @Success 200 {object} openbanking.Auth "Token retrieved successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Invalid request payload"
 func (h *MyHandler) GetTokenHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Getting Token from external bank")
 
-	var request models.GetTokenRequest
+	var request repository.GetTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return

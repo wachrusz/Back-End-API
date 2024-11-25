@@ -1,10 +1,10 @@
 //go:build !exclude_swagger
 // +build !exclude_swagger
 
-// Package models provides basic financial models functionality.
-package models
+// Package repository provides basic financial repository functionality.
+package repository
 
-//FinHealth
+// FinHealth
 type FinHealth struct {
 	ID              string `json:"id"`
 	IncomeScore     int    `json:"income_score"`
@@ -64,7 +64,7 @@ func FinHealthCalculations(userID string) (*FinHealth, error) {
 		return &finHealth, err
 	}
 
-	expenseTemp, expensePerc, err := GetMonthlyExpenseIncrease(userID)
+	expenseTemp, expensePerc, err := GetMonthlyIncrease(userID)
 	if err != nil {
 		return &finHealth, err
 	}

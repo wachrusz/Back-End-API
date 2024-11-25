@@ -16,18 +16,20 @@ import (
 )
 
 type Service struct {
-	email email.Emails
-	user  user.Users
-	repo  *mydb.Database
-	mutex sync.Mutex
+	email         email.Emails
+	user          user.Users
+	repo          *mydb.Database
+	mutex         sync.Mutex
+	tokenLifetime time.Duration
 }
 
-func NewService(repo *mydb.Database, e email.Emails, u user.Users) *Service {
+func NewService(repo *mydb.Database, e email.Emails, u user.Users, d int) *Service {
 	return &Service{
-		email: e,
-		user:  u,
-		repo:  repo,
-		mutex: sync.Mutex{},
+		email:         e,
+		user:          u,
+		repo:          repo,
+		mutex:         sync.Mutex{},
+		tokenLifetime: time.Minute * time.Duration(d),
 	}
 }
 
@@ -38,7 +40,7 @@ type Tokens interface {
 	ChangePasswordForRecover(email, password, resetToken string) error
 	Login(email, password string) (string, error)
 	RefreshToken(rt, userID string) (string, string, error)
-	GenerateToken(userID string, deviceID string, duration time.Duration) (*Details, error)
+	GenerateToken(userID string, deviceID string) (*Details, error)
 	ConfirmEmailRegister(token, code, deviceID string) (Details, error)
 	ConfirmEmailLogin(token, code, deviceID string) (Details, error)
 }
@@ -259,14 +261,14 @@ func (s *Service) refreshToken(refreshTokenString string) (*Details, error) {
 		return nil, fmt.Errorf("Failed to get device ID from refresh token")
 	}
 
-	return s.GenerateToken(userID, deviceID, time.Minute*15)
+	return s.GenerateToken(userID, deviceID)
 }
 
-func (s *Service) GenerateToken(userID string, device_id string, duration time.Duration) (*Details, error) {
+func (s *Service) GenerateToken(userID string, deviceID string) (*Details, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":       userID,
-		"exp":       time.Now().Add(duration).Unix(),
-		"device_id": device_id,
+		"exp":       time.Now().Add(s.tokenLifetime).Unix(),
+		"device_id": deviceID,
 	})
 
 	accessTokenString, err := accessToken.SignedString([]byte(enc.SecretKey))
@@ -276,7 +278,7 @@ func (s *Service) GenerateToken(userID string, device_id string, duration time.D
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":       userID,
-		"device_id": device_id,
+		"device_id": deviceID,
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte(enc.SecretKey))
 	if err != nil {
@@ -326,7 +328,7 @@ func (s *Service) ConfirmEmailRegister(token, code, deviceID string) (Details, e
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)
+	tokenDetails, err := s.GenerateToken(userID, deviceID)
 	if err != nil {
 		return result, myerrors.ErrInternal
 	}
@@ -368,7 +370,7 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (Details, erro
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	tokenDetails, err := s.GenerateToken(userID, deviceID, time.Minute*15)
+	tokenDetails, err := s.GenerateToken(userID, deviceID)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}

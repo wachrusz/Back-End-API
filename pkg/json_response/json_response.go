@@ -71,3 +71,7 @@ type CodeError struct {
 	LockDuration int    `json:"lock_duration"`
 	StatusCode   int    `json:"status_code"`
 }
+
+type IdRequest struct {
+	ID string `json:"id"`
+}

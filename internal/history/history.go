@@ -28,8 +28,8 @@ func GetHistory(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(history)
 }
 
-// @Summary Add history entry
-// @Description Add a new entry to the history.
+// @Summary Create history entry
+// @Description Create a new entry to the history.
 // @Tags History
 // @Accept json
 // @Produce json

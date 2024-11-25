@@ -7,11 +7,13 @@ package categories
 import (
 	//"encoding/json"
 
+	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"math"
 	"time"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
 
 	"log"
@@ -40,15 +42,15 @@ type Analytics struct {
 
 // Tracker represents the structure for tracking data, including tracking state and goals.
 type Tracker struct {
-	TrackingState models.TrackingState `json:"tracking_state"`
-	Goal          []models.Goal        `json:"goal"`
-	FinHealth     models.FinHealth     `json:"fin_health"`
+	TrackingState repository.TrackingState `json:"tracking_state"`
+	Goal          []models.Goal            `json:"goal"`
+	FinHealth     repository.FinHealth     `json:"fin_health"`
 }
 
 // More represents additional user information, including app and settings details.
 type More struct {
-	App      models.App      `json:"app"`
-	Settings models.Settings `json:"settings"`
+	App      repository.App      `json:"app"`
+	Settings repository.Settings `json:"settings"`
 }
 
 func round(num float64, precision int) float64 {
@@ -111,7 +113,6 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	// TODO: refactor maybe? too complicated
 	if startDateStr == "" {
 		startDateStr = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
-
 	}
 	if endDateStr == "" {
 		endDateStr = time.Now().Format("2006-01-02")
@@ -120,7 +121,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryIncome := "SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsIncome, err := s.repo.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting income: %v", err)
 	}
 	defer rowsIncome.Close()
 
@@ -128,7 +129,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsIncome.Next() {
 		var income models.Income
 		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning income: %v", err)
 		}
 		income.UserID = userID
 		if income.Currency != currencyCode && currencyCode != "" {
@@ -140,7 +141,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryExpense := "SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsExpense, err := s.repo.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting expense: %v", err)
 	}
 	defer rowsExpense.Close()
 
@@ -148,7 +149,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsExpense.Next() {
 		var expense models.Expense
 		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning expense: %v", err)
 		}
 		expense.UserID = userID
 		if expense.Currency != currencyCode && currencyCode != "" {
@@ -160,7 +161,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryWealthFund := "SELECT id, amount, date, planned, currency_code, connected_account, user_id, category_id FROM wealth_fund WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsWealthFund, err := s.repo.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting wealth funds: %v", err)
 	}
 	defer rowsWealthFund.Close()
 
@@ -168,7 +169,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsWealthFund.Next() {
 		var wealthFund models.WealthFund
 		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning wealth funds: %v", err)
 		}
 		if wealthFund.Currency != currencyCode && currencyCode != "" {
 			wealthFund.Amount = s.convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
@@ -203,7 +204,7 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 		goal.Need = s.convertCurrency(goal.Need, goal.Currency, currencyCode)
 		goalList = append(goalList, goal)
 	}
-	trackingState := &models.TrackingState{
+	trackingState := &repository.TrackingState{
 		State:  s.getTotalState(userID, currencyCode),
 		UserID: userID,
 	}
@@ -278,7 +279,7 @@ func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 		return nil, err
 	}
 
-	var settings models.Settings
+	var settings repository.Settings
 
 	app, err := s.GetAppFromDB(userID)
 	if err != nil {
@@ -292,7 +293,7 @@ func (s *Service) GetMoreFromDB(userID string) (*More, error) {
 	return &more, nil
 }
 
-func (s *Service) GetAppFromDB(userID string) (*models.App, error) {
+func (s *Service) GetAppFromDB(userID string) (*repository.App, error) {
 	connectedAccounts, err := s.GetConnectedAccountsFromDB(userID)
 	if err != nil {
 		return nil, err
@@ -303,7 +304,7 @@ func (s *Service) GetAppFromDB(userID string) (*models.App, error) {
 		return nil, err
 	}
 
-	app := &models.App{
+	app := &repository.App{
 		ConnectedAccounts: connectedAccounts,
 		CategorySettings:  *categorySettings,
 		//OperationArchive:  operationArchive,
@@ -365,8 +366,8 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models.ConnectedA
 	return connectedAccounts, nil
 }
 
-func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error) {
-	var categorySettings models.CategorySettings
+func (s *Service) GetCategorySettingsFromDB(userID string) (*repository.CategorySettings, error) {
+	var categorySettings repository.CategorySettings
 
 	// Запрос для получения конфигурации доходов
 	queryIncome := "SELECT id, name, icon, is_fixed, user_id FROM income_categories WHERE user_id = $1"
@@ -378,7 +379,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySett
 	defer rowsIncome.Close()
 
 	for rowsIncome.Next() {
-		var config models.IncomeCategory
+		var config repository.IncomeCategory
 		err := rowsIncome.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning income category configuration:", err)
@@ -397,7 +398,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySett
 	defer rowsExpense.Close()
 
 	for rowsExpense.Next() {
-		var config models.ExpenseCategory
+		var config repository.ExpenseCategory
 		err := rowsExpense.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning expense category configuration:", err)
@@ -415,7 +416,7 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySett
 	defer rowsInvestment.Close()
 
 	for rowsInvestment.Next() {
-		var config models.InvestmentCategory
+		var config repository.InvestmentCategory
 		err := rowsInvestment.Scan(&config.ID, &config.Name, &config.Icon, &config.IsConstant, &config.UserID)
 		if err != nil {
 			log.Println("Error scanning investment category configuration:", err)
@@ -426,14 +427,14 @@ func (s *Service) GetCategorySettingsFromDB(userID string) (*models.CategorySett
 
 	// Проверка, что были получены данные
 	if len(categorySettings.ExpenseCategories) == 0 && len(categorySettings.IncomeCategories) == 0 && len(categorySettings.InvestmentCategories) == 0 {
-		return &models.CategorySettings{}, nil
+		return &repository.CategorySettings{}, nil
 	}
 
 	return &categorySettings, nil
 }
 
-func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation, error) {
-	var operations []models.Operation
+func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]repository.Operation, error) {
+	var operations []repository.Operation
 
 	query := `
 		SELECT id, description, amount, date, category, operation_type
@@ -450,7 +451,7 @@ func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]mod
 	defer rows.Close()
 
 	for rows.Next() {
-		var operation models.Operation
+		var operation repository.Operation
 		err := rows.Scan(
 			&operation.ID,
 			&operation.Description,
@@ -478,9 +479,9 @@ type Categories interface {
 	GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error)
 	GetUserInfoFromDB(userID string) (string, string, error)
 	GetMoreFromDB(userID string) (*More, error)
-	GetAppFromDB(userID string) (*models.App, error)
+	GetAppFromDB(userID string) (*repository.App, error)
 	GetSubscriptionFromDB(userID string) (*models.Subscription, error)
 	GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error)
-	GetCategorySettingsFromDB(userID string) (*models.CategorySettings, error)
-	GetOperationArchiveFromDB(userID, limit, offset string) ([]models.Operation, error)
+	GetCategorySettingsFromDB(userID string) (*repository.CategorySettings, error)
+	GetOperationArchiveFromDB(userID, limit, offset string) ([]repository.Operation, error)
 }
