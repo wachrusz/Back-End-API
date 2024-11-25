@@ -7,6 +7,7 @@ package categories
 import (
 	//"encoding/json"
 
+	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"math"
 	"time"
@@ -112,7 +113,6 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	// TODO: refactor maybe? too complicated
 	if startDateStr == "" {
 		startDateStr = time.Now().AddDate(0, 0, -30).Format("2006-01-02")
-
 	}
 	if endDateStr == "" {
 		endDateStr = time.Now().Format("2006-01-02")
@@ -121,7 +121,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryIncome := "SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsIncome, err := s.repo.Query(queryIncome, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting income: %v", err)
 	}
 	defer rowsIncome.Close()
 
@@ -129,7 +129,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsIncome.Next() {
 		var income models.Income
 		if err := rowsIncome.Scan(&income.ID, &income.Amount, &income.Date, &income.Planned, &income.CategoryID, &income.Sender, &income.BankAccount, &income.Currency); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning income: %v", err)
 		}
 		income.UserID = userID
 		if income.Currency != currencyCode && currencyCode != "" {
@@ -141,7 +141,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryExpense := "SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsExpense, err := s.repo.Query(queryExpense, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting expense: %v", err)
 	}
 	defer rowsExpense.Close()
 
@@ -149,7 +149,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsExpense.Next() {
 		var expense models.Expense
 		if err := rowsExpense.Scan(&expense.ID, &expense.Amount, &expense.Date, &expense.Planned, &expense.CategoryID, &expense.SentTo, &expense.BankAccount, &expense.Currency); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning expense: %v", err)
 		}
 		expense.UserID = userID
 		if expense.Currency != currencyCode && currencyCode != "" {
@@ -161,7 +161,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	queryWealthFund := "SELECT id, amount, date, planned, currency_code, connected_account, user_id, category_id FROM wealth_fund WHERE user_id = $1 AND date >= $2 AND date <= $3 ORDER BY date DESC LIMIT $4 OFFSET $5;"
 	rowsWealthFund, err := s.repo.Query(queryWealthFund, userID, startDateStr, endDateStr, limitStr, offsetStr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting wealth funds: %v", err)
 	}
 	defer rowsWealthFund.Close()
 
@@ -169,7 +169,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	for rowsWealthFund.Next() {
 		var wealthFund models.WealthFund
 		if err := rowsWealthFund.Scan(&wealthFund.ID, &wealthFund.Amount, &wealthFund.Date, &wealthFund.PlannedStatus, &wealthFund.Currency, &wealthFund.ConnectedAccount, &wealthFund.UserID, &wealthFund.CategoryID); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning wealth funds: %v", err)
 		}
 		if wealthFund.Currency != currencyCode && currencyCode != "" {
 			wealthFund.Amount = s.convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
