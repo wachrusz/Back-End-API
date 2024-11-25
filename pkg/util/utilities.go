@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"golang.org/x/crypto/bcrypt"
@@ -238,4 +239,10 @@ func HashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(hashedPassword), nil
+}
+
+// GetParamFromRequest extracts a parameter from the URL by its key.
+func GetParamFromRequest(r *http.Request, key string) string {
+	// chi.URLParam позволяет извлечь параметр из URL
+	return chi.URLParam(r, key)
 }

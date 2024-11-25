@@ -2,15 +2,21 @@ package v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"net/http"
 
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"go.uber.org/zap"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
+
+type GoalRequest struct {
+	Goal models.Goal `json:"goal"`
+}
 
 // CreateGoalHandler creates a new goal in the database.
 //
@@ -19,7 +25,7 @@ import (
 // @Tags Tracker
 // @Accept json
 // @Produce json
-// @Param goal body models.Goal true "Goal object"
+// @Param goal body GoalRequest true "Goal object"
 // @Success 201 {object} jsonresponse.IdResponse "Goal created successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
@@ -30,11 +36,13 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Creating a new goal...")
 
 	// Decode the request payload
-	var goal models.Goal
-	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
+	var goalR GoalRequest
+	if err := json.NewDecoder(r.Body).Decode(&goalR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	goal := goalR.Goal
 
 	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -47,7 +55,7 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal.UserID = userID
 
 	// Create a new goal in the database
-	goalID, err := models.CreateGoal(&goal)
+	goalID, err := h.m.Goals.Create(&goal)
 	if err != nil {
 		h.errResp(w, fmt.Errorf("error creating goal: %v", err), http.StatusInternalServerError)
 		return
@@ -67,15 +75,16 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 
 // UpdateGoalHandler updates an existing goal in the database.
 //
-// @Summary Update a goal
-// @Description Updates an existing goal.
+// @Summary Update the goal
+// @Description Updates an existing goal. There is no need to fill user_id field.
 // @Tags Tracker
 // @Accept json
 // @Produce json
-// @Param goal body models.Goal true "Goal object"
+// @Param goal body GoalRequest true "Goal object"
 // @Success 201 {object} jsonresponse.IdResponse "Goal updated successfully"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 404 {object} jsonresponse.ErrorResponse "Goal not found"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error updating goal"
 // @Security JWT
 // @Router /tracker/goal [put]
@@ -83,11 +92,13 @@ func (h *MyHandler) UpdateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Updating a goal...")
 
 	// Decode the request payload
-	var goal models.Goal
-	if err := json.NewDecoder(r.Body).Decode(&goal); err != nil {
+	var goalR GoalRequest
+	if err := json.NewDecoder(r.Body).Decode(&goalR); err != nil {
 		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	goal := goalR.Goal
 
 	// Extract the user ID from the request context
 	userID, ok := utility.GetUserIDFromContext(r.Context())
@@ -100,20 +111,67 @@ func (h *MyHandler) UpdateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal.UserID = userID
 
 	// Create a new goal in the database
-	goalID, err := models.UpdateGoal(&goal)
-	if err != nil {
-		h.errResp(w, fmt.Errorf("error updating goal: %v", err), http.StatusInternalServerError)
+	if err := h.m.Goals.Update(&goal); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("expense not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error updating expense: %v", err), http.StatusInternalServerError)
+		}
 		return
 	}
 
 	// Send success response
 	response := jsonresponse.IdResponse{
 		Message:    "Successfully updated a goal",
-		Id:         goalID,
+		Id:         goal.ID,
 		StatusCode: http.StatusCreated,
 	}
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 
-	h.l.Debug("Goal updated successfully", zap.Int64("goalID", goalID))
+	h.l.Debug("Goal updated successfully", zap.Int64("goalID", goal.ID))
+}
+
+// DeleteGoalHandler handles the deletion of an existing goal.
+//
+// @Summary Delete the goal
+// @Description Delete the existing goal.
+// @Tags Tracker
+// @Param ConnectedAccount body jsonresponse.IdRequest true "goal id"
+// @Success 204 {object} jsonresponse.SuccessResponse "goal deleted successfully"
+// @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request payload"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Error deleting goal"
+// @Security JWT
+// @Router /tracker/goal [delete]
+func (h *MyHandler) DeleteGoalHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Deleting goal...")
+
+	var id jsonresponse.IdRequest
+	if err := json.NewDecoder(r.Body).Decode(&id); err != nil {
+		h.errResp(w, fmt.Errorf("invalid request payload: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.m.Goals.Delete(id.ID, userID); err != nil {
+		if errors.Is(err, myerrors.ErrNotFound) {
+			h.errResp(w, fmt.Errorf("goal not found: %v", err), http.StatusNotFound)
+		} else {
+			h.errResp(w, fmt.Errorf("error deleting goal: %v", err), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	response := jsonresponse.SuccessResponse{
+		Message:    "Successfully deleted goal",
+		StatusCode: http.StatusNoContent,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
 }

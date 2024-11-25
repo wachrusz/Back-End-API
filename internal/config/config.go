@@ -10,15 +10,16 @@ import (
 )
 
 type Config struct {
-	Host             string        `yaml:"host"`
-	Port             int           `yaml:"port"`
-	DBPassword       string        `yaml:"db_password"`
-	CrtPath          string        `yaml:"crt_path"`
-	KeyPath          string        `yaml:"key_path"`
-	SecretKey        []byte        `yaml:"secret_key"`
-	SecretRefreshKey []byte        `yaml:"secret_refresh_key"`
-	CurrencyURL      string        `yaml:"currency_url"`
-	Rabbit           rabbit.Config `yaml:"rabbit"`
+	Host                string        `yaml:"host"`
+	Port                int           `yaml:"port"`
+	DBPassword          string        `yaml:"db_password"`
+	CrtPath             string        `yaml:"crt_path"`
+	KeyPath             string        `yaml:"key_path"`
+	SecretKey           []byte        `yaml:"secret_key"`
+	SecretRefreshKey    []byte        `yaml:"secret_refresh_key"`
+	CurrencyURL         string        `yaml:"currency_url"`
+	Rabbit              rabbit.Config `yaml:"rabbit"`
+	AccessTokenLifetime int           `yaml:"access_token_dur_minutes"`
 }
 
 func New() (*Config, error) {
@@ -89,6 +90,13 @@ func processEnvironment(cfg *Config) error {
 		cfg.Rabbit.URL = rabbitUrl
 	}
 
+	if tokenLifetimeStr, exists := os.LookupEnv("ACCESS_LIFETIME"); exists {
+		tokenLifetime, err := strconv.Atoi(tokenLifetimeStr)
+		if err != nil {
+			return fmt.Errorf("invalid access token lifetime value: %w", err)
+		}
+		cfg.AccessTokenLifetime = tokenLifetime
+	}
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {
 	//	cfg.CrtPath = crtPath
 	//}

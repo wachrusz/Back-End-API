@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/wachrusz/Back-End-API/internal/models"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 )
 
 type AccountListResponse struct {
-	Accounts []models.Account `json:"accounts"`
+	Accounts []repository.Account `json:"accounts"`
 }
 
 func GetAccounts(auth Auth, apiURL string) (*AccountListResponse, error) {

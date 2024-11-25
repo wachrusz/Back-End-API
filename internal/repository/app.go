@@ -1,18 +1,19 @@
 //go:build !exclude_swagger
 // +build !exclude_swagger
 
-// Package models provides basic financial models functionality.
-package models
+// Package repository provides basic financial repository functionality.
+package repository
 
 import (
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"log"
 )
 
 // App представляет собой информацию о приложении пользователя.
 type App struct {
-	ConnectedAccounts []ConnectedAccount `json:"connected_accounts"`
-	CategorySettings  CategorySettings   `json:"category_settings"`
+	ConnectedAccounts []models.ConnectedAccount `json:"connected_accounts"`
+	CategorySettings  CategorySettings          `json:"category_settings"`
 	//OperationArchive  []Operation        `json:"operation_archive"` //*Deleted from APP
 }
 

@@ -1,4 +1,4 @@
-package models
+package repository
 
 type GetTokenRequest struct {
 	ClientID     string `json:"client_id"`

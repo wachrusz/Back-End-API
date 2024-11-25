@@ -13,4 +13,5 @@ var (
 	ErrLocked         = errors.New("locked")
 	ErrCode           = errors.New("invalid code")
 	ErrExpired        = errors.New("expired code")
+	ErrNotFound       = errors.New("not found")
 )

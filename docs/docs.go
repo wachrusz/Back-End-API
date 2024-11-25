@@ -19,7 +19,237 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/analytics/expense": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing expense. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ExpenseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "expense updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "expense not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing expense.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the expense",
+                "parameters": [
+                    {
+                        "description": "Expense id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Expense deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/analytics/expenses": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Create a new expense record.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Create a expense",
+                "parameters": [
+                    {
+                        "description": "Expense object",
+                        "name": "expense",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ExpenseRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully created an expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error creating expense",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/analytics/income": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing income. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the income",
+                "parameters": [
+                    {
+                        "description": "income object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.IncomeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "income updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "income not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating income",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -44,7 +274,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Income"
+                            "$ref": "#/definitions/v1.IncomeRequest"
                         }
                     }
                 ],
@@ -74,9 +304,119 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing income.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the income",
+                "parameters": [
+                    {
+                        "description": "income id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "income deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting income",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/analytics/wealth_fund": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing wealth fund. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Update the wealth fund",
+                "parameters": [
+                    {
+                        "description": "wealth fund object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.WealthFundRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "wealth fund updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "wealth fund not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating wealth fund",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -101,7 +441,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.WealthFund"
+                            "$ref": "#/definitions/v1.WealthFundRequest"
                         }
                     }
                 ],
@@ -131,9 +471,119 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing wealth fund.",
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Delete the wealth fund",
+                "parameters": [
+                    {
+                        "description": "wealth fund id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "wealth fund deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting wealth fund",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/app/accounts": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Update an existing connected account. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "App"
+                ],
+                "summary": "Update a connected account",
+                "parameters": [
+                    {
+                        "description": "ConnectedAccount object",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Connected account updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Connected account not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating connected account",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -158,7 +608,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
+                            "$ref": "#/definitions/v1.ConnectedAccountRequest"
                         }
                     }
                 ],
@@ -202,12 +652,12 @@ const docTemplate = `{
                 "summary": "Delete a connected account",
                 "parameters": [
                     {
-                        "description": "ConnectedAccount object",
+                        "description": "ConnectedAccount id",
                         "name": "ConnectedAccount",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ConnectedAccount"
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
                         }
                     }
                 ],
@@ -264,7 +714,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.ExpenseCategory"
+                            "$ref": "#/definitions/repository.ExpenseCategory"
                         }
                     }
                 ],
@@ -315,7 +765,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.IncomeCategory"
+                            "$ref": "#/definitions/repository.IncomeCategory"
                         }
                     }
                 ],
@@ -366,7 +816,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.InvestmentCategory"
+                            "$ref": "#/definitions/repository.InvestmentCategory"
                         }
                     }
                 ],
@@ -929,66 +1379,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/expenses": {
-            "post": {
-                "security": [
-                    {
-                        "JWT": []
-                    }
-                ],
-                "description": "Create a new expense record.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Analytics"
-                ],
-                "summary": "Create an expense",
-                "parameters": [
-                    {
-                        "description": "Expense object",
-                        "name": "expense",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Expense"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successfully created an expense",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.IdResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request payload",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "User not authenticated",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Error creating expense",
-                        "schema": {
-                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/history/add": {
             "post": {
-                "description": "Add a new entry to the history.",
+                "description": "Create a new entry to the history.",
                 "consumes": [
                     "application/json"
                 ],
@@ -998,7 +1391,7 @@ const docTemplate = `{
                 "tags": [
                     "History"
                 ],
-                "summary": "Add history entry",
+                "summary": "Create history entry",
                 "responses": {
                     "200": {
                         "description": "History entry added successfully",
@@ -1579,6 +1972,67 @@ const docTemplate = `{
             }
         },
         "/settings/subscription": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates an existing subscription. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Update the subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription object",
+                        "name": "subscription",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.SubscriptionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "subscription updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating subscription",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1603,7 +2057,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Subscription"
+                            "$ref": "#/definitions/v1.SubscriptionRequest"
                         }
                     }
                 ],
@@ -1622,6 +2076,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating subscription",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing subscription.",
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Delete the subscription",
+                "parameters": [
+                    {
+                        "description": "Subscription id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Subscription deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting subscription",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -1687,6 +2190,67 @@ const docTemplate = `{
             }
         },
         "/tracker/goal": {
+            "put": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Updates an existing goal. There is no need to fill user_id field.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Update the goal",
+                "parameters": [
+                    {
+                        "description": "Goal object",
+                        "name": "goal",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Goal updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Goal not found",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error updating goal",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1711,7 +2275,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Goal"
+                            "$ref": "#/definitions/v1.GoalRequest"
                         }
                     }
                 ],
@@ -1736,6 +2300,55 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error creating goal",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Delete the existing goal.",
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Delete the goal",
+                "parameters": [
+                    {
+                        "description": "goal id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "goal deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error deleting goal",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -1772,10 +2385,10 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "app": {
-                    "$ref": "#/definitions/models.App"
+                    "$ref": "#/definitions/repository.App"
                 },
                 "settings": {
-                    "$ref": "#/definitions/models.Settings"
+                    "$ref": "#/definitions/repository.Settings"
                 }
             }
         },
@@ -1783,7 +2396,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "fin_health": {
-                    "$ref": "#/definitions/models.FinHealth"
+                    "$ref": "#/definitions/repository.FinHealth"
                 },
                 "goal": {
                     "type": "array",
@@ -1792,7 +2405,7 @@ const docTemplate = `{
                     }
                 },
                 "tracking_state": {
-                    "$ref": "#/definitions/models.TrackingState"
+                    "$ref": "#/definitions/repository.TrackingState"
                 }
             }
         },
@@ -1861,6 +2474,14 @@ const docTemplate = `{
                 }
             }
         },
+        "jsonresponse.IdRequest": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
         "jsonresponse.IdResponse": {
             "type": "object",
             "properties": {
@@ -1897,43 +2518,6 @@ const docTemplate = `{
                 },
                 "token": {
                     "type": "string"
-                }
-            }
-        },
-        "models.App": {
-            "type": "object",
-            "properties": {
-                "category_settings": {
-                    "$ref": "#/definitions/models.CategorySettings"
-                },
-                "connected_accounts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ConnectedAccount"
-                    }
-                }
-            }
-        },
-        "models.CategorySettings": {
-            "type": "object",
-            "properties": {
-                "expense_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ExpenseCategory"
-                    }
-                },
-                "income_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.IncomeCategory"
-                    }
-                },
-                "investment_category": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.InvestmentCategory"
-                    }
                 }
             }
         },
@@ -1989,83 +2573,29 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ExpenseCategory": {
-            "type": "object",
-            "properties": {
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_constant": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.FinHealth": {
-            "type": "object",
-            "properties": {
-                "expense_score": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "income_score": {
-                    "type": "integer"
-                },
-                "investment_score": {
-                    "type": "integer"
-                },
-                "obligation_score": {
-                    "type": "integer"
-                },
-                "plan_score": {
-                    "type": "integer"
-                },
-                "total_score": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.GetTokenRequest": {
-            "type": "object",
-            "properties": {
-                "auth_url": {
-                    "type": "string"
-                },
-                "client_id": {
-                    "type": "string"
-                },
-                "client_secret": {
-                    "type": "string"
-                }
-            }
-        },
         "models.Goal": {
             "type": "object",
             "properties": {
+                "currency": {
+                    "type": "string"
+                },
                 "current_state": {
                     "type": "number"
+                },
+                "end_date": {
+                    "type": "string"
                 },
                 "goal": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "need": {
                     "type": "number"
+                },
+                "start_date": {
+                    "type": "string"
                 },
                 "user_id": {
                     "type": "string"
@@ -2104,77 +2634,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.IncomeCategory": {
-            "type": "object",
-            "properties": {
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_constant": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.InvestmentCategory": {
-            "type": "object",
-            "properties": {
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "is_constant": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Operation": {
-            "type": "object",
-            "properties": {
-                "amount": {
-                    "type": "number"
-                },
-                "category": {
-                    "type": "string"
-                },
-                "date": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Settings": {
-            "type": "object",
-            "properties": {
-                "subscriptions": {
-                    "$ref": "#/definitions/models.Subscription"
-                }
-            }
-        },
         "models.Subscription": {
             "type": "object",
             "properties": {
@@ -2182,24 +2641,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "is_active": {
                     "type": "boolean"
                 },
                 "start_date": {
                     "type": "string"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.TrackingState": {
-            "type": "object",
-            "properties": {
-                "state": {
-                    "type": "number"
                 },
                 "user_id": {
                     "type": "string"
@@ -2250,6 +2698,188 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.App": {
+            "type": "object",
+            "properties": {
+                "category_settings": {
+                    "$ref": "#/definitions/repository.CategorySettings"
+                },
+                "connected_accounts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.ConnectedAccount"
+                    }
+                }
+            }
+        },
+        "repository.CategorySettings": {
+            "type": "object",
+            "properties": {
+                "expense_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.ExpenseCategory"
+                    }
+                },
+                "income_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.IncomeCategory"
+                    }
+                },
+                "investment_category": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.InvestmentCategory"
+                    }
+                }
+            }
+        },
+        "repository.ExpenseCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.FinHealth": {
+            "type": "object",
+            "properties": {
+                "expense_score": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "income_score": {
+                    "type": "integer"
+                },
+                "investment_score": {
+                    "type": "integer"
+                },
+                "obligation_score": {
+                    "type": "integer"
+                },
+                "plan_score": {
+                    "type": "integer"
+                },
+                "total_score": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.GetTokenRequest": {
+            "type": "object",
+            "properties": {
+                "auth_url": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_secret": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.IncomeCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.InvestmentCategory": {
+            "type": "object",
+            "properties": {
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_constant": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.Operation": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.Settings": {
+            "type": "object",
+            "properties": {
+                "subscriptions": {
+                    "$ref": "#/definitions/models.Subscription"
+                }
+            }
+        },
+        "repository.TrackingState": {
+            "type": "object",
+            "properties": {
+                "state": {
+                    "type": "number"
+                },
+                "user_id": {
                     "type": "string"
                 }
             }
@@ -2328,6 +2958,14 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ConnectedAccountRequest": {
+            "type": "object",
+            "properties": {
+                "account": {
+                    "$ref": "#/definitions/models.ConnectedAccount"
+                }
+            }
+        },
         "v1.EndTimeResponse": {
             "type": "object",
             "properties": {
@@ -2342,6 +2980,30 @@ const docTemplate = `{
                 },
                 "status_code": {
                     "type": "integer"
+                }
+            }
+        },
+        "v1.ExpenseRequest": {
+            "type": "object",
+            "properties": {
+                "expense": {
+                    "$ref": "#/definitions/models.Expense"
+                }
+            }
+        },
+        "v1.GoalRequest": {
+            "type": "object",
+            "properties": {
+                "goal": {
+                    "$ref": "#/definitions/models.Goal"
+                }
+            }
+        },
+        "v1.IncomeRequest": {
+            "type": "object",
+            "properties": {
+                "income": {
+                    "$ref": "#/definitions/models.Income"
                 }
             }
         },
@@ -2368,7 +3030,7 @@ const docTemplate = `{
                 "archive": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Operation"
+                        "$ref": "#/definitions/repository.Operation"
                     }
                 },
                 "message": {
@@ -2432,6 +3094,14 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.SubscriptionRequest": {
+            "type": "object",
+            "properties": {
+                "subscription": {
+                    "$ref": "#/definitions/models.Subscription"
+                }
+            }
+        },
         "v1.SupportRequest": {
             "type": "object",
             "properties": {
@@ -2477,6 +3147,14 @@ const docTemplate = `{
                 },
                 "reset_token": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.WealthFundRequest": {
+            "type": "object",
+            "properties": {
+                "wealth_fund": {
+                    "$ref": "#/definitions/models.WealthFund"
                 }
             }
         }

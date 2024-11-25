@@ -2,7 +2,7 @@ package v1
 
 /*
 func CreateFinHealthHandler(w http.ResponseWriter, r *http.Request) {
-	var finHealth models.FinHealth
+	var finHealth repository.FinHealth
 	if errResp := json.NewDecoder(r.Body).Decode(&finHealth); errResp != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
 		return
@@ -18,7 +18,7 @@ func CreateFinHealthHandler(w http.ResponseWriter, r *http.Request) {
 
 	finHealth.UserID = userID
 
-	if errResp := models.CreateFinHealth(&finHealth); errResp != nil {
+	if errResp := repository.CreateFinHealth(&finHealth); errResp != nil {
 		http.Error(w, "Error creating finHealth", http.StatusInternalServerError)
 		return
 	}
