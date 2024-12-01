@@ -10,16 +10,22 @@ import (
 )
 
 type MyHandler struct {
-	s *service.Services
-	l *zap.Logger
-	m *repository.Models
+	s         *service.Services
+	l         *zap.Logger
+	m         *repository.Models
+	rateLimit int
 }
 
-func NewHandler(services *service.Services, logger *zap.Logger, models *repository.Models) *MyHandler {
+func NewHandler(services *service.Services, logger *zap.Logger, models *repository.Models, rateLimit int) *MyHandler {
+	if rateLimit <= 0 {
+		rateLimit = 7
+	}
+
 	return &MyHandler{
-		s: services,
-		l: logger,
-		m: models,
+		s:         services,
+		l:         logger,
+		m:         models,
+		rateLimit: rateLimit,
 	}
 }
 

@@ -8,3 +8,4 @@ rabbit:
   exchange_type: "direct"
   queue: "user_emails"
 access_token_dur_minutes: 15
+rate_limit_per_second: 7
