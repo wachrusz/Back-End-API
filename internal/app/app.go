@@ -1,16 +1,16 @@
 package app
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/repository"
-	"net/http"
-
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	logger "github.com/zhukovrost/cadv_logger"
+	"go.uber.org/zap"
+	"net/http"
 
 	"github.com/wachrusz/Back-End-API/internal/config"
 	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
 	"github.com/wachrusz/Back-End-API/internal/http/v1"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 )
@@ -19,6 +19,7 @@ func Run(cfg *config.Config) error {
 	l := logger.New("standard", true)
 
 	l.Info("Starting application...")
+
 	l.Info("Connecting to the database...")
 	db, err := mydb.Init(cfg.GetDBURL())
 	if err != nil {
@@ -34,13 +35,13 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
+	l.Info("Initializing services...")
 	deps := service.Dependencies{
 		Repo:                  db,
 		Mailer:                mailer,
 		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
 	}
 
-	l.Info("Initializing services...")
 	services, err := service.NewServices(deps)
 	if err != nil {
 		return err
@@ -49,18 +50,19 @@ func Run(cfg *config.Config) error {
 	l.Info("Initializing models...")
 	models := repository.New(db)
 
-	handlerV1 := v1.NewHandler(services, l, models)
+	l.Info("Initializing handlers...", zap.Int("rate_limit_per_second", cfg.RateLimitPerSecond))
+	handlerV1 := v1.NewHandler(services, l, models, cfg.RateLimitPerSecond)
 	handlerOB := obhttp.NewHandler(services, l)
 
 	l.Info("Initializing routers...")
-	router, docRouter, errR := api.InitRouters(handlerV1, handlerOB, l)
-	services.Users.InitActiveUsers()
-
-	if errR != nil {
-		return errR
+	router, docRouter, err := api.InitRouters(handlerV1, handlerOB, l)
+	if err != nil {
+		return err
 	}
 
-	http.Handle("/", handlerV1.ContentTypeMiddleware(router))
+	services.Users.InitActiveUsers()
+
+	http.Handle("/", router)
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)
 

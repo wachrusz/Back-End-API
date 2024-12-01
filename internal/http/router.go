@@ -12,10 +12,11 @@ import (
 
 func newRouter(h *v1.MyHandler, obh *obhttp.MyHandler) chi.Router {
 	r := chi.NewRouter()
+	r.Use(h.ContentTypeMiddleware, h.RateLimitMiddleware)
+
 	r.Route("/v1", func(r chi.Router) {
 		h.RegisterHandler(r)
 		h.RegisterUserHandlers(r)
-		//history.RegisterHandlers(r)
 		h.RegisterProfileHandlers(r)
 	})
 
