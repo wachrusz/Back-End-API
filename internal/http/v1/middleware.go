@@ -3,11 +3,14 @@ package v1
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-chi/httprate"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func (h *MyHandler) ContentTypeMiddleware(next http.Handler) http.Handler {
@@ -92,4 +95,17 @@ func setUserIDInContext(ctx context.Context, userID string) context.Context {
 }
 func setDeviceIDInContext(ctx context.Context, deviceID string) context.Context {
 	return context.WithValue(ctx, "device_id", deviceID)
+}
+
+func (h *MyHandler) RateLimitMiddleware(next http.Handler) http.Handler {
+	rateLimiter := httprate.Limit(
+		h.rateLimit,
+		time.Second,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+			h.errResp(w, fmt.Errorf("Rate-limited. Please, slow down."), http.StatusTooManyRequests)
+		}),
+	)
+
+	return rateLimiter(next)
 }

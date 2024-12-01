@@ -20,6 +20,7 @@ type Config struct {
 	CurrencyURL         string        `yaml:"currency_url"`
 	Rabbit              rabbit.Config `yaml:"rabbit"`
 	AccessTokenLifetime int           `yaml:"access_token_dur_minutes"`
+	RateLimitPerSecond  int           `yaml:"rate_limit_per_second"`
 }
 
 func New() (*Config, error) {
@@ -97,6 +98,15 @@ func processEnvironment(cfg *Config) error {
 		}
 		cfg.AccessTokenLifetime = tokenLifetime
 	}
+
+	if rateStr, exists := os.LookupEnv("RATE_LIMIT"); exists {
+		rate, err := strconv.Atoi(rateStr)
+		if err != nil {
+			return fmt.Errorf("invalid rate limit per second value: %w", err)
+		}
+		cfg.RateLimitPerSecond = rate
+	}
+
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {
 	//	cfg.CrtPath = crtPath
 	//}
