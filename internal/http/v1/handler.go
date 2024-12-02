@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"github.com/redis/go-redis/v9"
 	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
@@ -10,22 +11,24 @@ import (
 )
 
 type MyHandler struct {
-	s         *service.Services
-	l         *zap.Logger
-	m         *repository.Models
-	rateLimit int
+	s            *service.Services
+	l            *zap.Logger
+	m            *repository.Models
+	rdb          *redis.Client
+	rateLimitCfg int64
 }
 
-func NewHandler(services *service.Services, logger *zap.Logger, models *repository.Models, rateLimit int) *MyHandler {
+func NewHandler(services *service.Services, logger *zap.Logger, models *repository.Models, cache *redis.Client, rateLimit int64) *MyHandler {
 	if rateLimit <= 0 {
-		rateLimit = 7
+		rateLimit = 10
 	}
 
 	return &MyHandler{
-		s:         services,
-		l:         logger,
-		m:         models,
-		rateLimit: rateLimit,
+		s:            services,
+		l:            logger,
+		m:            models,
+		rateLimitCfg: rateLimit,
+		rdb:          cache,
 	}
 }
 

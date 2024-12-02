@@ -81,6 +81,8 @@ func (h *MyHandler) RegisterUserHandlers(router chi.Router) {
 	//	r.Get("/google", h.s.Users.HandleGoogleLogin)
 	//})
 
+	router.Get("/metrics/rps", h.GetRequestCountHandler)
+
 	// Developer routes
 	router.Get("/dev/confirmation-code/get", h.GetConfirmationCodeTestHandler)
 }
