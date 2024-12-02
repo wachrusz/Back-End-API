@@ -5,12 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-chi/httprate"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
+	"net"
 	"net/http"
 	"strings"
 	"time"
+)
+
+const (
+	redisKey = "rate_limit:details"
+	totalKey = "rate_limit:total"
 )
 
 func (h *MyHandler) ContentTypeMiddleware(next http.Handler) http.Handler {
@@ -23,6 +28,64 @@ func (h *MyHandler) ContentTypeMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (h *MyHandler) RateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip, err := h.getIP(r)
+		if err != nil {
+			h.errResp(w, fmt.Errorf("internal server error"), http.StatusInternalServerError)
+			return
+		}
+
+		// Создаем контекст с таймаутом для работы с Redis
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		// Увеличиваем счётчик запросов для данного IP
+		newCount, err := h.rdb.HIncrBy(ctx, redisKey, ip, 1).Result()
+		if err != nil {
+			h.errResp(w, fmt.Errorf("internal server error"), http.StatusInternalServerError)
+			return
+		}
+
+		// Увеличиваем общий счётчик запросов
+		_, err = h.rdb.Incr(ctx, totalKey).Result()
+		if err != nil {
+			h.errResp(w, fmt.Errorf("internal server error"), http.StatusInternalServerError)
+			return
+		}
+
+		// Устанавливаем TTL для хеша, чтобы данные устарели через 1 секунду
+		if err := h.rdb.Expire(ctx, redisKey, time.Second).Err(); err != nil {
+			h.errResp(w, fmt.Errorf("internal server error"), http.StatusInternalServerError)
+			return
+		}
+
+		// Устанавливаем TTL для общего счётчика
+		if err := h.rdb.Expire(ctx, totalKey, time.Second).Err(); err != nil {
+			h.errResp(w, fmt.Errorf("internal server error"), http.StatusInternalServerError)
+			return
+		}
+
+		// Если количество запросов для данного IP больше или равно лимиту, то возвращаем ошибку
+		if newCount > h.rateLimitCfg {
+			h.errResp(w, fmt.Errorf("Rate-limited. Please, slow down."), http.StatusTooManyRequests)
+			return
+		}
+
+		// Продолжаем обработку запроса
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (h *MyHandler) getIP(r *http.Request) (string, error) {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return "", err
+	}
+
+	return ip, nil
 }
 
 func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -93,19 +156,7 @@ func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 func setUserIDInContext(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, "userID", userID)
 }
+
 func setDeviceIDInContext(ctx context.Context, deviceID string) context.Context {
 	return context.WithValue(ctx, "device_id", deviceID)
-}
-
-func (h *MyHandler) RateLimitMiddleware(next http.Handler) http.Handler {
-	rateLimiter := httprate.Limit(
-		h.rateLimit,
-		time.Second,
-		httprate.WithKeyFuncs(httprate.KeyByIP),
-		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-			h.errResp(w, fmt.Errorf("Rate-limited. Please, slow down."), http.StatusTooManyRequests)
-		}),
-	)
-
-	return rateLimiter(next)
 }

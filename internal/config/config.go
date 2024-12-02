@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/wachrusz/Back-End-API/pkg/cache"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -10,17 +11,18 @@ import (
 )
 
 type Config struct {
-	Host                string        `yaml:"host"`
-	Port                int           `yaml:"port"`
-	DBPassword          string        `yaml:"db_password"`
-	CrtPath             string        `yaml:"crt_path"`
-	KeyPath             string        `yaml:"key_path"`
-	SecretKey           []byte        `yaml:"secret_key"`
-	SecretRefreshKey    []byte        `yaml:"secret_refresh_key"`
-	CurrencyURL         string        `yaml:"currency_url"`
-	Rabbit              rabbit.Config `yaml:"rabbit"`
-	AccessTokenLifetime int           `yaml:"access_token_dur_minutes"`
-	RateLimitPerSecond  int           `yaml:"rate_limit_per_second"`
+	Host                string         `yaml:"host"`
+	Port                int            `yaml:"port"`
+	DBPassword          string         `yaml:"db_password"`
+	CrtPath             string         `yaml:"crt_path"`
+	KeyPath             string         `yaml:"key_path"`
+	SecretKey           []byte         `yaml:"secret_key"`
+	SecretRefreshKey    []byte         `yaml:"secret_refresh_key"`
+	CurrencyURL         string         `yaml:"currency_url"`
+	Rabbit              rabbit.Config  `yaml:"rabbit"`
+	AccessTokenLifetime int            `yaml:"access_token_dur_minutes"`
+	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
+	Redis               cache.RedisCfg `yaml:"redis"`
 }
 
 func New() (*Config, error) {
@@ -104,7 +106,15 @@ func processEnvironment(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("invalid rate limit per second value: %w", err)
 		}
-		cfg.RateLimitPerSecond = rate
+		cfg.RateLimitPerSecond = int64(rate)
+	}
+
+	if redisURL, exists := os.LookupEnv("REDIS_URL"); exists {
+		cfg.Redis.URL = redisURL
+	}
+
+	if redisPassword, exists := os.LookupEnv("REDIS_PASSWORD"); exists {
+		cfg.Redis.Password = redisPassword
 	}
 
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {

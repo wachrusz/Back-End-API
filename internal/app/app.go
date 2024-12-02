@@ -3,6 +3,7 @@ package app
 import (
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/pkg/cache"
 	logger "github.com/zhukovrost/cadv_logger"
 	"go.uber.org/zap"
 	"net/http"
@@ -29,6 +30,13 @@ func Run(cfg *config.Config) error {
 
 	mydb.SetDB(db) // TODO: Избавиться от этой хуйни окончательно!
 
+	l.Info("Connecting to redis...")
+	redis, err := cache.New(cfg.Redis)
+	if err != nil {
+		return err
+	}
+	defer redis.Close()
+
 	l.Info("Connecting to RabbitMQ...")
 	mailer, err := rabbit.New(cfg.Rabbit, l)
 	if err != nil {
@@ -50,8 +58,8 @@ func Run(cfg *config.Config) error {
 	l.Info("Initializing models...")
 	models := repository.New(db)
 
-	l.Info("Initializing handlers...", zap.Int("rate_limit_per_second", cfg.RateLimitPerSecond))
-	handlerV1 := v1.NewHandler(services, l, models, cfg.RateLimitPerSecond)
+	l.Info("Initializing handlers...", zap.Int64("rate_limit_per_second", cfg.RateLimitPerSecond))
+	handlerV1 := v1.NewHandler(services, l, models, redis, cfg.RateLimitPerSecond)
 	handlerOB := obhttp.NewHandler(services, l)
 
 	l.Info("Initializing routers...")

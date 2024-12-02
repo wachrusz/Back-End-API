@@ -1425,6 +1425,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/metrics/rps": {
+            "get": {
+                "description": "This handler returns the number of requests in the last second and details by IP for rate limiting and usage monitoring.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Metrics"
+                ],
+                "summary": "Returns the number of requests in the last second",
+                "responses": {
+                    "200": {
+                        "description": "Successful response with request count",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RequestCountResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/openbanking/accounts/get": {
             "get": {
                 "description": "Fetches a list of user accounts from the Open Banking API using the provided authorization token and API URL.",
@@ -3091,6 +3126,30 @@ const docTemplate = `{
             "properties": {
                 "refresh_token": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.RequestCountResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "description": "Детали запросов по IP",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "local_id": {
+                    "description": "Идентификатор локального сервера",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "Временная метка ответа",
+                    "type": "string"
+                },
+                "total_rps": {
+                    "description": "Общее количество запросов за последнюю секунду",
+                    "type": "integer"
                 }
             }
         },
