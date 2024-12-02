@@ -477,6 +477,23 @@ definitions:
       refresh_token:
         type: string
     type: object
+  v1.RequestCountResponse:
+    properties:
+      details:
+        additionalProperties:
+          type: string
+        description: Детали запросов по IP
+        type: object
+      local_id:
+        description: Идентификатор локального сервера
+        type: string
+      timestamp:
+        description: Временная метка ответа
+        type: string
+      total_rps:
+        description: Общее количество запросов за последнюю секунду
+        type: integer
+    type: object
   v1.SubscriptionRequest:
     properties:
       subscription:
@@ -1440,6 +1457,30 @@ paths:
       summary: Get history entries
       tags:
       - History
+  /metrics/rps:
+    get:
+      consumes:
+      - application/json
+      description: This handler returns the number of requests in the last second
+        and details by IP for rate limiting and usage monitoring.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with request count
+          schema:
+            $ref: '#/definitions/v1.RequestCountResponse'
+        "429":
+          description: Rate limit exceeded
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      summary: Returns the number of requests in the last second
+      tags:
+      - Metrics
   /openbanking/accounts/get:
     get:
       consumes:

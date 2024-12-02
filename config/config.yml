@@ -7,5 +7,8 @@ rabbit:
   exchange: "emails"
   exchange_type: "direct"
   queue: "user_emails"
+redis:
+  url: "localhost:6379"
+  password: ""
 access_token_dur_minutes: 15
-rate_limit_per_second: 7
+rate_limit_per_second: 10
