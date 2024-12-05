@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Host          string        `yaml:"host"`
-	Port          int           `yaml:"port"`
+	Port          int64         `yaml:"port"`
 	IdleTimeout   time.Duration `yaml:"idle_timeout"`
 	ReadTimeout   time.Duration `yaml:"read_timeout"`
 	WriteTimeout  time.Duration `yaml:"write_timeout"`
@@ -45,7 +45,7 @@ func NewServer(handler http.Handler, logger *zap.Logger, cfg Config) *Server {
 
 // start runs the server and listens for incoming requests.
 func (s *Server) start() error {
-	s.logger.Info("Starting server...", zap.Int("port", s.cfg.Port))
+	s.logger.Info("Starting server...", zap.Int64("port", s.cfg.Port))
 	return s.httpServer.ListenAndServeTLS(s.cfg.CrtPath, s.cfg.KeyPath)
 }
 
@@ -69,7 +69,7 @@ func (s *Server) Run(ctx context.Context) error {
 		if err := s.shutdown(ctx); err != nil {
 			return fmt.Errorf("graceful shutdown failed: %w", err)
 		}
-		s.logger.Info("Server stopped gracefully", zap.Int("port", s.cfg.Port))
+		s.logger.Info("Server stopped gracefully", zap.Int64("port", s.cfg.Port))
 	}
 
 	return nil
@@ -77,6 +77,6 @@ func (s *Server) Run(ctx context.Context) error {
 
 // shutdown gracefully shuts down the server with the given context.
 func (s *Server) shutdown(ctx context.Context) error {
-	s.logger.Info("Shutting down server...", zap.Int("port", s.cfg.Port))
+	s.logger.Info("Shutting down server...", zap.Int64("port", s.cfg.Port))
 	return s.httpServer.Shutdown(ctx)
 }

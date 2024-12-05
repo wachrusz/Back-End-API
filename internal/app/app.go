@@ -2,23 +2,38 @@ package app
 
 import (
 	"context"
-	api "github.com/wachrusz/Back-End-API/internal/http"
-	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
-	"github.com/wachrusz/Back-End-API/internal/server"
-	"github.com/wachrusz/Back-End-API/pkg/cache"
-	logger "github.com/zhukovrost/cadv_logger"
+	"errors"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/wachrusz/Back-End-API/internal/config"
+	api "github.com/wachrusz/Back-End-API/internal/http"
 	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
 	"github.com/wachrusz/Back-End-API/internal/http/v1"
+	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/repository"
+	"github.com/wachrusz/Back-End-API/internal/server"
 	"github.com/wachrusz/Back-End-API/internal/service"
+	"github.com/wachrusz/Back-End-API/pkg/cache"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
+	logger "github.com/zhukovrost/cadv_logger"
+)
+
+const (
+	rateLimitKey = "rate_limit:total"
+	stableChecks = 5
+)
+
+var (
+	workerCount int64
+	workerMu    sync.Mutex
+	workerMap   = make(map[int64]context.CancelFunc)
 )
 
 func Run(cfg *config.Config) error {
@@ -36,11 +51,11 @@ func Run(cfg *config.Config) error {
 	mydb.SetDB(db) // TODO: Избавиться от этой хуйни окончательно!
 
 	l.Info("Connecting to redis...")
-	redis, err := cache.New(cfg.Redis)
+	client, err := cache.New(cfg.Redis)
 	if err != nil {
 		return err
 	}
-	defer redis.Close()
+	defer client.Close()
 
 	l.Info("Connecting to RabbitMQ...")
 	mailer, err := rabbit.New(cfg.Rabbit, l)
@@ -52,18 +67,21 @@ func Run(cfg *config.Config) error {
 	deps := service.Dependencies{
 		Repo:                  db,
 		Mailer:                mailer,
-		Cache:                 redis,
+		Cache:                 client,
 		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	go monitorRateLimit(ctx, *cfg, deps, l)
+
+	// Goroutine для graceful shutdown
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-quit
-		l.Info("Received termination signal")
+		l.Info("Received shutdown signal")
 		cancel()
 	}()
 
@@ -76,6 +94,7 @@ func Run(cfg *config.Config) error {
 }
 
 func worker(ctx context.Context, cfg *config.Config, deps service.Dependencies, logger *zap.Logger) error {
+	logger.Info("Starting worker...")
 	services, err := service.NewServices(deps)
 	if err != nil {
 		return err
@@ -104,4 +123,82 @@ func worker(ctx context.Context, cfg *config.Config, deps service.Dependencies, 
 
 	srv := server.NewServer(mux, logger, cfg.Server)
 	return srv.Run(ctx)
+}
+
+func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Dependencies, logger *zap.Logger) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	lowRateCount := 0
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			value, err := deps.Cache.Get(ctx, rateLimitKey).Int64()
+			if err != nil && !errors.Is(err, redis.Nil) {
+				logger.Error("Failed to fetch rate limit value", zap.Error(err))
+				continue
+			}
+
+			if value > cfg.Workers.NewWorkerRPS*(workerCount+1) {
+				launchWorker(ctx, cfg, deps, logger)
+				lowRateCount = 0
+			} else if cfg.Workers.NewWorkerRPS*(workerCount+1) >= value && value >= cfg.Workers.NewWorkerRPS*workerCount {
+				lowRateCount = 0
+			} else {
+				lowRateCount++
+				if lowRateCount >= stableChecks {
+					terminateWorkers(context.Background(), cfg, logger)
+				}
+			}
+		}
+	}
+}
+
+func launchWorker(ctx context.Context, cfg config.Config, deps service.Dependencies, logger *zap.Logger) {
+	workerMu.Lock()
+	defer workerMu.Unlock()
+
+	if workerCount >= cfg.Workers.MaxWorkers {
+		logger.Warn("Max workers limit reached")
+		return
+	}
+
+	workerCount++
+	port := cfg.Server.Port + workerCount
+	cfg.Server.Port = port
+
+	// Запускаем воркера с новым контекстом
+	workerCtx, workerCancel := context.WithCancel(ctx)
+
+	go func() {
+		defer workerCancel()
+		err := worker(workerCtx, &cfg, deps, logger)
+		if err != nil {
+			logger.Error("Worker stopped with error", zap.Error(err))
+		} else {
+			logger.Info("Worker stopped gracefully", zap.Int64("port", cfg.Server.Port))
+		}
+	}()
+
+	workerMap[port] = workerCancel
+}
+
+// Terminate all worker goroutines
+func terminateWorkers(ctx context.Context, cfg config.Config, logger *zap.Logger) {
+	workerMu.Lock()
+	defer workerMu.Unlock()
+
+	port := cfg.Server.Port + workerCount
+	workerCount--
+
+	cancel := workerMap[port]
+	delete(workerMap, port)
+
+	cancel()
+	// Cancel each worker context and remove from channel
+	logger.Info("Terminating worker", zap.Int64("port", port))
+
 }
