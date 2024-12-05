@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/joho/godotenv"
+	"github.com/wachrusz/Back-End-API/internal/server"
 	"github.com/wachrusz/Back-End-API/pkg/cache"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	"gopkg.in/yaml.v3"
@@ -11,8 +12,8 @@ import (
 )
 
 type Config struct {
-	Host                string         `yaml:"host"`
-	Port                int            `yaml:"port"`
+	Server              server.Config  `yaml:"server"`
+	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
 	DBPassword          string         `yaml:"db_password"`
 	CrtPath             string         `yaml:"crt_path"`
 	KeyPath             string         `yaml:"key_path"`
@@ -21,7 +22,6 @@ type Config struct {
 	CurrencyURL         string         `yaml:"currency_url"`
 	Rabbit              rabbit.Config  `yaml:"rabbit"`
 	AccessTokenLifetime int            `yaml:"access_token_dur_minutes"`
-	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
 	Redis               cache.RedisCfg `yaml:"redis"`
 }
 
@@ -38,12 +38,8 @@ func New() (*Config, error) {
 	return &cfg, nil
 }
 
-func (c Config) GetAddr() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
-}
-
-func (c Config) GetDBURL() string {
-	return fmt.Sprintf("postgres://cadvadmin:%s@%s:5432/cadvdb?sslmode=disable", c.DBPassword, c.Host)
+func (c *Config) GetDBURL() string {
+	return fmt.Sprintf("postgres://cadvadmin:%s@%s:5432/cadvdb?sslmode=disable", c.DBPassword, c.Server.Host)
 }
 
 func loadConfig(filename string, cfg *Config) error {
@@ -67,14 +63,14 @@ func processEnvironment(cfg *Config) error {
 		return err
 	}
 	if host, exists := os.LookupEnv("HOST"); exists {
-		cfg.Host = host
+		cfg.Server.Host = host
 	}
 	if portStr, exists := os.LookupEnv("PORT"); exists {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
 			return fmt.Errorf("invalid PORT value: %w", err)
 		}
-		cfg.Port = port
+		cfg.Server.Port = port
 	}
 	if dbPassword, exists := os.LookupEnv("DB_PASSWORD"); exists {
 		cfg.DBPassword = dbPassword

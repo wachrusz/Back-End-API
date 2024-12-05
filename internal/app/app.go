@@ -3,6 +3,7 @@ package app
 import (
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/server"
 	"github.com/wachrusz/Back-End-API/pkg/cache"
 	logger "github.com/zhukovrost/cadv_logger"
 	"go.uber.org/zap"
@@ -68,20 +69,14 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
+	mux := http.NewServeMux()
+	mux.Handle("/", router)
+	mux.Handle("/swagger/", docRouter)
+	mux.Handle("/docs/", docRouter)
+
 	services.Users.InitActiveUsers()
-
-	http.Handle("/", router)
-	http.Handle("/swagger/", docRouter)
-	http.Handle("/docs/", docRouter)
-
 	go services.Currency.ScheduleCurrencyUpdates()
 
-	l.Info("Serving...")
-	//changed tls hosting now everything works
-	err = http.ListenAndServeTLS(":8080", cfg.CrtPath, cfg.KeyPath, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	srv := server.NewServer(mux, l, cfg.Server)
+	return srv.Run()
 }

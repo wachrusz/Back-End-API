@@ -1,5 +1,10 @@
-host: "localhost"
-port: 8080
+server:
+  host: "localhost"
+  port: 8080
+  idle_timeout: 2m
+  read_timeout: 15s
+  write_timeout: 15s
+  shutdown_grace: 30s
 crt_path: "secret/ok_server.crt"
 key_path: "secret/ok_server.key"
 rabbit:
