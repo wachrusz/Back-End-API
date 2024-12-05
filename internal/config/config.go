@@ -13,6 +13,7 @@ import (
 
 type Config struct {
 	Server              server.Config  `yaml:"server"`
+	Workers             WorkersConfig  `yaml:"workers"`
 	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
 	DBPassword          string         `yaml:"db_password"`
 	SecretKey           []byte         `yaml:"secret_key"`
@@ -21,6 +22,11 @@ type Config struct {
 	Rabbit              rabbit.Config  `yaml:"rabbit"`
 	AccessTokenLifetime int            `yaml:"access_token_dur_minutes"`
 	Redis               cache.RedisCfg `yaml:"redis"`
+}
+
+type WorkersConfig struct {
+	MaxWorkers   int64 `yaml:"max_workers"`
+	NewWorkerRPS int64 `yaml:"new_worker_rps"`
 }
 
 func New() (*Config, error) {
@@ -68,7 +74,7 @@ func processEnvironment(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("invalid PORT value: %w", err)
 		}
-		cfg.Server.Port = port
+		cfg.Server.Port = int64(port)
 	}
 	if dbPassword, exists := os.LookupEnv("DB_PASSWORD"); exists {
 		cfg.DBPassword = dbPassword
@@ -109,6 +115,22 @@ func processEnvironment(cfg *Config) error {
 
 	if redisPassword, exists := os.LookupEnv("REDIS_PASSWORD"); exists {
 		cfg.Redis.Password = redisPassword
+	}
+
+	if maxWorkersStr, exists := os.LookupEnv("MAX_WORKERS"); exists {
+		maxWorkers, err := strconv.Atoi(maxWorkersStr)
+		if err != nil {
+			return fmt.Errorf("invalid max workers value: %w", err)
+		}
+		cfg.Workers.MaxWorkers = int64(maxWorkers)
+	}
+
+	if workersRPSStr, exists := os.LookupEnv("NEW_WORKER_RPS"); exists {
+		workersRPS, err := strconv.Atoi(workersRPSStr)
+		if err != nil {
+			return fmt.Errorf("invalid new worker rps value: %w", err)
+		}
+		cfg.Workers.NewWorkerRPS = int64(workersRPS)
 	}
 
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {

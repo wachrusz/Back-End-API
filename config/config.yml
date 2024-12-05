@@ -17,3 +17,6 @@ redis:
   password: ""
 access_token_dur_minutes: 15
 rate_limit_per_second: 10
+workers:
+  max_workers: 20
+  new_worker_rps: 1000
