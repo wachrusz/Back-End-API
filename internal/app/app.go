@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/server"
@@ -8,6 +9,9 @@ import (
 	logger "github.com/zhukovrost/cadv_logger"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/wachrusz/Back-End-API/internal/config"
 	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
@@ -48,23 +52,44 @@ func Run(cfg *config.Config) error {
 	deps := service.Dependencies{
 		Repo:                  db,
 		Mailer:                mailer,
+		Cache:                 redis,
 		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-quit
+		l.Info("Received termination signal")
+		cancel()
+	}()
+
+	if err := worker(ctx, cfg, deps, l); err != nil {
+		return err
+	}
+
+	l.Info("Application stopped successfully")
+	return nil
+}
+
+func worker(ctx context.Context, cfg *config.Config, deps service.Dependencies, logger *zap.Logger) error {
 	services, err := service.NewServices(deps)
 	if err != nil {
 		return err
 	}
 
-	l.Info("Initializing models...")
-	models := repository.New(db)
+	logger.Info("Initializing models...")
+	models := repository.New(deps.Repo)
 
-	l.Info("Initializing handlers...", zap.Int64("rate_limit_per_second", cfg.RateLimitPerSecond))
-	handlerV1 := v1.NewHandler(services, l, models, redis, cfg.RateLimitPerSecond)
-	handlerOB := obhttp.NewHandler(services, l)
+	logger.Info("Initializing handlers...", zap.Int64("rate_limit_per_second", cfg.RateLimitPerSecond))
+	handlerV1 := v1.NewHandler(services, logger, models, deps.Cache, cfg.RateLimitPerSecond)
+	handlerOB := obhttp.NewHandler(services, logger)
 
-	l.Info("Initializing routers...")
-	router, docRouter, err := api.InitRouters(handlerV1, handlerOB, l)
+	logger.Info("Initializing routers...")
+	router, docRouter, err := api.InitRouters(handlerV1, handlerOB, logger)
 	if err != nil {
 		return err
 	}
@@ -77,6 +102,6 @@ func Run(cfg *config.Config) error {
 	services.Users.InitActiveUsers()
 	go services.Currency.ScheduleCurrencyUpdates()
 
-	srv := server.NewServer(mux, l, cfg.Server)
-	return srv.Run()
+	srv := server.NewServer(mux, logger, cfg.Server)
+	return srv.Run(ctx)
 }
