@@ -15,8 +15,6 @@ type Config struct {
 	Server              server.Config  `yaml:"server"`
 	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
 	DBPassword          string         `yaml:"db_password"`
-	CrtPath             string         `yaml:"crt_path"`
-	KeyPath             string         `yaml:"key_path"`
 	SecretKey           []byte         `yaml:"secret_key"`
 	SecretRefreshKey    []byte         `yaml:"secret_refresh_key"`
 	CurrencyURL         string         `yaml:"currency_url"`
