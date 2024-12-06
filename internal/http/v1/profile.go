@@ -77,7 +77,7 @@ type ProfileAnalyticsResponse struct {
 // @Param   X-Currency  header   string  true  "Currency code for analytics data (e.g., USD, EUR)"
 // @Param   limit       query    int     false "Limit for pagination"
 // @Param   offset      query    int     false "Offset for pagination"
-// @Param   start_date  query    string  false "start date for analytics data (YYYY-MM-DD)"
+// @Param   start_date  query    string  false "Start date for analytics data (YYYY-MM-DD)"
 // @Param   end_date    query    string  false "End date for analytics data (YYYY-MM-DD)"
 // @Success 200 {object} ProfileAnalyticsResponse "Successfully retrieved analytics data"
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"

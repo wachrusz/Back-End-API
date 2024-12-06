@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/redis/go-redis/v9"
 	"github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/service/categories"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
@@ -21,7 +20,6 @@ type Services struct {
 
 type Dependencies struct {
 	Repo                  *mydatabase.Database
-	Cache                 *redis.Client
 	Mailer                rabbit.Mailer
 	AccessTokenDurMinutes int
 }
