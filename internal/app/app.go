@@ -134,7 +134,6 @@ func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Depen
 
 	for {
 		logger.Info("Entrance")
-		logger.Info(ticker)
 		select {
 		case <-ctx.Done():
 			logger.Info("case Done")
@@ -147,9 +146,9 @@ func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Depen
 				continue
 			}
 
-			logger.Info(value)
+			logger.Info(string(value))
 
-			logger.Info(cfg.Workers.NewWorkerRPS * (workerCount + 1))
+			logger.Info(string(cfg.Workers.NewWorkerRPS * (workerCount + 1)))
 			if value > cfg.Workers.NewWorkerRPS*(workerCount+1) {
 				logger.Info("if value > cfg.Workers.NewWorkerRPS*(workerCount+1)")
 				launchWorker(ctx, cfg, deps, logger)
@@ -165,7 +164,7 @@ func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Depen
 				}
 			}
 		}
-		logger.Info(lowRateCount)
+		logger.Info(string(lowRateCount))
 	}
 }
 
