@@ -169,6 +169,7 @@ func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Depen
 }
 
 func launchWorker(ctx context.Context, cfg config.Config, deps service.Dependencies, logger *zap.Logger) {
+	logger.Info("Started launchWorker")
 	workerMu.Lock()
 	defer workerMu.Unlock()
 
@@ -180,6 +181,8 @@ func launchWorker(ctx context.Context, cfg config.Config, deps service.Dependenc
 	workerCount++
 	port := cfg.Server.Port + workerCount
 	cfg.Server.Port = port
+
+	logger.Info("workerCount, port" + string(workerCount) + string(port))
 
 	// Запускаем воркера с новым контекстом
 	workerCtx, workerCancel := context.WithCancel(ctx)
