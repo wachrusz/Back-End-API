@@ -165,7 +165,7 @@ func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Depen
 				}
 			}
 		}
-		logger.Info("lowRateCount: " + string(lowRateCount))
+		logger.Info(string(lowRateCount))
 	}
 }
 
