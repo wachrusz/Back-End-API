@@ -63,7 +63,6 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
-	l.Info("Initializing services...")
 	deps := service.Dependencies{
 		Repo:                  db,
 		Mailer:                mailer,
