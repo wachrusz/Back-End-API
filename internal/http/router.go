@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/wachrusz/Back-End-API/docs"
 	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
@@ -38,15 +40,14 @@ func InitRouters(h *v1.MyHandler, obh *obhttp.MyHandler, l *zap.Logger) (chi.Rou
 	//mainRouter.Route("/api/emojis", func(r chi.Router) {
 	//	r.Get("/get/{id}", profile.GetIconHandler) // Маршрут для получения иконки
 	//})
+	l.Info("Available routes:")
 
-	//l.Debug("Available routes:")
-	//
-	//for _, r := range [2]chi.Router{mainRouter, docRouter} {
-	//	_ = chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-	//		l.Debug("Route found", zap.String("method", method), zap.String("route", route))
-	//		return nil
-	//	})
-	//}
+	for _, r := range [2]chi.Router{mainRouter, docRouter} {
+		_ = chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+			l.Info("Route found", zap.String("method", method), zap.String("route", route))
+			return nil
+		})
+	}
 
 	return mainRouter, docRouter, nil
 }
