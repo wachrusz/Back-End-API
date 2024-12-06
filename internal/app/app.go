@@ -3,8 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,10 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
+
 	"github.com/wachrusz/Back-End-API/internal/config"
 	api "github.com/wachrusz/Back-End-API/internal/http"
 	"github.com/wachrusz/Back-End-API/internal/http/obhttp"
-	"github.com/wachrusz/Back-End-API/internal/http/v1"
+	v1 "github.com/wachrusz/Back-End-API/internal/http/v1"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/server"
@@ -125,34 +126,46 @@ func worker(ctx context.Context, cfg *config.Config, deps service.Dependencies, 
 }
 
 func monitorRateLimit(ctx context.Context, cfg config.Config, deps service.Dependencies, logger *zap.Logger) {
+	logger.Info("Started monitorRateLimit")
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	lowRateCount := 0
 
 	for {
+		logger.Info("Entrance")
+		logger.Info(ticker)
 		select {
 		case <-ctx.Done():
+			logger.Info("case Done")
 			return
 		case <-ticker.C:
+			logger.Info("case <-ticker.C")
 			value, err := deps.Cache.Get(ctx, rateLimitKey).Int64()
 			if err != nil && !errors.Is(err, redis.Nil) {
 				logger.Error("Failed to fetch rate limit value", zap.Error(err))
 				continue
 			}
 
+			logger.Info(value)
+
+			logger.Info(cfg.Workers.NewWorkerRPS * (workerCount + 1))
 			if value > cfg.Workers.NewWorkerRPS*(workerCount+1) {
+				logger.Info("if value > cfg.Workers.NewWorkerRPS*(workerCount+1)")
 				launchWorker(ctx, cfg, deps, logger)
 				lowRateCount = 0
 			} else if cfg.Workers.NewWorkerRPS*(workerCount+1) >= value && value >= cfg.Workers.NewWorkerRPS*workerCount {
+				logger.Info("if cfg.Workers.NewWorkerRPS*(workerCount+1) >= value && value >= cfg.Workers.NewWorkerRPS*workerCount")
 				lowRateCount = 0
 			} else {
+				logger.Info("else")
 				lowRateCount++
 				if lowRateCount >= stableChecks {
 					terminateWorkers(context.Background(), cfg, logger)
 				}
 			}
 		}
+		logger.Info(lowRateCount)
 	}
 }
 
