@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"github.com/joho/godotenv"
-	"github.com/wachrusz/Back-End-API/internal/server"
 	"github.com/wachrusz/Back-End-API/pkg/cache"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	"gopkg.in/yaml.v3"
@@ -12,21 +11,18 @@ import (
 )
 
 type Config struct {
-	Server              server.Config  `yaml:"server"`
-	Workers             WorkersConfig  `yaml:"workers"`
-	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
+	Host                string         `yaml:"host"`
+	Port                int            `yaml:"port"`
 	DBPassword          string         `yaml:"db_password"`
+	CrtPath             string         `yaml:"crt_path"`
+	KeyPath             string         `yaml:"key_path"`
 	SecretKey           []byte         `yaml:"secret_key"`
 	SecretRefreshKey    []byte         `yaml:"secret_refresh_key"`
 	CurrencyURL         string         `yaml:"currency_url"`
 	Rabbit              rabbit.Config  `yaml:"rabbit"`
 	AccessTokenLifetime int            `yaml:"access_token_dur_minutes"`
+	RateLimitPerSecond  int64          `yaml:"rate_limit_per_second"`
 	Redis               cache.RedisCfg `yaml:"redis"`
-}
-
-type WorkersConfig struct {
-	MaxWorkers   int64 `yaml:"max_workers"`
-	NewWorkerRPS int64 `yaml:"new_worker_rps"`
 }
 
 func New() (*Config, error) {
@@ -42,8 +38,12 @@ func New() (*Config, error) {
 	return &cfg, nil
 }
 
-func (c *Config) GetDBURL() string {
-	return fmt.Sprintf("postgres://cadvadmin:%s@%s:5432/cadvdb?sslmode=disable", c.DBPassword, c.Server.Host)
+func (c Config) GetAddr() string {
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+}
+
+func (c Config) GetDBURL() string {
+	return fmt.Sprintf("postgres://cadvadmin:%s@%s:5432/cadvdb?sslmode=disable", c.DBPassword, c.Host)
 }
 
 func loadConfig(filename string, cfg *Config) error {
@@ -67,14 +67,14 @@ func processEnvironment(cfg *Config) error {
 		return err
 	}
 	if host, exists := os.LookupEnv("HOST"); exists {
-		cfg.Server.Host = host
+		cfg.Host = host
 	}
 	if portStr, exists := os.LookupEnv("PORT"); exists {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
 			return fmt.Errorf("invalid PORT value: %w", err)
 		}
-		cfg.Server.Port = int64(port)
+		cfg.Port = port
 	}
 	if dbPassword, exists := os.LookupEnv("DB_PASSWORD"); exists {
 		cfg.DBPassword = dbPassword
@@ -115,22 +115,6 @@ func processEnvironment(cfg *Config) error {
 
 	if redisPassword, exists := os.LookupEnv("REDIS_PASSWORD"); exists {
 		cfg.Redis.Password = redisPassword
-	}
-
-	if maxWorkersStr, exists := os.LookupEnv("MAX_WORKERS"); exists {
-		maxWorkers, err := strconv.Atoi(maxWorkersStr)
-		if err != nil {
-			return fmt.Errorf("invalid max workers value: %w", err)
-		}
-		cfg.Workers.MaxWorkers = int64(maxWorkers)
-	}
-
-	if workersRPSStr, exists := os.LookupEnv("NEW_WORKER_RPS"); exists {
-		workersRPS, err := strconv.Atoi(workersRPSStr)
-		if err != nil {
-			return fmt.Errorf("invalid new worker rps value: %w", err)
-		}
-		cfg.Workers.NewWorkerRPS = int64(workersRPS)
 	}
 
 	//if crtPath, exists := os.LookupEnv("CRT_PATH"); exists {

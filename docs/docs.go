@@ -1767,7 +1767,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "start date for analytics data (YYYY-MM-DD)",
+                        "description": "Start date for analytics data (YYYY-MM-DD)",
                         "name": "start_date",
                         "in": "query"
                     },
