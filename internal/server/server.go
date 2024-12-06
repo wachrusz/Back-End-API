@@ -45,7 +45,7 @@ func NewServer(handler http.Handler, logger *zap.Logger, cfg Config) *Server {
 
 // start runs the server and listens for incoming requests.
 func (s *Server) start() error {
-	s.logger.Info("Starting server...", zap.Int64("port", s.cfg.Port))
+	s.logger.Info("Server is running...", zap.Int64("port", s.cfg.Port))
 	return s.httpServer.ListenAndServeTLS(s.cfg.CrtPath, s.cfg.KeyPath)
 }
 
@@ -60,7 +60,7 @@ func (s *Server) Run(ctx context.Context) error {
 	select {
 	case err := <-errChan:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("server error: %w", err)
+			return fmt.Errorf("server error on port %d: %w", s.cfg.Port, err)
 		}
 	case <-ctx.Done():
 		// Trigger shutdown
