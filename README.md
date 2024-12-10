@@ -27,6 +27,9 @@ The **Cash Advisor API** is a comprehensive backend service designed to manage u
 >
 
 # External Services&Packages
+>[Mikhail Vakhrushin](https://github.com/wachrusz/)
+>>[cadv_metrics](https://github.com/wachrusz/cadvmetrics)
+>>
 >[Rostislav Zhukov](https://github.com/zhukovrost/)
 >>[cadv_email](https://github.com/zhukovrost/cadv_email)
 >>
