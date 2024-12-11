@@ -70,7 +70,7 @@ func (h *MyHandler) RegisterUserHandlers(router chi.Router) {
 		})
 
 		// Token routes
-		r.Post("/refresh", h.AuthMiddleware(h.RefreshTokenHandler))
+		r.Post("/refresh", h.RefreshTokenHandler)
 		r.Delete("/tokens", h.DeleteTokensHandler)
 		r.Get("/tokens/amount", h.GetTokenPairsAmountHandler)
 	})
