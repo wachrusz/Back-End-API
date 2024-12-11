@@ -4,12 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	"github.com/wachrusz/Back-End-API/pkg/util"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type RefreshToken struct {
@@ -37,17 +40,37 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	//! Заставляет задуматься
-	userID, ok := utility.GetUserIDFromContext(r.Context())
-	if !ok {
-		h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
-		return
-	}
-
+	/*
+		userID, ok := utility.GetUserIDFromContext(r.Context())
+		if !ok {
+			h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+			return
+		}
+	*/
 	var tmpToken RefreshToken
 
 	err := json.NewDecoder(r.Body).Decode(&tmpToken)
 	if err != nil {
 		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	refreshToken, err := jwt.Parse(tmpToken.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(enc.SecretKey), nil
+	})
+
+	claims, ok := refreshToken.Claims.(jwt.MapClaims)
+	if !ok {
+		h.errResp(w, errors.New("no claims in token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		h.errResp(w, errors.New("Failed to get user ID from refresh token: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
