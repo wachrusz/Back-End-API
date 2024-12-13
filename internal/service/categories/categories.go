@@ -8,9 +8,10 @@ import (
 	//"encoding/json"
 
 	"fmt"
-	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"math"
 	"time"
+
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/repository"
@@ -332,7 +333,7 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models.ConnectedA
 
 	// Запрос к базе данных для выбора подключенных аккаунтов по идентификатору пользователя.
 	query := `
-		SELECT id, user_id, bank_id, account_number, account_type
+		SELECT id, user_id, bank_id, account_number, account_type, state
 		FROM connected_accounts
 		WHERE user_id = $1;
 	`
