@@ -59,11 +59,11 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(enc.SecretKey), nil
+		return []byte(enc.SecretRefreshKey), nil
 	})
 
 	if refreshToken == nil {
-		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()+". DESC: "+tmpToken.RefreshToken), http.StatusBadRequest)
+		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
