@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
@@ -13,8 +14,8 @@ type AccountModel struct {
 
 func (m *AccountModel) Create(account *models.ConnectedAccount) (int64, error) {
 	var connectedAccountID int64
-	err := m.DB.QueryRow("INSERT INTO connected_accounts (user_id, bank_id, account_number, account_type, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id",
-		account.UserID, account.BankID, account.AccountNumber, account.AccountType).Scan(&connectedAccountID)
+	err := m.DB.QueryRow("INSERT INTO connected_accounts (user_id, bank_id, account_number, account_type, created_at, updated_at, state) VALUES ($1, $2, $3, $4, NOW(), NOW(), $5) RETURNING id",
+		account.UserID, account.BankID, account.AccountNumber, account.AccountType, account.AccountState).Scan(&connectedAccountID)
 	if err != nil {
 		return 0, err
 	}
