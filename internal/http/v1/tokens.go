@@ -62,6 +62,11 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		return []byte(enc.SecretKey), nil
 	})
 
+	if refreshToken == nil {
+		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
 	claims, ok := refreshToken.Claims.(jwt.MapClaims)
 	if !ok {
 		h.errResp(w, errors.New("no claims in token: "+err.Error()), http.StatusBadRequest)
