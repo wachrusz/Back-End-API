@@ -63,7 +63,7 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 	})
 
 	if refreshToken == nil {
-		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()), http.StatusBadRequest)
+		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()+". DESC: "+tmpToken.RefreshToken), http.StatusBadRequest)
 		return
 	}
 
