@@ -5,6 +5,7 @@ import (
 	"github.com/wachrusz/Back-End-API/internal/service/categories"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
 	"github.com/wachrusz/Back-End-API/internal/service/email"
+	"github.com/wachrusz/Back-End-API/internal/service/fin_health"
 	"github.com/wachrusz/Back-End-API/internal/service/token"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
@@ -16,6 +17,7 @@ type Services struct {
 	Emails     email.Emails
 	Currency   currency.CurrencyService
 	Tokens     token.Tokens
+	FinHealth  fin_health.Health // TODO: implement the interface
 }
 
 type Dependencies struct {
@@ -32,13 +34,15 @@ func NewServices(deps Dependencies) (*Services, error) {
 	e := email.NewService(deps.Repo, deps.Mailer)
 	cat := categories.NewService(deps.Repo, cur)
 	u := user.NewService(deps.Repo, cat)
+	h := fin_health.NewService(deps.Repo)
 	t := token.NewService(deps.Repo, e, u, deps.AccessTokenDurMinutes)
 	return &Services{
 		Users:      u,
 		Categories: cat,
 		Emails:     e,
 		//Reports:    report.NewService(deps.Repo),
-		Currency: cur,
-		Tokens:   t,
+		Currency:  cur,
+		Tokens:    t,
+		FinHealth: h,
 	}, nil
 }
