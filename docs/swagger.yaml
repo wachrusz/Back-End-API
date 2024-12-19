@@ -109,6 +109,8 @@ definitions:
     properties:
       account_number:
         type: string
+      account_state:
+        type: number
       account_type:
         type: string
       bank_id:
@@ -394,6 +396,15 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/models.ConnectedAccount'
+    type: object
+  v1.DeltaResponse:
+    properties:
+      expenditure_delta:
+        type: number
+      message:
+        type: string
+      status:
+        type: integer
     type: object
   v1.EndTimeResponse:
     properties:
@@ -1427,6 +1438,32 @@ paths:
       summary: Get token pairs amount
       tags:
       - Auth
+  /fin_health/expense/delta:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to calculate the expenditure
+        delta, providing insight into their financial health.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully calculated expenditure delta
+          schema:
+            $ref: '#/definitions/v1.DeltaResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while calculating expenditure delta
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Calculate expenditure delta
+      tags:
+      - Financial Health
   /history/add:
     post:
       consumes:
@@ -1461,8 +1498,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: This handler returns the number of requests in the last second
-        and details by IP for rate limiting and usage monitoring.
+      description: This streaming handler returns the number of requests in the last
+        second and details by IP for rate limiting and usage monitoring.
       produces:
       - application/json
       responses:
@@ -1478,7 +1515,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/jsonresponse.ErrorResponse'
-      summary: Returns the number of requests in the last second
+      summary: Returns the number of requests in the last second as a stream
       tags:
       - Metrics
   /openbanking/accounts/get:
