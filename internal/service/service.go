@@ -17,7 +17,7 @@ type Services struct {
 	Emails     email.Emails
 	Currency   currency.CurrencyService
 	Tokens     token.Tokens
-	FinHealth  fin_health.Health // TODO: implement the interface
+	FinHealth  fin_health.Health
 }
 
 type Dependencies struct {

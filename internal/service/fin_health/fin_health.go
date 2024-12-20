@@ -16,4 +16,5 @@ func NewService(repo *mydb.Database) *Service {
 
 type Health interface {
 	ExpenditureDelta(userID string) (float64, error)
+	ExpensePropensity(userID string) (float64, error)
 }
