@@ -18,6 +18,7 @@ func newRouter(h *v1.MyHandler, obh *obhttp.MyHandler) chi.Router {
 		h.RegisterHandler(r)
 		h.RegisterUserHandlers(r)
 		h.RegisterProfileHandlers(r)
+		h.RegisterFinHealthHandlers(r)
 	})
 
 	//Open Banking Group

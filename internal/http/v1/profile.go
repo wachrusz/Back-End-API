@@ -87,7 +87,7 @@ type ProfileAnalyticsResponse struct {
 func (h *MyHandler) GetProfileAnalyticsHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
-		jsonresponse.SendErrorResponse(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+		h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
