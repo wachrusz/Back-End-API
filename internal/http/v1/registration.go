@@ -56,7 +56,10 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 
 func (h *MyHandler) RegisterFinHealthHandlers(router chi.Router) {
 	router.Route("/fin_health", func(r chi.Router) {
-		r.Get("/expense/delta", h.AuthMiddleware(h.ExpenditureDeltaHandler))
+		r.Route("/expense", func(r chi.Router) {
+			r.Get("/delta", h.AuthMiddleware(h.ExpenditureDeltaHandler))
+			r.Get("/propensity", h.AuthMiddleware(h.ExpensePropensity))
+		})
 	})
 }
 func (h *MyHandler) RegisterUserHandlers(router chi.Router) {

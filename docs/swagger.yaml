@@ -403,7 +403,7 @@ definitions:
         type: number
       message:
         type: string
-      status:
+      status_code:
         type: integer
     type: object
   v1.EndTimeResponse:
@@ -482,6 +482,15 @@ definitions:
         type: integer
       tracker:
         $ref: '#/definitions/categories.Tracker'
+    type: object
+  v1.PropensityResponse:
+    properties:
+      expense_propensity:
+        type: number
+      message:
+        type: string
+      status_code:
+        type: integer
     type: object
   v1.RefreshToken:
     properties:
@@ -1462,6 +1471,32 @@ paths:
       security:
       - JWT: []
       summary: Calculate expenditure delta
+      tags:
+      - Financial Health
+  /fin_health/expense/propensity:
+    get:
+      consumes:
+      - application/json
+      description: This endpoint allows authenticated users to calculate the expense
+        propensity, providing insight into their financial health.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully calculated expense propensity
+          schema:
+            $ref: '#/definitions/v1.PropensityResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Server error while calculating expenditure delta
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Calculate expense propensity
       tags:
       - Financial Health
   /history/add:

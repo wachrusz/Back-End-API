@@ -1419,6 +1419,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/fin_health/expense/propensity": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the expense propensity, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate expense propensity",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated expense propensity",
+                        "schema": {
+                            "$ref": "#/definitions/v1.PropensityResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating expenditure delta",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/history/add": {
             "post": {
                 "description": "Create a new entry to the history.",
@@ -3053,7 +3093,7 @@ const docTemplate = `{
                 "message": {
                     "type": "string"
                 },
-                "status": {
+                "status_code": {
                     "type": "integer"
                 }
             }
@@ -3175,6 +3215,20 @@ const docTemplate = `{
                 },
                 "tracker": {
                     "$ref": "#/definitions/categories.Tracker"
+                }
+            }
+        },
+        "v1.PropensityResponse": {
+            "type": "object",
+            "properties": {
+                "expense_propensity": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
                 }
             }
         },
