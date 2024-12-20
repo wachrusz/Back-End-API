@@ -5,15 +5,16 @@
 package repository
 
 import (
+	"log"
+
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
-	"log"
 )
 
 // App представляет собой информацию о приложении пользователя.
 type App struct {
-	ConnectedAccounts []models.ConnectedAccount `json:"connected_accounts"`
-	CategorySettings  CategorySettings          `json:"category_settings"`
+	ConnectedAccounts map[string][]models.ConnectedAccount `json:"connected_accounts"`
+	CategorySettings  CategorySettings                     `json:"category_settings"`
 	//OperationArchive  []Operation        `json:"operation_archive"` //*Deleted from APP
 }
 
