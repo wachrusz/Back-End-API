@@ -59,7 +59,7 @@ func round(num float64, precision int) float64 {
 	return math.Round(num*output) / output
 }
 
-func (s *Service) convertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
+func (s *Service) ConvertCurrency(amount float64, fromCurrencyCode string, toCurrencyCode string) float64 {
 	// TODO: refactor: unsafe map exchangeRates
 	if fromCurrencyCode == "" || toCurrencyCode == "" {
 		return round(amount, 2)
@@ -134,7 +134,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 		}
 		income.UserID = userID
 		if income.Currency != currencyCode && currencyCode != "" {
-			income.Amount = s.convertCurrency(income.Amount, income.Currency, currencyCode)
+			income.Amount = s.ConvertCurrency(income.Amount, income.Currency, currencyCode)
 		}
 		incomeList = append(incomeList, income)
 	}
@@ -154,7 +154,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 		}
 		expense.UserID = userID
 		if expense.Currency != currencyCode && currencyCode != "" {
-			expense.Amount = s.convertCurrency(expense.Amount, expense.Currency, currencyCode)
+			expense.Amount = s.ConvertCurrency(expense.Amount, expense.Currency, currencyCode)
 		}
 		expenseList = append(expenseList, expense)
 	}
@@ -173,7 +173,7 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 			return nil, fmt.Errorf("error scanning wealth funds: %v", err)
 		}
 		if wealthFund.Currency != currencyCode && currencyCode != "" {
-			wealthFund.Amount = s.convertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
+			wealthFund.Amount = s.ConvertCurrency(wealthFund.Amount, wealthFund.Currency, currencyCode)
 		}
 		wealthFundList = append(wealthFundList, wealthFund)
 	}
@@ -202,7 +202,7 @@ func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr str
 			return nil, err
 		}
 		goal.UserID = userID
-		goal.Need = s.convertCurrency(goal.Need, goal.Currency, currencyCode)
+		goal.Need = s.ConvertCurrency(goal.Need, goal.Currency, currencyCode)
 		goalList = append(goalList, goal)
 	}
 	trackingState := &repository.TrackingState{
@@ -255,7 +255,7 @@ func (s *Service) getTotalState(userID string, convertionCode string) float64 {
 		log.Println(err)
 		return 0
 	}
-	return s.convertCurrency(state, "RUB", convertionCode)
+	return s.ConvertCurrency(state, "RUB", convertionCode)
 }
 
 func (s *Service) GetUserInfoFromDB(userID string) (string, string, error) {

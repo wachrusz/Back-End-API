@@ -42,13 +42,6 @@ type ConfirmResponse struct {
 func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming email...")
 
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		err := errors.New("empty 'Content-Type' HEADER")
-		h.errResp(w, fmt.Errorf("invalid Content-Type, expected application/json: %v", err), http.StatusBadRequest)
-		return
-	}
-
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {
 		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
@@ -112,11 +105,6 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 // @Router /auth/login/confirm [post]
 func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Confirming email for login...")
-	contentType := r.Header.Get("Content-Type")
-	if contentType != "application/json" {
-		h.errResp(w, fmt.Errorf("invalid content type"), http.StatusBadRequest)
-		return
-	}
 
 	var confirmRequest token.ConfirmEmailRequest
 	if err := json.NewDecoder(r.Body).Decode(&confirmRequest); err != nil {

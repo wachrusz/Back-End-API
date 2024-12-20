@@ -1379,6 +1379,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/fin_health/expense/delta": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the expenditure delta, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate expenditure delta",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated expenditure delta",
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeltaResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating expenditure delta",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/expense/propensity": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the expense propensity, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate expense propensity",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated expense propensity",
+                        "schema": {
+                            "$ref": "#/definitions/v1.PropensityResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating expenditure delta",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/history/add": {
             "post": {
                 "description": "Create a new entry to the history.",
@@ -1427,7 +1507,7 @@ const docTemplate = `{
         },
         "/metrics/rps": {
             "get": {
-                "description": "This handler returns the number of requests in the last second and details by IP for rate limiting and usage monitoring.",
+                "description": "This streaming handler returns the number of requests in the last second and details by IP for rate limiting and usage monitoring.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1437,7 +1517,7 @@ const docTemplate = `{
                 "tags": [
                     "Metrics"
                 ],
-                "summary": "Returns the number of requests in the last second",
+                "summary": "Returns the number of requests in the last second as a stream",
                 "responses": {
                     "200": {
                         "description": "Successful response with request count",
@@ -2562,6 +2642,9 @@ const docTemplate = `{
                 "account_number": {
                     "type": "string"
                 },
+                "account_state": {
+                    "type": "number"
+                },
                 "account_type": {
                     "type": "string"
                 },
@@ -3001,6 +3084,20 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.DeltaResponse": {
+            "type": "object",
+            "properties": {
+                "expenditure_delta": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
         "v1.EndTimeResponse": {
             "type": "object",
             "properties": {
@@ -3118,6 +3215,20 @@ const docTemplate = `{
                 },
                 "tracker": {
                     "$ref": "#/definitions/categories.Tracker"
+                }
+            }
+        },
+        "v1.PropensityResponse": {
+            "type": "object",
+            "properties": {
+                "expense_propensity": {
+                    "type": "number"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
                 }
             }
         },
