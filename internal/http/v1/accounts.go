@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-	"net/http"
 )
 
 type ConnectedAccountRequest struct {
@@ -46,6 +47,8 @@ func (h *MyHandler) AddConnectedAccountHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 	account.UserID = userID
+
+	h.l.Debug(account.AccountNumber + account.AccountType + account.BankID + account.ID + account.UserID)
 
 	connectedAccountID, err := h.m.Accounts.Create(&account)
 	if err != nil {
