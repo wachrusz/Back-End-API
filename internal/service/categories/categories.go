@@ -328,12 +328,13 @@ func (s *Service) GetSubscriptionFromDB(userID string) (*models.Subscription, er
 	return &subscription, nil
 }
 
-func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error) {
-	var connectedAccounts []models.ConnectedAccount
+func (s *Service) GetConnectedAccountsFromDB(userID string) (map[string][]models.ConnectedAccount, error) {
+	// Инициализация мапы для хранения подключенных аккаунтов, сгруппированных по bank_id.
+	connectedAccountsMap := make(map[string][]models.ConnectedAccount)
 
 	// Запрос к базе данных для выбора подключенных аккаунтов по идентификатору пользователя.
 	query := `
-		SELECT id, user_id, bank_id, account_number, account_type, state
+		SELECT id, user_id, bank_id, account_number, account_type, name, currency, state
 		FROM connected_accounts
 		WHERE user_id = $1;
 	`
@@ -352,19 +353,23 @@ func (s *Service) GetConnectedAccountsFromDB(userID string) ([]models.ConnectedA
 			&connectedAccount.BankID,
 			&connectedAccount.AccountNumber,
 			&connectedAccount.AccountType,
+			&connectedAccount.AccountName,
+			&connectedAccount.AccountCurrency,
+			&connectedAccount.AccountState,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		connectedAccounts = append(connectedAccounts, connectedAccount)
+		// Добавляем подключенный аккаунт в мапу по ключу bank_id.
+		connectedAccountsMap[connectedAccount.BankID] = append(connectedAccountsMap[connectedAccount.BankID], connectedAccount)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return connectedAccounts, nil
+	return connectedAccountsMap, nil
 }
 
 func (s *Service) GetCategorySettingsFromDB(userID string) (*repository.CategorySettings, error) {
@@ -482,7 +487,7 @@ type Categories interface {
 	GetMoreFromDB(userID string) (*More, error)
 	GetAppFromDB(userID string) (*repository.App, error)
 	GetSubscriptionFromDB(userID string) (*models.Subscription, error)
-	GetConnectedAccountsFromDB(userID string) ([]models.ConnectedAccount, error)
+	GetConnectedAccountsFromDB(userID string) (map[string][]models.ConnectedAccount, error)
 	GetCategorySettingsFromDB(userID string) (*repository.CategorySettings, error)
 	GetOperationArchiveFromDB(userID, limit, offset string) ([]repository.Operation, error)
 }

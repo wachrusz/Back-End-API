@@ -16,9 +16,9 @@ func (m *AccountModel) Create(account *models.ConnectedAccount) (int64, error) {
 	var connectedAccountID int64
 	err := m.DB.QueryRow(
 		`INSERT INTO connected_accounts 
-		(user_id, bank_id, account_number, account_type, state, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id`,
-		account.UserID, account.BankID, account.AccountNumber, account.AccountType, account.AccountState).Scan(&connectedAccountID)
+		(user_id, bank_id, account_number, account_type, state, name, currency, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING id`,
+		account.UserID, account.BankID, account.AccountNumber, account.AccountType, account.AccountState, account.AccountName, account.AccountCurrency).Scan(&connectedAccountID)
 	if err != nil {
 		return 0, err
 	}
