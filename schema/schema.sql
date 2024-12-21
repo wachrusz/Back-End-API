@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1)
--- Dumped by pg_dump version 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1)
+-- Dumped from database version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
+-- Dumped by pg_dump version 16.6 (Ubuntu 16.6-0ubuntu0.24.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,6 +27,23 @@ CREATE TYPE public.planned AS ENUM (
 
 
 ALTER TYPE public.planned OWNER TO postgres;
+
+--
+-- Name: delete_expired_codes(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.delete_expired_codes() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM confirmation_codes
+    WHERE expiration_time < NOW(); -- Удаляем записи, у которых expiration_time меньше текущего времени
+    RETURN NEW; -- Возвращаем новую запись (если это операция вставки или обновления)
+END;
+$$;
+
+
+ALTER FUNCTION public.delete_expired_codes() OWNER TO postgres;
 
 --
 -- Name: update_transactions(); Type: FUNCTION; Schema: public; Owner: postgres
@@ -110,7 +127,7 @@ CREATE SEQUENCE public.banks_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.banks_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.banks_id_seq OWNER TO postgres;
 
 --
 -- Name: banks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -141,12 +158,15 @@ ALTER TABLE public.confirmation_codes OWNER TO postgres;
 
 CREATE TABLE public.connected_accounts (
     id integer NOT NULL,
-    user_id integer,
-    bank_id integer,
-    account_number character varying(20),
-    account_type character varying(50),
+    user_id integer DEFAULT 0,
+    bank_id integer DEFAULT 0,
+    account_number character varying(20) DEFAULT '00000000000000000000'::character varying,
+    account_type character varying(50) DEFAULT 'unknown'::character varying,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    name character varying(50) DEFAULT 'null'::character varying,
+    currency character varying(3) DEFAULT 'RUB'::character varying,
+    state real DEFAULT 0
 );
 
 
@@ -165,7 +185,7 @@ CREATE SEQUENCE public.connected_accounts_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.connected_accounts_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.connected_accounts_id_seq OWNER TO postgres;
 
 --
 -- Name: connected_accounts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -205,7 +225,7 @@ CREATE SEQUENCE public.currency_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.currency_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.currency_id_seq OWNER TO postgres;
 
 --
 -- Name: currency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -274,7 +294,7 @@ CREATE SEQUENCE public.expense_categories_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.expense_categories_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.expense_categories_id_seq OWNER TO postgres;
 
 --
 -- Name: expense_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -296,7 +316,7 @@ CREATE SEQUENCE public.expense_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.expense_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.expense_id_seq OWNER TO postgres;
 
 --
 -- Name: expense_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -313,8 +333,11 @@ CREATE TABLE public.goal (
     id integer NOT NULL,
     goal character varying(255),
     user_id integer,
-    need real,
-    current_state real
+    need real DEFAULT 0,
+    current_state real DEFAULT 0,
+    currency character varying(3) DEFAULT 'RUB'::character varying,
+    start_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    end_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -333,7 +356,7 @@ CREATE SEQUENCE public.goal_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.goal_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.goal_id_seq OWNER TO postgres;
 
 --
 -- Name: goal_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -391,7 +414,7 @@ CREATE SEQUENCE public.income_categories_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.income_categories_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.income_categories_id_seq OWNER TO postgres;
 
 --
 -- Name: income_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -413,7 +436,7 @@ CREATE SEQUENCE public.income_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.income_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.income_id_seq OWNER TO postgres;
 
 --
 -- Name: income_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -450,7 +473,7 @@ CREATE SEQUENCE public.investment_categories_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.investment_categories_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.investment_categories_id_seq OWNER TO postgres;
 
 --
 -- Name: investment_categories_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -490,7 +513,7 @@ CREATE SEQUENCE public.operations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.operations_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.operations_id_seq OWNER TO postgres;
 
 --
 -- Name: operations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -526,7 +549,7 @@ CREATE SEQUENCE public.profile_images_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.profile_images_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.profile_images_id_seq OWNER TO postgres;
 
 --
 -- Name: profile_images_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -562,7 +585,7 @@ CREATE SEQUENCE public.service_images_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.service_images_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.service_images_id_seq OWNER TO postgres;
 
 --
 -- Name: service_images_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -602,7 +625,7 @@ CREATE SEQUENCE public.sessions_session_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.sessions_session_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.sessions_session_id_seq OWNER TO postgres;
 
 --
 -- Name: sessions_session_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -639,7 +662,7 @@ CREATE SEQUENCE public.subscriptions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.subscriptions_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.subscriptions_id_seq OWNER TO postgres;
 
 --
 -- Name: subscriptions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -674,7 +697,7 @@ CREATE SEQUENCE public.tracking_state_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.tracking_state_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.tracking_state_id_seq OWNER TO postgres;
 
 --
 -- Name: tracking_state_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -714,7 +737,7 @@ CREATE SEQUENCE public.transactions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.transactions_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.transactions_id_seq OWNER TO postgres;
 
 --
 -- Name: transactions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -751,7 +774,7 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.users_id_seq OWNER TO postgres;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -791,7 +814,7 @@ CREATE SEQUENCE public.wealth_fund_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.wealth_fund_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.wealth_fund_id_seq OWNER TO postgres;
 
 --
 -- Name: wealth_fund_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -1147,6 +1170,13 @@ ALTER TABLE ONLY public.wealth_fund
 --
 
 CREATE TRIGGER transaction_reference_check BEFORE INSERT OR UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION public.validate_transaction_reference();
+
+
+--
+-- Name: confirmation_codes trigger_delete_expired_codes; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trigger_delete_expired_codes BEFORE INSERT OR UPDATE ON public.confirmation_codes FOR EACH ROW EXECUTE FUNCTION public.delete_expired_codes();
 
 
 --
