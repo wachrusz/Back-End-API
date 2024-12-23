@@ -4,7 +4,7 @@ include secret/.env
 .PHONY: db/psql
 db/psql:
 	@echo "Connecting to the database...\nTo quit type \\q\n"
-	@psql postgres://cadvadmin:${DB_PASSWORD}@${HOST}:5432/cadvdb?sslmode=disable
+	@psql $(DBSTRING)
 
 ## runs the application
 .PHONY: run/api
@@ -21,3 +21,26 @@ amqp/run:
 build/docs:
 	@echo 'Building docs'
 	swag init -g ./cmd/api/main.go
+
+MIGRATIONS_DIR = ./migrations
+
+.PHONY: migration/create
+migration/create:
+	@read -p "Enter migration name: " migration_name; \
+	migrate create -seq -ext .sql -dir $(MIGRATIONS_DIR) $$migration_name
+
+migration/up:
+	@read -p "Enter the number of migrations to apply (ignore if you want to migrate up as possible): " count; \
+	migrate -path $(MIGRATIONS_DIR) -database $(DBSTRING) up $$count
+
+# Цель для отката миграций с подтверждением действия
+migration/down:
+	@echo "WARNING: You are about to roll back migrations!"
+	@read -p "Are you sure you want to continue? (y/n): " confirm; \
+	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+		read -p "Enter the number of migrations to rollback (leave blank to rollback all migrations): " count; \
+		migrate -path $(MIGRATIONS_DIR) -database $(DBSTRING) down $$count; \
+		echo "Migrations rolled back successfully."; \
+	else \
+		echo "Migration rollback aborted."; \
+	fi
