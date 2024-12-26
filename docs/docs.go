@@ -1379,7 +1379,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/fin_health/expense/delta": {
+        "/fin_health/expenses/delta": {
             "get": {
                 "security": [
                     {
@@ -1419,7 +1419,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/fin_health/expense/propensity": {
+        "/fin_health/expenses/propensity": {
             "get": {
                 "security": [
                     {
@@ -1452,6 +1452,166 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Server error while calculating expenditure delta",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/savings/delta": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the savings delta, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate savings delta",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated savings delta",
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeltaResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating savings delta",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/savings/ratio/illiquid": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the illiquid fund ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate illiquid fund ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated illiquid fund ratio",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating illiquid fund ratio",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/savings/ratio/liquid": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the liquid fund ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate liquid fund ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated liquid fund ratio",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating liquid fund ratio",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/savings/ratio/savings_to_income": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the savings to income ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate savings to income ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated savings to income ratio",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating savings to income ratio",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
@@ -2639,6 +2799,12 @@ const docTemplate = `{
         "models.ConnectedAccount": {
             "type": "object",
             "properties": {
+                "account_currency": {
+                    "type": "string"
+                },
+                "account_name": {
+                    "type": "string"
+                },
                 "account_number": {
                     "type": "string"
                 },
@@ -2827,9 +2993,12 @@ const docTemplate = `{
                     "$ref": "#/definitions/repository.CategorySettings"
                 },
                 "connected_accounts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ConnectedAccount"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/models.ConnectedAccount"
+                        }
                     }
                 }
             }
@@ -3087,7 +3256,7 @@ const docTemplate = `{
         "v1.DeltaResponse": {
             "type": "object",
             "properties": {
-                "expenditure_delta": {
+                "delta": {
                     "type": "number"
                 },
                 "message": {
@@ -3226,6 +3395,20 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.RatioResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "ratio": {
+                    "type": "number"
                 },
                 "status_code": {
                     "type": "integer"
