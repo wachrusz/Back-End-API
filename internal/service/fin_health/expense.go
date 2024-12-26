@@ -2,36 +2,25 @@ package fin_health
 
 import "math"
 
+// ExpensePropensity считает среднюю склонность к потреблению
+// Формула: Суммарные расходы за месяц/располагаемый доход за месяц
+// Формула преобразования: min{100*(1.2-propensity_to_expend); 50}
 func (s *Service) ExpensePropensity(userID string) (float64, error) {
 	q := `
 	WITH current_month_expenses AS (
-		SELECT COALESCE(SUM(
-			CASE
-				WHEN currency_code = 'RUB' THEN amount
-				ELSE amount * COALESCE(
-					(SELECT rate_to_ruble 
-					 FROM exchange_rates 
-					 WHERE currency_code = expense.currency_code), 
-					1)
-			END), 0) AS total_current_month
-		FROM expense
+		SELECT COALESCE(SUM(amount_in_rubles), 0) AS total_current_month
+		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
+			planned = '0' AND
 			date >= NOW() - INTERVAL '30 days'
 	), 
 	current_month_incomes AS (
-		SELECT COALESCE(SUM(
-			CASE
-				WHEN currency_code = 'RUB' THEN amount
-				ELSE amount * COALESCE(
-					(SELECT rate_to_ruble 
-					 FROM exchange_rates 
-					 WHERE currency_code = income.currency_code), 
-					1)
-			END), 0) AS total_current_month
-		FROM income
+		SELECT COALESCE(SUM(amount_in_rubles), 0) AS total_current_month
+		FROM income_in_rubles
 		WHERE
 			user_id = $1 AND
+			planned = '0' AND
 			date >= NOW() - INTERVAL '30 days'
 	) 
 	SELECT 
@@ -54,36 +43,25 @@ func (s *Service) ExpensePropensity(userID string) (float64, error) {
 	return result, nil
 }
 
+// ExpenditureDelta считает изменение расходов по сравнению со среднемесячными расходами
+// Формула: (суммарные расходы за данный месяц - средние ежемесячные расходы за последние 3 месяца)/средние ежемесячные расходы за последние 3 месяца *100
+// Формула преобразования: min{2.5*(15 - expenditure_delta); 50}
 func (s *Service) ExpenditureDelta(userID string) (float64, error) {
 	q := `
 	WITH current_month_expenses AS (
-		SELECT COALESCE(SUM(
-			CASE
-				WHEN currency_code = 'RUB' THEN amount
-				ELSE amount * COALESCE(
-					(SELECT rate_to_ruble 
-					 FROM exchange_rates 
-					 WHERE currency_code = expense.currency_code), 
-					1)
-			END), 0) AS total_current_month
-		FROM expense
+		SELECT COALESCE(SUM(amount_in_rubles), 0) AS total_current_month
+		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
+			planned = '0' AND
 			date >= NOW() - INTERVAL '30 days'
 	),
 	average_monthly_expenses AS (
-		SELECT COALESCE(SUM(
-			CASE
-				WHEN currency_code = 'RUB' THEN amount
-				ELSE amount * COALESCE(
-					(SELECT rate_to_ruble 
-					 FROM exchange_rates 
-					 WHERE currency_code = expense.currency_code), 
-					1)
-			END), 0) / 3 AS avg_last_3_months
-		FROM expense
+		SELECT COALESCE(SUM(amount_in_rubles), 0) / 3 AS avg_last_3_months
+		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
+			planned = '0' AND
 			date >= NOW() - INTERVAL '90 days'
 	)
 	SELECT 
