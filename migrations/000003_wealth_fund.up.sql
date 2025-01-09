@@ -7,6 +7,8 @@ CREATE TYPE public.active_type AS ENUM (
 ALTER TYPE public.active_type OWNER TO postgres;
 
 ALTER TABLE public.wealth_fund ADD COLUMN type public.active_type, ADD COLUMN is_liquid BOOLEAN;
+ALTER TABLE public.expense ADD COLUMN type public.active_type, ADD COLUMN is_liquid BOOLEAN;
+ALTER TABLE public.income ADD COLUMN type public.active_type, ADD COLUMN is_liquid BOOLEAN;
 
 
 CREATE VIEW public.expense_in_rubles AS
