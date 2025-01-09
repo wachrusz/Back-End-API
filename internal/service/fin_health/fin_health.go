@@ -32,4 +32,6 @@ type Health interface {
 	IlliquidFundRatio(userID string) (float64, error)
 	SavingsToIncomeRatio(userID string) (float64, error)
 	SavingDelta(userID string) (float64, error)
+	InvestmentsToSavingsRatio(userID string) (float64, error)
+	InvestmentsToFundRatio(userID string) (float64, error)
 }
