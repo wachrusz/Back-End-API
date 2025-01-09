@@ -1459,6 +1459,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/fin_health/investments/ratio/investments_to_fund": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the monthly investments to fund ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate monthly investments to fund ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated investments to fund",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating investments to fund ratio",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/investments/ratio/investments_to_savings": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the monthly investments to savings ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate monthly investments to savings ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated investments to savings",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating investments to savings ratio",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/fin_health/savings/delta": {
             "get": {
                 "security": [

@@ -240,3 +240,75 @@ func (h *MyHandler) SavingsDelta(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
+
+// InvestmentsToSavingsRatioHandler calculates the monthly investments to savings ratio for an authenticated user.
+//
+// @Summary Calculate monthly investments to savings ratio
+// @Description This endpoint allows authenticated users to calculate the monthly investments to savings ratio, providing insight into their financial health.
+// @Tags Financial Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} RatioResponse "Successfully calculated investments to savings"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error while calculating investments to savings ratio"
+// @Security JWT
+// @Router /fin_health/investments/ratio/investments_to_savings [get]
+func (h *MyHandler) InvestmentsToSavingsRatioHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Calculating savings to income ratio...")
+
+	user, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("authentication error"), http.StatusUnauthorized)
+		return
+	}
+	result, err := h.s.FinHealth.InvestmentsToSavingsRatio(user)
+	if err != nil {
+		h.errResp(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := RatioResponse{
+		Message:    "Monthly investments to savings ratio calculated successfully",
+		Ratio:      result,
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// InvestmentsToFundRatioHandler calculates the monthly investments to fund ratio for an authenticated user.
+//
+// @Summary Calculate monthly investments to fund ratio
+// @Description This endpoint allows authenticated users to calculate the monthly investments to fund ratio, providing insight into their financial health.
+// @Tags Financial Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} RatioResponse "Successfully calculated investments to fund"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error while calculating investments to fund ratio"
+// @Security JWT
+// @Router /fin_health/investments/ratio/investments_to_fund [get]
+func (h *MyHandler) InvestmentsToFundRatioHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Calculating fund to income ratio...")
+
+	user, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("authentication error"), http.StatusUnauthorized)
+		return
+	}
+	result, err := h.s.FinHealth.InvestmentsToFundRatio(user)
+	if err != nil {
+		h.errResp(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := RatioResponse{
+		Message:    "Monthly investments to fund ratio calculated successfully",
+		Ratio:      result,
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
