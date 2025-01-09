@@ -72,6 +72,10 @@ func (h *MyHandler) RegisterFinHealthHandlers(router chi.Router) {
 			r.Get("/investments_to_savings", h.AuthMiddleware(h.InvestmentsToSavingsRatioHandler))
 			r.Get("/investments_to_fund", h.AuthMiddleware(h.InvestmentsToFundRatioHandler))
 		})
+		r.Route("/loans", func(r chi.Router) {
+			r.Get("/propensity", h.AuthMiddleware(h.LoansPropensityHandler))
+			r.Get("/ratio/loans_to_assets", h.AuthMiddleware(h.LoansToAssetsRatioHandler))
+		})
 	})
 }
 func (h *MyHandler) RegisterUserHandlers(router chi.Router) {

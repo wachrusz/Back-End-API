@@ -312,3 +312,75 @@ func (h *MyHandler) InvestmentsToFundRatioHandler(w http.ResponseWriter, r *http
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
+
+// LoansToAssetsRatioHandler calculates the monthly loans to assets ratio for an authenticated user.
+//
+// @Summary Calculate monthly loans to assets ratio
+// @Description This endpoint allows authenticated users to calculate the monthly loans to assets ratio, providing insight into their financial health.
+// @Tags Financial Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} RatioResponse "Successfully calculated loans to assets ratio"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error while calculating loans to assets ratio"
+// @Security JWT
+// @Router /fin_health/loans/ratio/loans_to_assets [get]
+func (h *MyHandler) LoansToAssetsRatioHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Calculating loans to assets ratio...")
+
+	user, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("authentication error"), http.StatusUnauthorized)
+		return
+	}
+	result, err := h.s.FinHealth.LoansToAssetsRatio(user)
+	if err != nil {
+		h.errResp(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := RatioResponse{
+		Message:    "Monthly loans to assets ratio calculated successfully",
+		Ratio:      result,
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}
+
+// LoansPropensityHandler calculates the loans propensity for an authenticated user.
+//
+// @Summary Calculate loans propensity
+// @Description This endpoint allows authenticated users to calculate their loans propensity, providing insight into their financial health and spending behavior.
+// @Tags Financial Health
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} PropensityResponse "Successfully calculated loans propensity"
+// @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
+// @Failure 500 {object} jsonresponse.ErrorResponse "Server error while calculating loans propensity"
+// @Security JWT
+// @Router /fin_health/loans/propensity [get]
+func (h *MyHandler) LoansPropensityHandler(w http.ResponseWriter, r *http.Request) {
+	h.l.Debug("Calculating loans propensity...")
+
+	user, ok := utility.GetUserIDFromContext(r.Context())
+	if !ok {
+		h.errResp(w, fmt.Errorf("authentication error"), http.StatusUnauthorized)
+		return
+	}
+	result, err := h.s.FinHealth.LoansPropensity(user)
+	if err != nil {
+		h.errResp(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := PropensityResponse{
+		Message:    "Loans propensity calculated successfully",
+		Propensity: result,
+		StatusCode: http.StatusOK,
+	}
+	w.WriteHeader(response.StatusCode)
+	json.NewEncoder(w).Encode(response)
+}

@@ -1539,6 +1539,86 @@ const docTemplate = `{
                 }
             }
         },
+        "/fin_health/loans/propensity": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate their loans propensity, providing insight into their financial health and spending behavior.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate loans propensity",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated loans propensity",
+                        "schema": {
+                            "$ref": "#/definitions/v1.PropensityResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating loans propensity",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/fin_health/loans/ratio/loans_to_assets": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "This endpoint allows authenticated users to calculate the monthly loans to assets ratio, providing insight into their financial health.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Financial Health"
+                ],
+                "summary": "Calculate monthly loans to assets ratio",
+                "responses": {
+                    "200": {
+                        "description": "Successfully calculated loans to assets ratio",
+                        "schema": {
+                            "$ref": "#/definitions/v1.RatioResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error while calculating loans to assets ratio",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/fin_health/savings/delta": {
             "get": {
                 "security": [

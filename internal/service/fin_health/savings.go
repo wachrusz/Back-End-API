@@ -77,8 +77,11 @@ func (s *Service) SavingsToIncomeRatio(userID string) (float64, error) {
 			planned = '0' AND
 			date >= NOW() - INTERVAL '30 days'
 	)
-	SELECT 
-		expense_for_savings.total / income_monthly.total AS ratio
+	SELECT
+	    CASE 
+			WHEN income_monthly.total THEN 0
+	    	ELSE expense_for_savings.total / income_monthly.total
+	    END AS ratio
 	FROM 
 		expense_for_savings, 
 		income_monthly;
