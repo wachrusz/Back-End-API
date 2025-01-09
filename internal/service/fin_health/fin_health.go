@@ -34,4 +34,6 @@ type Health interface {
 	SavingDelta(userID string) (float64, error)
 	InvestmentsToSavingsRatio(userID string) (float64, error)
 	InvestmentsToFundRatio(userID string) (float64, error)
+	LoansToAssetsRatio(userID string) (float64, error)
+	LoansPropensity(userID string) (float64, error)
 }
