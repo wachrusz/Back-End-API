@@ -12,7 +12,7 @@ func (s *Service) InvestmentsToSavingsRatio(userID string) (float64, error) {
 		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			type = $2 AND
 			date >= NOW() - INTERVAL '30 days'
 	),
@@ -21,7 +21,7 @@ func (s *Service) InvestmentsToSavingsRatio(userID string) (float64, error) {
 		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			type = $3 AND
 			date >= NOW() - INTERVAL '30 days'
 	)
@@ -55,7 +55,7 @@ func (s *Service) InvestmentsToFundRatio(userID string) (float64, error) {
 		FROM wealth_fund_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			type = $2
 	),
 	savings AS (
@@ -63,7 +63,7 @@ func (s *Service) InvestmentsToFundRatio(userID string) (float64, error) {
 		FROM wealth_fund_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			type = $3
 	)
 	SELECT 

@@ -14,14 +14,14 @@ func (s *Service) LoansToAssetsRatio(userID string) (float64, error) {
 		WHERE
 			user_id = $1  AND
 			type = $2 AND 
-			planned = '0'	
+			planned = false	
 	),
 	fund AS (
 		SELECT COALESCE(SUM(amount_in_rubles), 0) AS total
 		FROM wealth_fund_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0'
+			planned = false
 	)
 	SELECT 
 	    CASE
@@ -59,7 +59,7 @@ func (s *Service) LoansPropensity(userID string) (float64, error) {
 		WHERE
 			user_id = $1  AND
 			type = $2 AND 
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '30 days'
 	),
 	income AS (
@@ -67,7 +67,7 @@ func (s *Service) LoansPropensity(userID string) (float64, error) {
 		FROM income_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '30 days'
 	)
 	SELECT 
