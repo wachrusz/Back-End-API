@@ -10,7 +10,7 @@ var ratioQuery string = `
 		WHERE
 			user_id = $1  AND
 			is_liquid = $2 AND 
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '1 year'
 	),
 	average_yearly_expense AS (
@@ -18,11 +18,14 @@ var ratioQuery string = `
 		FROM expense_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '1 year'
 	)
 	SELECT 
-		la.total_liquid / ay.avg_last_year AS ratio
+	    CASE
+	        WHEN ay.avg_last_year = 0 THEN 0
+			ELSE la.total_liquid / ay.avg_last_year 
+		END AS ratio
 	FROM 
 		liquid_active la, 
 		average_yearly_expense ay;`
@@ -66,7 +69,7 @@ func (s *Service) SavingsToIncomeRatio(userID string) (float64, error) {
 		WHERE
 			user_id = $1  AND
 			type = $2 AND 
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '30 days'
 	),
 	income_monthly AS (
@@ -74,12 +77,12 @@ func (s *Service) SavingsToIncomeRatio(userID string) (float64, error) {
 		FROM income_in_rubles
 		WHERE
 			user_id = $1 AND
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '30 days'
 	)
 	SELECT
 	    CASE 
-			WHEN income_monthly.total THEN 0
+			WHEN income_monthly.total = 0 THEN 0
 	    	ELSE expense_for_savings.total / income_monthly.total
 	    END AS ratio
 	FROM 
@@ -108,7 +111,7 @@ func (s *Service) SavingDelta(userID string) (float64, error) {
 		WHERE
 			user_id = $1 AND
 			type = $2 AND
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '30 days'
 	), 
 	average_saving_amount_annually AS (
@@ -117,23 +120,28 @@ func (s *Service) SavingDelta(userID string) (float64, error) {
 		WHERE
 			user_id = $1 AND
 			type = $2 AND
-			planned = '0' AND
+			planned = false AND
 			date >= NOW() - INTERVAL '1 year'
 	) 
 	SELECT 
 	    CASE
 			WHEN av.avg_amount = 0 THEN 0
 			ELSE (cs.total - av.avg_amount) / av.avg_amount + 1
-		END AS delta 
+		END AS delta,
+	    av.avg_amount AS avg
 	FROM 
 		current_month_savings cs, 
 		average_saving_amount_annually av
 	`
 
-	var delta float64
-	err := s.repo.QueryRow(q, userID, saving).Scan(&delta)
+	var delta, avg float64
+	err := s.repo.QueryRow(q, userID, saving).Scan(&delta, &avg)
 	if err != nil {
 		return 0, err
+	}
+
+	if avg == 0 {
+		return 0, nil
 	}
 
 	result := math.Min((delta-0.8)*50, 20)
