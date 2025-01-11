@@ -112,6 +112,7 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 // @Router /auth/logout [post]
 func (h *MyHandler) LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("User logout initiated...")
+	// TODO: DEVICE CHECK
 
 	// Retrieve the current device ID from the context
 	currentDeviceID, ok := utility.GetDeviceIDFromContext(r.Context())

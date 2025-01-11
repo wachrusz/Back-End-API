@@ -10,6 +10,5 @@ func (s *Service) Logout(device, userID string) error {
 		return fmt.Errorf("error removing session from db: %v", err)
 	}
 
-	delete(s.ActiveUsers, userID)
 	return nil
 }

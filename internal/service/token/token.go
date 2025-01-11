@@ -219,8 +219,6 @@ func (s *Service) updateTokenInDB(userID, newAccessToken string) error {
 		return err
 	}
 
-	s.user.SetAccessToken(userID, newAccessToken)
-
 	query := `
 		UPDATE sessions
 		SET token = $1,
@@ -334,7 +332,7 @@ func (s *Service) ConfirmEmailRegister(token, code, deviceID string) (Details, e
 	}
 
 	//! SAVE SESSIONS
-	err = s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
+	err = s.user.SaveSessionToDatabase(userID, deviceID, tokenDetails.AccessToken)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
@@ -375,7 +373,7 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (Details, erro
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	err = s.user.SaveSessionToDatabase(registerRequest.Email, deviceID, userID, tokenDetails.AccessToken)
+	err = s.user.SaveSessionToDatabase(userID, deviceID, tokenDetails.AccessToken)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
@@ -417,7 +415,7 @@ func (s *Service) ResetPasswordConfirm(token, code, deviceID string) (ResetToken
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	err = s.user.SaveSessionToDatabase(email, deviceID, userID, newToken)
+	err = s.user.SaveSessionToDatabase(userID, deviceID, newToken)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}

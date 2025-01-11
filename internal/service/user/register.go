@@ -30,9 +30,6 @@ func (s *Service) GetUserByEmail(email string) (IdentificationData, bool) {
 }
 
 func (s *Service) Register(email, password string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	if _, exists := s.GetUserByEmail(email); exists {
 		return errors.New("Already exists")
 	}

@@ -120,7 +120,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 
 	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
-		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusBadRequest)
 		return
 	}
 

@@ -6,15 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
+
+var NoDeviceError = errors.New("please, fill X-Device-ID header with your device id")
 
 type UserAuthenticationRequest struct {
 	Email    string `json:"email"`
@@ -216,11 +218,36 @@ func GetDeviceIDFromJWT(tokenString string) (string, error) {
 }
 
 func GetDeviceIDFromRequest(r *http.Request) (string, error) {
-	id, err := uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil.String(), err
+	deviceID := strings.TrimSpace(r.Header.Get("X-Device-ID"))
+	if deviceID == "" {
+		return "", NoDeviceError
 	}
-	return id.String(), nil
+	return deviceID, nil
+}
+
+// ExtractTokenFromHeader извлекает токен из заголовка Authorization
+func ExtractTokenFromHeader(r *http.Request) (string, error) {
+	// Получаем значение заголовка Authorization
+	tokenString := r.Header.Get("Authorization")
+
+	// Проверяем, что заголовок не пустой
+	if tokenString == "" {
+		return "", errors.New("missing Authorization header")
+	}
+
+	// Проверяем, что заголовок начинается с "Bearer "
+	const bearerPrefix = "Bearer "
+	if !strings.HasPrefix(tokenString, bearerPrefix) {
+		return "", errors.New("invalid Authorization header format, expected 'Bearer <token>'")
+	}
+
+	// Убираем префикс "Bearer " и возвращаем токен
+	token := strings.TrimSpace(strings.TrimPrefix(tokenString, bearerPrefix))
+	if token == "" {
+		return "", errors.New("empty token in Authorization header")
+	}
+
+	return token, nil
 }
 
 func GetDeviceIDFromContext(ctx context.Context) (string, bool) {
