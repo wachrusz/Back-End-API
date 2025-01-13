@@ -5,13 +5,14 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
-	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -54,10 +55,11 @@ func GenerateRegisterJWTToken(email, password string) (string, error) {
 	return signedToken, nil
 }
 
-func GenerateResetJWTToken(email string) (string, error) {
+func GenerateResetJWTToken(email string) (string, int64, error) {
+	expiresAt := time.Now().Add(time.Minute * tokenExpirationMinutes).Unix()
 	claims := jwt.MapClaims{
 		"email":     email,
-		"exp":       time.Now().Add(time.Minute * tokenExpirationMinutes).Unix(),
+		"exp":       expiresAt,
 		"code_used": false,
 		"confirmed": false,
 	}
@@ -65,10 +67,10 @@ func GenerateResetJWTToken(email string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(enc.SecretKey))
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return signedToken, nil
+	return signedToken, expiresAt, nil
 }
 
 func VerifyRegisterJWTToken(tokenString, enteredEmail, enteredPassword string) error {

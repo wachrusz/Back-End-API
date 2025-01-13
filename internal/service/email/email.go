@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/repository"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
-	"time"
 	//"github.com/go-gomail/gomail"
 )
 
@@ -162,7 +163,7 @@ func (s *Service) CheckConfirmationCode(email, token, enteredCode string) (Check
 	}
 
 	if time.Now().After(expirationTime) {
-		return result, myerrors.ErrExpired
+		return result, myerrors.ErrExpiredCode
 	}
 
 	return result, nil

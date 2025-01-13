@@ -3,6 +3,9 @@ package token
 import (
 	"database/sql"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
@@ -11,25 +14,28 @@ import (
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"golang.org/x/crypto/bcrypt"
-	"sync"
-	"time"
+)
+
+const (
+	refreshTokenLifeTime = time.Hour * 24 * 30 // 30 days
+	resetTokenLifeTime   = time.Minute * 15    // 15 minutes
 )
 
 type Service struct {
-	email         email.Emails
-	user          user.Users
-	repo          *mydb.Database
-	mutex         sync.Mutex
-	tokenLifetime time.Duration
+	email               email.Emails
+	user                user.Users
+	repo                *mydb.Database
+	mutex               sync.Mutex
+	accessTokenLifetime time.Duration
 }
 
 func NewService(repo *mydb.Database, e email.Emails, u user.Users, d int) *Service {
 	return &Service{
-		email:         e,
-		user:          u,
-		repo:          repo,
-		mutex:         sync.Mutex{},
-		tokenLifetime: time.Minute * time.Duration(d),
+		email:               e,
+		user:                u,
+		repo:                repo,
+		mutex:               sync.Mutex{},
+		accessTokenLifetime: time.Minute * time.Duration(d),
 	}
 }
 
@@ -39,10 +45,12 @@ type Tokens interface {
 	ResetPasswordConfirm(token, code, deviceId string) (ResetTokenDetails, error)
 	ChangePasswordForRecover(email, password, resetToken string) error
 	Login(email, password string) (string, error)
-	RefreshToken(rt, userID string) (string, string, error)
-	GenerateToken(userID string, deviceID string) (*Details, error)
+	RefreshToken(refreshTokenString, deviceID string) (Details, error)
+	GenerateToken(userID string, deviceID string) (Details, error)
 	ConfirmEmailRegister(token, code, deviceID string) (Details, error)
 	ConfirmEmailLogin(token, code, deviceID string) (Details, error)
+	RemoveSessionFromDatabase(deviceID, userID string) error
+	Logout(device, userID string) error
 }
 
 func (s *Service) PrimaryRegistration(email, password string) (string, error) {
@@ -89,7 +97,7 @@ func (s *Service) ResetPassword(email string) (string, error) {
 		return "", fmt.Errorf("%w: there is no user with this email", myerrors.ErrInvalidCreds)
 	}
 
-	token, err := utility.GenerateResetJWTToken(email)
+	token, _, err := utility.GenerateResetJWTToken(email)
 	if err != nil {
 		return "", fmt.Errorf("%w: error generating confirmation token: %v", myerrors.ErrInternal, err)
 	}
@@ -197,39 +205,8 @@ func comparePasswords(hashedPassword, password string) bool {
 	return err == nil
 }
 
-func (s *Service) RefreshToken(rt, userID string) (string, string, error) {
-	tokenDetails, err := s.refreshToken(rt)
-	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
-	}
-
-	err = s.updateTokenInDB(userID, tokenDetails.AccessToken)
-	if err != nil {
-		return "", "", fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
-	}
-
-	return tokenDetails.AccessToken, tokenDetails.RefreshToken, nil
-}
-
-// *NEW
-// ! Это выглядит подозрительно плохо, есть вероятность что нахуй буду послан при попытке запустить(так и было)
-func (s *Service) updateTokenInDB(userID, newAccessToken string) error {
-	encryptedToken, err := enc.EncryptToken(newAccessToken)
-	if err != nil {
-		return err
-	}
-
-	query := `
-		UPDATE sessions
-		SET token = $1,
-		expires_at = NOW() + INTERVAL '15 minutes'
-		WHERE user_id = $2;
-	`
-	_, err = s.repo.Exec(query, encryptedToken, userID)
-	return err
-}
-
-func (s *Service) refreshToken(refreshTokenString string) (*Details, error) {
+func (s *Service) RefreshToken(refreshTokenString, deviceID string) (Details, error) {
+	details := Details{}
 	refreshToken, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -238,54 +215,117 @@ func (s *Service) refreshToken(refreshTokenString string) (*Details, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return details, err
 	}
 
 	if _, ok := refreshToken.Claims.(jwt.Claims); !ok && !refreshToken.Valid {
-		return nil, fmt.Errorf("Invalid refresh token")
+		return details, fmt.Errorf("Invalid refresh token")
 	}
 
 	claims, ok := refreshToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil, fmt.Errorf("Failed to parse refresh token claims")
+		return details, fmt.Errorf("Failed to parse refresh token claims")
 	}
 
-	userID, ok := claims["sub"].(string)
+	userIDClaims, ok := claims["sub"].(string)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get user ID from refresh token")
-	}
-	deviceID, ok := claims["device_id"].(string)
-	if !ok {
-		return nil, fmt.Errorf("Failed to get device ID from refresh token")
+		return details, fmt.Errorf("Failed to get user ID from refresh token")
 	}
 
-	return s.GenerateToken(userID, deviceID)
+	deviceIDClaims, ok := claims["device_id"].(string)
+	if !ok {
+		return details, fmt.Errorf("Failed to get device ID from refresh token")
+	}
+
+	if deviceID != deviceIDClaims {
+		return details, myerrors.ErrInvalidToken
+	}
+
+	expiresFloat, ok := claims["exp"].(float64)
+	if !ok {
+		return details, fmt.Errorf("Failed to get expiration time from refresh token")
+	}
+	expires := int64(expiresFloat)
+
+	if time.Unix(expires, 0).Before(time.Now()) {
+		return details, myerrors.ErrExpiredToken
+	}
+
+	details, err = s.GenerateToken(userIDClaims, deviceID)
+	if err != nil {
+		return details, err
+	}
+
+	err = s.updateTokenInDB(userIDClaims, deviceID, details.RefreshToken, details.ExpiresAt)
+	if err != nil {
+		return details, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
+	}
+
+	return details, nil
 }
 
-func (s *Service) GenerateToken(userID string, deviceID string) (*Details, error) {
+// updateTokenInDB выполняет ротацию refresh-токенов и обновляет последнюю активность пользователя
+func (s *Service) updateTokenInDB(userID, deviceID, token string, expirationTime int64) error {
+	encryptedToken, err := enc.EncryptToken(token)
+	if err != nil {
+		return err
+	}
+
+	expirationTimeFormatted := time.Unix(expirationTime, 0).UTC()
+
+	result, err := s.repo.Exec(`
+        UPDATE sessions 
+        SET last_activity=NOW(), token=$1, expires_at=$2
+        WHERE (user_id=$3 AND device_id=$4) AND (expires_at>NOW() AND revoked=false)`,
+		encryptedToken, expirationTimeFormatted, userID, deviceID)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return myerrors.ErrExpiredToken
+	}
+
+	if rowsAffected != 1 {
+		// TODO: revoke
+		return myerrors.ErrDualSession
+	}
+
+	return err
+}
+
+func (s *Service) GenerateToken(userID string, deviceID string) (Details, error) {
+	details := Details{}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":       userID,
-		"exp":       time.Now().Add(s.tokenLifetime).Unix(),
+		"exp":       time.Now().Add(s.accessTokenLifetime).Unix(),
 		"device_id": deviceID,
 	})
 
 	accessTokenString, err := accessToken.SignedString([]byte(enc.SecretKey))
 	if err != nil {
-		return nil, err
+		return details, err
 	}
 
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub":       userID,
+		"exp":       time.Now().Add(refreshTokenLifeTime).Unix(),
 		"device_id": deviceID,
 	})
 	refreshTokenString, err := refreshToken.SignedString([]byte(enc.SecretKey))
 	if err != nil {
-		return nil, err
+		return details, err
 	}
 
-	refreshTokenExpiresAt := time.Now().Add(30 * 24 * time.Hour).Unix()
+	refreshTokenExpiresAt := time.Now().Add(refreshTokenLifeTime).Unix()
 
-	return &Details{
+	return Details{
 		AccessToken:  accessTokenString,
 		RefreshToken: refreshTokenString,
 		ExpiresAt:    refreshTokenExpiresAt,
@@ -332,12 +372,12 @@ func (s *Service) ConfirmEmailRegister(token, code, deviceID string) (Details, e
 	}
 
 	//! SAVE SESSIONS
-	err = s.user.SaveSessionToDatabase(userID, deviceID, tokenDetails.AccessToken)
+	err = s.saveSessionToDatabase(userID, deviceID, tokenDetails.RefreshToken, tokenDetails.ExpiresAt)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	return *tokenDetails, nil
+	return tokenDetails, nil
 }
 
 func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (Details, error) {
@@ -373,12 +413,12 @@ func (s *Service) ConfirmEmailLogin(token, code, deviceID string) (Details, erro
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	err = s.user.SaveSessionToDatabase(userID, deviceID, tokenDetails.AccessToken)
+	err = s.saveSessionToDatabase(userID, deviceID, tokenDetails.RefreshToken, tokenDetails.ExpiresAt)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	return *tokenDetails, nil
+	return tokenDetails, nil
 }
 
 func (s *Service) ResetPasswordConfirm(token, code, deviceID string) (ResetTokenDetails, error) {
@@ -400,7 +440,7 @@ func (s *Service) ResetPasswordConfirm(token, code, deviceID string) (ResetToken
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	newToken, err := utility.GenerateResetJWTToken(email)
+	newToken, expiresAt, err := utility.GenerateResetJWTToken(email)
 	if err != nil {
 		return result, fmt.Errorf("%w: error generating confirmation token: %v", myerrors.ErrInternal, err)
 	}
@@ -415,12 +455,12 @@ func (s *Service) ResetPasswordConfirm(token, code, deviceID string) (ResetToken
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	err = s.user.SaveSessionToDatabase(userID, deviceID, newToken)
+	err = s.saveSessionToDatabase(userID, deviceID, newToken, expiresAt)
 	if err != nil {
 		return result, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
 	}
 
-	result.ExpiresAt = time.Now().Add(15 * time.Minute).Unix()
+	result.ExpiresAt = expiresAt
 	result.ResetToken = newToken
 	return result, nil
 }
@@ -443,4 +483,35 @@ type ResetTokenDetails struct {
 	ExpiresAt         int64  `json:"expires_at"`
 	RemainingAttempts int    `json:"-"`
 	LockDuration      int    `json:"-"`
+}
+
+func (s *Service) saveSessionToDatabase(userID, deviceID, token string, expirationTime int64) error {
+	// Encrypt the token
+	encryptedToken, err := enc.EncryptToken(token)
+	if err != nil {
+		return err
+	}
+
+	expirationTimeFormatted := time.Unix(expirationTime, 0).UTC()
+
+	_, err = s.repo.Exec(`
+        INSERT INTO sessions (device_id, created_at, last_activity, user_id, token, expires_at)
+        VALUES ($1, NOW(), NOW(), $2, $3, $4)`,
+		deviceID, userID, encryptedToken, expirationTimeFormatted)
+	return err
+}
+
+func (s *Service) RemoveSessionFromDatabase(deviceID, userID string) error {
+	_, err := s.repo.Exec(`
+        UPDATE sessions SET revoked = true WHERE device_id = $1 AND user_id = $2;`, deviceID, userID)
+	return err
+}
+
+func (s *Service) Logout(device, userID string) error {
+	err := s.RemoveSessionFromDatabase(device, userID)
+	if err != nil {
+		return fmt.Errorf("error removing session from db: %v", err)
+	}
+
+	return nil
 }

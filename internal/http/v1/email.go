@@ -11,9 +11,10 @@ import (
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 
+	"net/http"
+
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // ConfirmResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
@@ -209,7 +210,7 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
 			h.errResp(w, err, http.StatusInternalServerError)
 			break
-		case errors.Is(err, myerrors.ErrInvalidToken) || errors.Is(err, myerrors.ErrExpired):
+		case errors.Is(err, myerrors.ErrInvalidToken) || errors.Is(err, myerrors.ErrExpiredCode):
 			h.errResp(w, err, http.StatusBadRequest)
 			break
 		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
