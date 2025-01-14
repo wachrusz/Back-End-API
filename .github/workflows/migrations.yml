@@ -31,7 +31,6 @@ jobs:
         id: find-migrations
         run: |
           # Находим последний файл .up.sql
-          cd migations
           LATEST_UP=$(ls -1 *up.sql | sort -V | tail -n 1)
           # Находим последний файл .down.sql
           LATEST_DOWN=$(ls -1 *down.sql | sort -V | tail -n 1)
