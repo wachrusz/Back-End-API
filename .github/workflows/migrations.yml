@@ -1,0 +1,90 @@
+name: Run Database Migrations on Remote Server
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: 
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Test SSH connection
+        env:
+          SERVER_IP: ${{ secrets.PG_HOST }}
+        run: ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP "echo 'SSH connection successful!'"
+      - name: Install psql (PostgreSQL client)
+        run: sudo apt-get install -y postgresql-client
+      - name: Find latest migration files
+        id: find-migrations
+        run: |
+          # Находим последний файл .up.sql
+          cd migrations
+          LATEST_UP=$(ls -1 *up.sql | sort -V | tail -n 1)
+          # Находим последний файл .down.sql
+          LATEST_DOWN=$(ls -1 *down.sql | sort -V | tail -n 1)
+          # Проверяем, что файлы найдены
+          if [ -z "$LATEST_UP" ]; then
+            echo "No .up.sql migration files found!"
+            exit 1
+          fi
+          if [ -z "$LATEST_DOWN" ]; then
+            echo "No .down.sql migration files found!"
+            exit 1
+          fi
+          # Сохраняем пути в переменные окружения
+          echo "LATEST_UP=$LATEST_UP" >> $GITHUB_ENV
+          echo "LATEST_DOWN=$LATEST_DOWN" >> $GITHUB_ENV
+      - name: Copy migration files to remote server
+        env:
+          SERVER_IP:   ${{ secrets.SERVER_IP      }}
+          LATEST_DOWN: ${{ env.LATEST_DOWN        }}
+          LATEST_UP:   ${{ env.LATEST_UP          }}
+        run: |
+          scp -o StrictHostKeyChecking=no $LATEST_DOWN ubuntu@$SERVER_IP:/tmp/
+          scp -o StrictHostKeyChecking=no $LATEST_UP ubuntu@$SERVER_IP:/tmp/
+      - name: Check if migration already executed
+        id: check-migration
+        env:
+          PGHOST:       ${{ secrets.PG_HOST     }}
+          PGPORT:       ${{ secrets.PG_PORT     }}
+          PGDATABASE:   ${{ secrets.PG_DATABASE }}
+          PGUSER:       ${{ secrets.PG_USER     }}
+          PGPASSWORD:   ${{ secrets.DB_PASSWORD }}
+          SERVER_IP:    ${{ secrets.SERVER_IP   }}
+          LATEST_UP:    ${{ env.LATEST_UP       }}
+        run: |
+          # Проверяем, существует ли миграция в таблице migrations
+          EXISTS=$(ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
+          "psql -h $PGHOST -U $PGUSER -d $PGDATABASE -t -c \
+          'SELECT 1 FROM migrations WHERE name = '\''$LATEST_UP'\'';'")
+          
+          if [ -z "$EXISTS" ]; then
+            echo "Migration $LATEST_UP not executed yet."
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "Migration $LATEST_UP already executed."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Run up migrations on remote server (if not executed)
+        if: steps.check-migration.outputs.should_run == 'true'
+        env:
+          PGHOST:       ${{ secrets.PG_HOST     }}
+          PGPORT:       ${{ secrets.PG_PORT     }}
+          PGDATABASE:   ${{ secrets.PG_DATABASE }}
+          PGUSER:       ${{ secrets.PG_USER     }}
+          PGPASSWORD:   ${{ secrets.DB_PASSWORD }}
+          SERVER_IP:    ${{ secrets.SERVER_IP   }}
+          LATEST_UP:    ${{ env.LATEST_UP       }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
+          "psql -h $PGHOST -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
+          # Добавляем запись о выполненной миграции
+          ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
+          "psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c \
+          'INSERT INTO migrations (name) VALUES ('\''$LATEST_UP'\'');'"
