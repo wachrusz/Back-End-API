@@ -68,6 +68,8 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
+	services.Users.InitActiveUsers()
+
 	http.Handle("/", router)
 	http.Handle("/swagger/", docRouter)
 	http.Handle("/docs/", docRouter)

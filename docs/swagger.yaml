@@ -1146,11 +1146,6 @@ paths:
       description: Confirms the user's email for login using a RefreshToken and confirmation
         code.
       parameters:
-      - description: Уникальный идентификатор устройства
-        in: header
-        name: X-Device-ID
-        required: true
-        type: string
       - description: Confirmation request
         in: body
         name: confirmRequest
@@ -1274,11 +1269,6 @@ paths:
       - application/json
       description: Confirms the password reset process using a RefreshToken and code.
       parameters:
-      - description: Unique device id
-        in: header
-        name: X-Device-ID
-        required: true
-        type: string
       - description: Confirmation request
         in: body
         name: confirmRequest
@@ -1381,11 +1371,6 @@ paths:
       description: Confirms the user's email using a RefreshToken and confirmation
         code during registration.
       parameters:
-      - description: Уникальный идентификатор устройства
-        in: header
-        name: X-Device-ID
-        required: true
-        type: string
       - description: Confirmation request
         in: body
         name: confirmRequest
@@ -2403,8 +2388,8 @@ schemes:
 - https
 securityDefinitions:
   JWT:
-    description: To authorize, write "Bearer <token>" in header Authorization
+    description: To authorize,
     in: header
-    name: Bearer Authorization
+    name: Authorization
     type: apiKey
 swagger: "2.0"

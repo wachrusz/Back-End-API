@@ -3,8 +3,6 @@ package user
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
@@ -32,6 +30,9 @@ func (s *Service) GetUserByEmail(email string) (IdentificationData, bool) {
 }
 
 func (s *Service) Register(email, password string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	if _, exists := s.GetUserByEmail(email); exists {
 		return errors.New("Already exists")
 	}
@@ -51,17 +52,4 @@ func (s *Service) Register(email, password string) error {
 	}
 
 	return nil
-}
-
-func (s *Service) GetUserIDFromUsersDatabase(email string) (string, error) {
-	var result string
-
-	err := s.repo.QueryRow(`
-	SELECT id FROM users WHERE email = $1;
-	`, email).Scan(&result)
-
-	if err != nil {
-		return "", fmt.Errorf("error checking session in database: %v", err)
-	}
-	return result, nil
 }

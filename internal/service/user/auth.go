@@ -12,26 +12,27 @@ import (
 )
 
 func (s *Service) DeleteTokens(email, deviceID string) error {
-	// TODO: bug fix
 	if email != "" {
 		err := s.deleteForEmail(email)
 		if err != nil {
 			return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
 		}
-		//userID, err := s.GetUserIDFromUsersDatabase(email)
-		//if err != nil {
-		//	return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
-		//}
+		userID, err := s.GetUserIDFromUsersDatabase(email)
+		if err != nil {
+			return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
+		}
+		s.RemoveActiveUser(userID)
 	}
 	if deviceID != "" {
 		err := s.deleteForDeviceID(deviceID)
 		if err != nil {
 			return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
 		}
-		//userID, err := s.GetUserIDFromSessionDatabase(deviceID)
-		//if err != nil {
-		//	return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
-		//}
+		userID, err := s.GetUserIDFromSessionDatabase(deviceID)
+		if err != nil {
+			return fmt.Errorf("%w: %v", myerrors.ErrDeletingTokens, err)
+		}
+		s.RemoveActiveUser(userID)
 	}
 
 	return nil

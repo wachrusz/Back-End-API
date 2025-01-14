@@ -14,7 +14,7 @@ The **Cash Advisor API** is a comprehensive backend service designed to manage u
 >>Postgres, Redis (in progress)
 >
 >**API**
->>Go, REST, JWT, Oauth2, CHI, TSB RF API (Only exchange rates), RabbitMQ, etc.
+>>Go, REST, JWT, Oauth2, Gorilla Mux, TSB RF API (Only exchange rates), RabbitMQ, etc.
 >
 >**Server**
 >>Nginx, Ubuntu, Pgbadger

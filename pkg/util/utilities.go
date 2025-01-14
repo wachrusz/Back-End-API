@@ -5,19 +5,16 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"math/big"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	"golang.org/x/crypto/bcrypt"
+	"math/big"
+	"net/http"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
-
-var NoDeviceError = errors.New("please, fill X-Device-ID header with your device id")
 
 type UserAuthenticationRequest struct {
 	Email    string `json:"email"`
@@ -55,11 +52,10 @@ func GenerateRegisterJWTToken(email, password string) (string, error) {
 	return signedToken, nil
 }
 
-func GenerateResetJWTToken(email string) (string, int64, error) {
-	expiresAt := time.Now().Add(time.Minute * tokenExpirationMinutes).Unix()
+func GenerateResetJWTToken(email string) (string, error) {
 	claims := jwt.MapClaims{
 		"email":     email,
-		"exp":       expiresAt,
+		"exp":       time.Now().Add(time.Minute * tokenExpirationMinutes).Unix(),
 		"code_used": false,
 		"confirmed": false,
 	}
@@ -67,10 +63,10 @@ func GenerateResetJWTToken(email string) (string, int64, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(enc.SecretKey))
 	if err != nil {
-		return "", 0, err
+		return "", err
 	}
 
-	return signedToken, expiresAt, nil
+	return signedToken, nil
 }
 
 func VerifyRegisterJWTToken(tokenString, enteredEmail, enteredPassword string) error {
@@ -220,36 +216,11 @@ func GetDeviceIDFromJWT(tokenString string) (string, error) {
 }
 
 func GetDeviceIDFromRequest(r *http.Request) (string, error) {
-	deviceID := strings.TrimSpace(r.Header.Get("X-Device-ID"))
-	if deviceID == "" {
-		return "", NoDeviceError
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return uuid.Nil.String(), err
 	}
-	return deviceID, nil
-}
-
-// ExtractTokenFromHeader извлекает токен из заголовка Authorization
-func ExtractTokenFromHeader(r *http.Request) (string, error) {
-	// Получаем значение заголовка Authorization
-	tokenString := r.Header.Get("Authorization")
-
-	// Проверяем, что заголовок не пустой
-	if tokenString == "" {
-		return "", errors.New("missing Authorization header")
-	}
-
-	// Проверяем, что заголовок начинается с "Bearer "
-	const bearerPrefix = "Bearer "
-	if !strings.HasPrefix(tokenString, bearerPrefix) {
-		return "", errors.New("invalid Authorization header format, expected 'Bearer <token>'")
-	}
-
-	// Убираем префикс "Bearer " и возвращаем токен
-	token := strings.TrimSpace(strings.TrimPrefix(tokenString, bearerPrefix))
-	if token == "" {
-		return "", errors.New("empty token in Authorization header")
-	}
-
-	return token, nil
+	return id.String(), nil
 }
 
 func GetDeviceIDFromContext(ctx context.Context) (string, bool) {

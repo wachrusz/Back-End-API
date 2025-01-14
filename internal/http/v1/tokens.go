@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
+	enc "github.com/wachrusz/Back-End-API/pkg/encryption"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"github.com/wachrusz/Back-End-API/pkg/validator"
@@ -37,34 +39,59 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 		h.errResp(w, errors.New("Invalid Content-Type, expected application/json: "), http.StatusBadRequest)
 		return
 	}
+	//! Заставляет задуматься
+	/*
+		userID, ok := utility.GetUserIDFromContext(r.Context())
+		if !ok {
+			h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
+			return
+		}
+	*/
+	var tmpToken RefreshToken
 
-	var rt RefreshToken
-
-	err := json.NewDecoder(r.Body).Decode(&rt)
+	err := json.NewDecoder(r.Body).Decode(&tmpToken)
 	if err != nil {
 		h.errResp(w, errors.New("Invalid request payload: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	deviceID, err := utility.GetDeviceIDFromRequest(r)
-	if err != nil {
-		h.errResp(w, err, http.StatusBadRequest)
+	refreshToken, err := jwt.Parse(tmpToken.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(enc.SecretRefreshKey), nil
+	})
+
+	if refreshToken == nil {
+		h.errResp(w, errors.New("failed to parse refresh token: "+err.Error()), http.StatusBadRequest)
 		return
 	}
 
-	details, err := h.s.Tokens.RefreshToken(rt.RefreshToken, deviceID)
+	claims, ok := refreshToken.Claims.(jwt.MapClaims)
+	if !ok {
+		h.errResp(w, errors.New("no claims in token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := claims["sub"].(string)
+	if !ok {
+		h.errResp(w, errors.New("Failed to get user ID from refresh token: "+err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	access, refresh, err := h.s.Tokens.RefreshToken(tmpToken.RefreshToken, userID)
 	if err != nil {
 		h.errResp(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	response := ConfirmResponse{
-		Message:              "Successfully confirmed email",
-		TokenDetails:         details,
+	response := jsonresponse.DoubleTokenResponse{
+		Message:              "Successfully refreshed tokens",
+		AccessToken:          access,
+		RefreshToken:         refresh,
 		AccessTokenLifeTime:  60 * 15,
 		RefreshTokenLifeTime: 30 * 24 * 60 * 60,
 		StatusCode:           http.StatusOK,
-		DeviceId:             deviceID,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -85,7 +112,6 @@ func (h *MyHandler) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) 
 // @Router /auth/logout [post]
 func (h *MyHandler) LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("User logout initiated...")
-	// TODO: DEVICE CHECK
 
 	// Retrieve the current device ID from the context
 	currentDeviceID, ok := utility.GetDeviceIDFromContext(r.Context())
@@ -102,7 +128,7 @@ func (h *MyHandler) LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Perform logout operation
-	if err := h.s.Tokens.Logout(currentDeviceID, userID); err != nil {
+	if err := h.s.Users.Logout(currentDeviceID, userID); err != nil {
 		h.errResp(w, fmt.Errorf("error during logout: %v", err), http.StatusInternalServerError)
 		return
 	}
