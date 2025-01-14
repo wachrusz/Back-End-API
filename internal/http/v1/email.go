@@ -275,7 +275,7 @@ func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Generate registration RefreshToken
-	token, err := h.s.Tokens.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
+	token, err := h.s.Tokens.Register(registrationRequest.Email, registrationRequest.Password)
 	if err != nil {
 		switch err {
 		case myerrors.ErrDuplicated:

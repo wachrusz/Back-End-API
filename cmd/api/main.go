@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/app"
-	"github.com/wachrusz/Back-End-API/internal/config"
 	"log"
 	"os"
+
+	"github.com/wachrusz/Back-End-API/internal/app"
+	"github.com/wachrusz/Back-End-API/internal/config"
 )
 
 // @title			Cash Advisor API
