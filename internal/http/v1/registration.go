@@ -56,9 +56,25 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 
 func (h *MyHandler) RegisterFinHealthHandlers(router chi.Router) {
 	router.Route("/fin_health", func(r chi.Router) {
-		r.Route("/expense", func(r chi.Router) {
+		r.Route("/expenses", func(r chi.Router) {
 			r.Get("/delta", h.AuthMiddleware(h.ExpenditureDeltaHandler))
 			r.Get("/propensity", h.AuthMiddleware(h.ExpensePropensity))
+		})
+		r.Route("/savings", func(r chi.Router) {
+			r.Route("/ratio", func(r chi.Router) {
+				r.Get("/liquid", h.AuthMiddleware(h.LiquidFundRatioHandler))
+				r.Get("/illiquid", h.AuthMiddleware(h.IlliquidFundRatioHandler))
+				r.Get("/savings_to_income", h.AuthMiddleware(h.SavingToIncomeRatioHandler))
+			})
+			r.Get("/delta", h.AuthMiddleware(h.SavingsDelta))
+		})
+		r.Route("/investments/ratio", func(r chi.Router) {
+			r.Get("/investments_to_savings", h.AuthMiddleware(h.InvestmentsToSavingsRatioHandler))
+			r.Get("/investments_to_fund", h.AuthMiddleware(h.InvestmentsToFundRatioHandler))
+		})
+		r.Route("/loans", func(r chi.Router) {
+			r.Get("/propensity", h.AuthMiddleware(h.LoansPropensityHandler))
+			r.Get("/ratio/loans_to_assets", h.AuthMiddleware(h.LoansToAssetsRatioHandler))
 		})
 	})
 }
