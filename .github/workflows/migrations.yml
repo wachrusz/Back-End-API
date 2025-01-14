@@ -21,7 +21,7 @@ jobs:
 
       - name: Test SSH connection
         env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_IP: ${{ secrets.PG_HOST }}
         run: ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP "echo 'SSH connection successful!'"
 
       - name: Install psql (PostgreSQL client)
