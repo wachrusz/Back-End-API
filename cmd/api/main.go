@@ -23,8 +23,8 @@ import (
 
 // @securityDefinitions.apikey JWT
 // @in header
-// @name Authorization
-// @description To authorize,
+// @name Bearer Authorization
+// @description To authorize, write "Bearer <token>" in header Authorization
 func main() {
 	cfg, err := config.New()
 	if err != nil {

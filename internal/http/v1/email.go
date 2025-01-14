@@ -34,6 +34,7 @@ type ConfirmResponse struct {
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Уникальный идентификатор устройства"
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse "Successfully confirmed email"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
@@ -98,6 +99,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Уникальный идентификатор устройства"
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse             "Successfully confirmed email for login"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
@@ -170,6 +172,7 @@ type ConfirmResetResponse struct {
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Unique device id"
 // @Param confirmRequest body token.ConfirmEmailRequest true 	"Confirmation request"
 // @Success 200 {object} jsonresponse.SuccessResponse 			"Successfully confirmed password reset"
 // @Failure 400 {object} jsonresponse.ErrorResponse 			"Unauthorized"

@@ -72,6 +72,7 @@ func (s *Service) GenerateToken(userID string, deviceID string) (Details, error)
 		"sub":       userID,
 		"exp":       time.Now().Add(s.accessTokenLifetime).Unix(),
 		"device_id": deviceID,
+		"iat":       time.Now(),
 	})
 
 	accessTokenString, err := accessToken.SignedString([]byte(enc.SecretKey))
