@@ -909,6 +909,13 @@ const docTemplate = `{
                 "summary": "Confirm email for login",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Уникальный идентификатор устройства",
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Confirmation request",
                         "name": "confirmRequest",
                         "in": "body",
@@ -1094,6 +1101,13 @@ const docTemplate = `{
                 "summary": "Confirm password reset",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Unique device id",
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
                         "description": "Confirmation request",
                         "name": "confirmRequest",
                         "in": "body",
@@ -1248,6 +1262,13 @@ const docTemplate = `{
                 ],
                 "summary": "Confirm email",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Уникальный идентификатор устройства",
+                        "name": "X-Device-ID",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "description": "Confirmation request",
                         "name": "confirmRequest",
@@ -3674,9 +3695,9 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "JWT": {
-            "description": "To authorize,",
+            "description": "To authorize, write \"Bearer \u003ctoken\u003e\" in header Authorization",
             "type": "apiKey",
-            "name": "Authorization",
+            "name": "Bearer Authorization",
             "in": "header"
         }
     }

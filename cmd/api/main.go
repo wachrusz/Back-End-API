@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/wachrusz/Back-End-API/internal/app"
-	"github.com/wachrusz/Back-End-API/internal/config"
 	"log"
 	"os"
+
+	"github.com/wachrusz/Back-End-API/internal/app"
+	"github.com/wachrusz/Back-End-API/internal/config"
 )
 
 // @title			Cash Advisor API
@@ -22,8 +23,8 @@ import (
 
 // @securityDefinitions.apikey JWT
 // @in header
-// @name Authorization
-// @description To authorize,
+// @name Bearer Authorization
+// @description To authorize, write "Bearer <token>" in header Authorization
 func main() {
 	cfg, err := config.New()
 	if err != nil {
