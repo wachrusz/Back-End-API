@@ -68,7 +68,7 @@ jobs:
         run: |
           # Проверяем, существует ли миграция в таблице migrations
           EXISTS=$(ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -h $PGHOST -U $PGUSER -d $PGDATABASE -t -c \
+          "PGPASSWORD=$PG_PASSWORD sudo -E psql -h $PGHOST -U $PGUSER -d $PGDATABASE -t -c \
           'SELECT 1 FROM migrations WHERE name = '\''$LATEST_UP'\'';'")
           
           if [ -z "$EXISTS" ]; then
