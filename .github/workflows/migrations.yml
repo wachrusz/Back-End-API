@@ -67,17 +67,10 @@ jobs:
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
           # Проверяем, существует ли миграция в таблице migrations
-          echo "PGPASSWORD is set to: $PGPASSWORD"
-          echo "PGHOST is set to: $PGHOST"
-          echo "PGPORT is set to: $PGPORT"
-          echo "PGDATABASE is set to: $PGDATABASE"
-          echo "PGUSER is set to: $PGUSER"
-          echo "SERVER_IP is set to: $SERVER_IP"
-          echo "LATEST_UP is set to: $LATEST_UP"
           EXISTS=$(ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -h localhost -U $PGUSER -d $PGDATABASE -t -c \
+          "PGPASSFILE=/home/ubuntu/.pgpass psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -t -c \
           'SELECT 1 FROM migrations WHERE name = '\''$LATEST_UP'\'';'")
-          
+
           if [ -z "$EXISTS" ]; then
             echo "Migration $LATEST_UP not executed yet."
             echo "should_run=true" >> $GITHUB_OUTPUT
@@ -98,8 +91,8 @@ jobs:
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -h localhost -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
+          "psql -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
           # Добавляем запись о выполненной миграции
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -h localhost -U $PGUSER -d $PGDATABASE -c \
+          "psql -U $PGUSER -d $PGDATABASE -c \
           'INSERT INTO migrations (name) VALUES ('\''$LATEST_UP'\'');'"
