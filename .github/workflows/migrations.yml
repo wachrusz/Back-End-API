@@ -68,7 +68,7 @@ jobs:
         run: |
           # Проверяем, существует ли миграция в таблице migrations
           EXISTS=$(ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "PGPASSWORD=$PG_PASSWORD sudo -E psql -U $PGUSER -d $PGDATABASE -t -c \
+          "PGPASSWORD=$PG_PASSWORD sudo -E psql -h localhost -U $PGUSER -d $PGDATABASE -t -c \
           'SELECT 1 FROM migrations WHERE name = '\''$LATEST_UP'\'';'")
           
           if [ -z "$EXISTS" ]; then
@@ -91,8 +91,8 @@ jobs:
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "PGPASSWORD=$PG_PASSWORD sudo -E psql -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
+          "PGPASSWORD=$PG_PASSWORD sudo -E psql -h localhost -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
           # Добавляем запись о выполненной миграции
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "PGPASSWORD=$PG_PASSWORD sudo -E psql -U $PGUSER -d $PGDATABASE -c \
+          "PGPASSWORD=$PG_PASSWORD sudo -E psql -h localhost -U $PGUSER -d $PGDATABASE -c \
           'INSERT INTO migrations (name) VALUES ('\''$LATEST_UP'\'');'"
