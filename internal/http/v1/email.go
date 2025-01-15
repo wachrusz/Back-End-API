@@ -11,9 +11,10 @@ import (
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 
+	"net/http"
+
 	"github.com/wachrusz/Back-End-API/pkg/validator"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 // ConfirmResponse решено вынести из пакета jsonresponse во избежание циклических зависимостей, так как требует token.Details.
@@ -33,6 +34,7 @@ type ConfirmResponse struct {
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Уникальный идентификатор устройства"
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse "Successfully confirmed email"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
@@ -97,6 +99,7 @@ func (h *MyHandler) ConfirmEmailRegisterHandler(w http.ResponseWriter, r *http.R
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Уникальный идентификатор устройства"
 // @Param confirmRequest body token.ConfirmEmailRequest true "Confirmation request"
 // @Success 200 {object} ConfirmResponse             "Successfully confirmed email for login"
 // @Failure 400 {object} jsonresponse.ErrorResponse "Invalid request or missing RefreshToken"
@@ -120,7 +123,7 @@ func (h *MyHandler) ConfirmEmailLoginHandler(w http.ResponseWriter, r *http.Requ
 
 	deviceID, err := utility.GetDeviceIDFromRequest(r)
 	if err != nil {
-		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("internal Server Error: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -169,6 +172,7 @@ type ConfirmResetResponse struct {
 // @Tags Auth
 // @Accept json
 // @Produce json
+// @Param X-Device-ID header string true "Unique device id"
 // @Param confirmRequest body token.ConfirmEmailRequest true 	"Confirmation request"
 // @Success 200 {object} jsonresponse.SuccessResponse 			"Successfully confirmed password reset"
 // @Failure 400 {object} jsonresponse.ErrorResponse 			"Unauthorized"
@@ -209,7 +213,7 @@ func (h *MyHandler) ResetPasswordConfirmHandler(w http.ResponseWriter, r *http.R
 		case errors.Is(err, myerrors.ErrInternal) || errors.Is(err, myerrors.ErrEmailing):
 			h.errResp(w, err, http.StatusInternalServerError)
 			break
-		case errors.Is(err, myerrors.ErrInvalidToken) || errors.Is(err, myerrors.ErrExpired):
+		case errors.Is(err, myerrors.ErrInvalidToken) || errors.Is(err, myerrors.ErrExpiredCode):
 			h.errResp(w, err, http.StatusBadRequest)
 			break
 		case errors.Is(err, myerrors.ErrCode) || errors.Is(err, myerrors.ErrLocked):
@@ -274,7 +278,7 @@ func (h *MyHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Generate registration RefreshToken
-	token, err := h.s.Tokens.PrimaryRegistration(registrationRequest.Email, registrationRequest.Password)
+	token, err := h.s.Tokens.Register(registrationRequest.Email, registrationRequest.Password)
 	if err != nil {
 		switch err {
 		case myerrors.ErrDuplicated:

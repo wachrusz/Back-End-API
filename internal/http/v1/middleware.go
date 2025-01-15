@@ -2,11 +2,11 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/wachrusz/Back-End-API/pkg/encryption"
 	"github.com/wachrusz/Back-End-API/pkg/json_response"
+	utility "github.com/wachrusz/Back-End-API/pkg/util"
 	"net"
 	"net/http"
 	"strings"
@@ -90,64 +90,63 @@ func (h *MyHandler) getIP(r *http.Request) (string, error) {
 
 func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tokenString := r.Header.Get("Authorization")
-
-		if tokenString == "" {
-			err := errors.New("Error in tokenString")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+		tokenString, err := utility.ExtractTokenFromHeader(r)
+		if err != nil {
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("authentication error: %w", err), http.StatusUnauthorized)
 			return
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(encryption.SecretKey), nil
+			return encryption.SecretKey, nil
 		})
+
 		if err != nil {
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("authentification error: %w", err), http.StatusUnauthorized)
 			return
 		}
 
 		if !token.Valid {
-			err := errors.New("Invalid RefreshToken")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid token"), http.StatusUnauthorized)
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			err := errors.New("Claims error")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid token: can't get claims"), http.StatusUnauthorized)
 			return
 		}
 		userIDClaim, ok := claims["sub"]
 		if !ok {
-			err := errors.New("No 'sub' claim in RefreshToken")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid token: no sub in claims"), http.StatusUnauthorized)
 			return
 		}
 
 		userID, ok := userIDClaim.(string)
 		if !ok {
-			err := errors.New("Failed to convert 'sub' claim to string")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("failed to convert userID into string"), http.StatusUnauthorized)
 			return
 		}
 
-		deviceID, ok := claims["device_id"].(string)
+		expiresClaim, ok := claims["exp"]
 		if !ok {
-			err := errors.New("Failed to convert 'sub' claim to string")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("invalid token: no exp in claims"), http.StatusUnauthorized)
 			return
 		}
 
-		if !h.s.Users.IsUserActive(userID) {
-			err := errors.New("Inactive user")
-			jsonresponse.SendErrorResponse(w, errors.New("Unauthorized: "+err.Error()), http.StatusUnauthorized)
+		expiresFloat, ok := expiresClaim.(float64)
+		if !ok {
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("failed to convert expires into float64"), http.StatusUnauthorized)
+			return
+		}
+		expires := int64(expiresFloat)
+
+		if time.Unix(expires, 0).Before(time.Now()) {
+			jsonresponse.SendErrorResponse(w, fmt.Errorf("token expired"), http.StatusUnauthorized)
 			return
 		}
 
 		r = r.WithContext(setUserIDInContext(r.Context(), userID))
-		r = r.WithContext(setDeviceIDInContext(r.Context(), deviceID))
-		h.s.Users.UpdateLastActivity(userID)
+		//h.s.Users.UpdateLastActivity(userID)
 
 		next.ServeHTTP(w, r)
 	}
@@ -155,8 +154,4 @@ func (h *MyHandler) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 func setUserIDInContext(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, "userID", userID)
-}
-
-func setDeviceIDInContext(ctx context.Context, deviceID string) context.Context {
-	return context.WithValue(ctx, "device_id", deviceID)
 }
