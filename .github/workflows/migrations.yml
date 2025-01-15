@@ -48,7 +48,7 @@ jobs:
 
       - name: Copy migration files to remote server
         env:
-          SERVER_IP:   ${{ secrets.SERVER_IP      }}
+          SERVER_IP:   ${{ secrets.PG_HOST      }}
           LATEST_DOWN: ${{ env.LATEST_DOWN        }}
           LATEST_UP:   ${{ env.LATEST_UP          }}
         run: |
