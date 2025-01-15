@@ -58,7 +58,7 @@ jobs:
       - name: Check if migration already executed
         id: check-migration
         env:
-          PGHOST:       ${{ secrets.PG_HOST     }}
+          PGHOST:       ${{ secrets.HOST     }}
           PGPORT:       ${{ secrets.PG_PORT     }}
           PGDATABASE:   ${{ secrets.PG_DATABASE }}
           PGUSER:       ${{ secrets.PG_USER     }}
@@ -82,7 +82,7 @@ jobs:
       - name: Run up migrations on remote server (if not executed)
         if: steps.check-migration.outputs.should_run == 'true'
         env:
-          PGHOST:       ${{ secrets.PG_HOST     }}
+          PGHOST:       ${{ secrets.HOST     }}
           PGPORT:       ${{ secrets.PG_PORT     }}
           PGDATABASE:   ${{ secrets.PG_DATABASE }}
           PGUSER:       ${{ secrets.PG_USER     }}
