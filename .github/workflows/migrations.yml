@@ -58,7 +58,6 @@ jobs:
       - name: Check if migration already executed
         id: check-migration
         env:
-          PGHOST:       ${{ secrets.HOST     }}
           PGPORT:       ${{ secrets.PG_PORT     }}
           PGDATABASE:   ${{ secrets.PG_DATABASE }}
           PGUSER:       ${{ secrets.PG_USER     }}
@@ -68,7 +67,7 @@ jobs:
         run: |
           # Проверяем, существует ли миграция в таблице migrations
           EXISTS=$(ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "PGPASSFILE=/home/ubuntu/.pgpass psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -t -c \
+          "PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -t -c \
           'SELECT 1 FROM migrations WHERE name = '\''$LATEST_UP'\'';'")
 
           if [ -z "$EXISTS" ]; then
@@ -91,8 +90,8 @@ jobs:
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
+          "PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -f /tmp/$LATEST_UP"
           # Добавляем запись о выполненной миграции
           ssh -o StrictHostKeyChecking=no ubuntu@$SERVER_IP \
-          "psql -U $PGUSER -d $PGDATABASE -c \
+          "PGPASSWORD=$PGPASSWORD psql -h 127.0.0.1 -U $PGUSER -d $PGDATABASE -c \
           'INSERT INTO migrations (name) VALUES ('\''$LATEST_UP'\'');'"
