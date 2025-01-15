@@ -61,7 +61,7 @@ jobs:
           PGPORT:       ${{ secrets.PG_PORT     }}
           PGDATABASE:   ${{ secrets.PG_DATABASE }}
           PGUSER:       ${{ secrets.PG_USER     }}
-          PGPASSWORD:   ${{ secrets.DB_PASSWORD }}
+          PGPASSWORD:   ${{ secrets.PG_PASSWORD }}
           SERVER_IP:    ${{ secrets.PG_HOST   }}
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
@@ -85,7 +85,7 @@ jobs:
           PGPORT:       ${{ secrets.PG_PORT     }}
           PGDATABASE:   ${{ secrets.PG_DATABASE }}
           PGUSER:       ${{ secrets.PG_USER     }}
-          PGPASSWORD:   ${{ secrets.DB_PASSWORD }}
+          PGPASSWORD:   ${{ secrets.PG_PASSWORD }}
           SERVER_IP:    ${{ secrets.PG_HOST   }}
           LATEST_UP:    ${{ env.LATEST_UP       }}
         run: |
