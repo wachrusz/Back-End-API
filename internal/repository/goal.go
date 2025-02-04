@@ -6,6 +6,7 @@ import (
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 )
 
 type GoalModel struct {
@@ -36,8 +37,8 @@ func (m *GoalModel) Update(goal *models.Goal) error {
             months = $4,
             additional_months = $5,
             is_completed = $6
-		WHERE id = $7
-	`, goal.Amount, goal.Currency, goal.Name, goal.Months, goal.AdditionalMonths, goal.IsCompleted, goal.ID)
+		WHERE id = $7 AND user_id = $8
+	`, goal.Amount, goal.Currency, goal.Name, goal.Months, goal.AdditionalMonths, goal.IsCompleted, goal.ID, goal.UserID)
 
 	if err != nil {
 		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
@@ -50,7 +51,7 @@ func (m *GoalModel) Update(goal *models.Goal) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("%w: no goal found with id %d", myerrors.ErrNotFound, goal.ID)
+		return fmt.Errorf("%w: no goal found with id %d for user %d", myerrors.ErrNotFound, goal.ID, goal.UserID)
 	}
 
 	return nil
@@ -99,7 +100,7 @@ func (m *GoalModel) ListByUserID(userID int64) ([]models.Goal, error) {
 	return goals, nil
 }
 
-func (m *GoalModel) Details(id int64) (*models.GoalDetails, error) {
+func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error) {
 	var d models.GoalDetails
 	q := `
 	SELECT
@@ -151,11 +152,11 @@ func (m *GoalModel) Details(id int64) (*models.GoalDetails, error) {
 			END), 0) AS last_month_converted_amount
 	FROM goals g
 	LEFT JOIN goal_transactions gt ON g.id = gt.goal_id AND gt.planned = false
-	WHERE g.id = $1
+	WHERE g.id = $1 AND g.user_id = $2
 	GROUP BY g.id;
 	`
 
-	err := m.DB.QueryRow(q, id).Scan(d.Goal.Amount, d.Goal.Currency, d.Goal.UserID, d.Goal.Name,
+	err := m.DB.QueryRow(q, id, userID).Scan(d.Goal.Amount, d.Goal.Currency, d.Goal.UserID, d.Goal.Name,
 		d.Goal.Months, d.Goal.AdditionalMonths, d.Goal.IsCompleted, d.Goal.Date,
 		&d.Month, &d.Gathered, &d.CurrentPayment)
 	if err != nil {
@@ -169,9 +170,34 @@ func (m *GoalModel) Details(id int64) (*models.GoalDetails, error) {
 	return &d, nil
 }
 
-func (m *GoalTransactionModel) Create(transaction *models.GoalTransaction) (int64, error) {
+func (m *GoalTransactionModel) Create(transaction *models.GoalTransaction, userID int64) (int64, error) {
+	tx, err := m.DB.Begin()
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	var exists bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM goals WHERE id = $1 AND user_id = $2)", transaction.GoalID, userID).Scan(&exists)
+	if err != nil {
+		return 0, err
+	}
+
+	if !exists {
+		return 0, fmt.Errorf("%w: goal with ID %d does not exist for user %d", myerrors.ErrNotFound, transaction.GoalID, userID)
+	}
+
 	var transactionId int64
-	err := m.DB.QueryRow("INSERT INTO goal_transactions(goal_id, amount, planned, currency_code, connected_account) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
+	err = tx.QueryRow(`
+        INSERT INTO goal_transactions(goal_id, amount, planned, currency_code, connected_account) 
+        VALUES ($1, $2, $3, $4, $5) 
+        RETURNING id`,
 		transaction.GoalID, transaction.Amount, transaction.Planned, transaction.Currency, transaction.BankAccount).Scan(&transactionId)
 
 	if err != nil {
@@ -181,23 +207,73 @@ func (m *GoalTransactionModel) Create(transaction *models.GoalTransaction) (int6
 	return transactionId, nil
 }
 
-func (m *GoalTransactionModel) ListByGoal(goalID int64) ([]*models.GoalTransaction, error) {
-	rows, err := m.DB.Query("SELECT id, amount, planned, currency_code, date, connected_account FROM goal WHERE goal_id = $1", goalID)
+func (m *GoalModel) TrackerInfo(userID int64, limit, offset int) ([]*models.GoalTrackerInfo, *jsonresponse.Metadata, error) {
+	tx, err := m.DB.Begin()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	defer rows.Close()
-
-	var transactions []*models.GoalTransaction
-	for rows.Next() {
-		var transaction models.GoalTransaction
-		transaction.GoalID = goalID
-
-		if err := rows.Scan(&transaction.ID, &transaction.Amount, &transaction.Planned, &transaction.Currency, &transaction.Date, &transaction.BankAccount); err != nil {
-			return nil, err
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			err = tx.Commit()
 		}
-		transactions = append(transactions, &transaction)
+	}()
+
+	result := make([]*models.GoalTrackerInfo, limit)
+	meta := jsonresponse.Metadata{
+		CurrentPage:  offset + 1,
+		PageSize:     limit,
+		TotalRecords: 0,
 	}
 
-	return transactions, nil
+	goalRows, err := tx.Query(`
+		SELECT COUNT(*) OVER(), id, amount, currency_code, name, months, additional_months, is_completed, start_date 
+		FROM goals 
+		WHERE user_id=$1
+		LIMIT $2 OFFSET $3`, userID, limit, offset,
+	)
+
+	defer goalRows.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for goalRows.Next() {
+		var goal models.Goal
+		if err := goalRows.Scan(&meta.TotalRecords, &goal.ID, &goal.Amount, &goal.Currency, &goal.Name,
+			&goal.Months, &goal.AdditionalMonths, &goal.IsCompleted, &goal.Date); err != nil {
+			return nil, nil, err
+		}
+
+		goal.UserID = userID
+		var transactions []*models.GoalTransaction
+
+		tRows, err := tx.Query(`
+			SELECT id, amount, currency_code, connected_account, date
+			FROM goal_transactions
+			WHERE goal_id=$1 AND planned=false`, goal.ID)
+
+		if err != nil {
+			return nil, nil, err
+		}
+
+		for tRows.Next() {
+			var transaction models.GoalTransaction
+			if err := tRows.Scan(&transaction.ID, &transaction.Amount, &transaction.Currency, &transaction.BankAccount, &transaction.Date); err != nil {
+				tRows.Close()
+				return nil, nil, err
+			}
+			transactions = append(transactions, &transaction)
+		}
+
+		result = append(result, &models.GoalTrackerInfo{
+			Goal:         &goal,
+			Transactions: transactions,
+		})
+
+		tRows.Close()
+	}
+
+	return result, &meta, nil
 }

@@ -43,6 +43,8 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 		r.Post("/", h.AuthMiddleware(h.CreateGoalHandler))
 		r.Put("/", h.AuthMiddleware(h.UpdateGoalHandler))
 		r.Delete("/", h.AuthMiddleware(h.DeleteGoalHandler))
+		r.Get("/", h.AuthMiddleware(h.GetGoalDetailsHandler))
+		r.Post("/transaction", h.AuthMiddleware(h.CreateGoalTransactionHandler))
 	})
 
 	r.Route("/settings/subscription", func(r chi.Router) {
@@ -116,7 +118,7 @@ func (h *MyHandler) RegisterProfileHandlers(router chi.Router) {
 	router.Route("/profile", func(r chi.Router) {
 		r.Get("/", h.AuthMiddleware(h.GetProfileHandler))
 		r.Get("/analytics", h.AuthMiddleware(h.GetProfileAnalyticsHandler))
-		//r.Get("/tracker", h.AuthMiddleware(h.GetProfileTrackerHandler))
+		r.Get("/tracker", h.AuthMiddleware(h.GetProfileTrackerHandler))
 		r.Get("/more", h.AuthMiddleware(h.GetProfileMore))
 		r.Put("/name", h.AuthMiddleware(h.UpdateName))
 		r.Get("/archive", h.AuthMiddleware(h.GetOperationArchive))

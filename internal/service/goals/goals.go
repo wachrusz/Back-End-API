@@ -14,8 +14,8 @@ type Goals interface {
 	Update(goal *models.Goal) error
 	Delete(id int64, userID int64) error
 	ListByUserID(userID int64) ([]models.Goal, error)
-	Details(goalId int64) (*models.GoalDetails, error)
-	NewTransaction(transaction *models.GoalTransaction) (*models.GoalDetails, error)
+	Details(id int64, userID int64) (*models.GoalDetails, error)
+	NewTransaction(transaction *models.GoalTransaction, userID int64) (*models.GoalDetails, error)
 }
 
 type Service struct {
@@ -27,35 +27,19 @@ func NewService(gr repo.GoalRepo, tr repo.GoalTransactionRepo) *Service {
 	return &Service{goalRepo: gr, transactionRepo: tr}
 }
 
-func (s *Service) Create(goal *models.Goal) (int64, error) {
-	return s.goalRepo.Create(goal)
-}
-
-func (s *Service) Update(goal *models.Goal) error {
-	return s.goalRepo.Update(goal)
-}
-
-func (s *Service) Delete(id int64, userID int64) error {
-	return s.goalRepo.Delete(id, 0)
-}
-
-func (s *Service) ListByUserID(userID int64) ([]models.Goal, error) {
-	return s.goalRepo.ListByUserID(userID)
-}
-
-func (s *Service) NewTransaction(transaction *models.GoalTransaction) (*models.GoalDetails, error) {
-	_, err := s.transactionRepo.Create(transaction)
+func (s *Service) NewTransaction(transaction *models.GoalTransaction, userID int64) (*models.GoalDetails, error) {
+	_, err := s.transactionRepo.Create(transaction, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Details(transaction.GoalID)
+	return s.Details(transaction.GoalID, userID)
 }
 
-func (s *Service) Details(goalId int64) (*models.GoalDetails, error) {
-	details, err := s.goalRepo.Details(goalId)
+func (s *Service) Details(goalID, userID int64) (*models.GoalDetails, error) {
+	details, err := s.goalRepo.Details(goalID, userID)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("no goal (id %d) found: %w", goalId, myerrors.ErrNotFound)
+		return nil, fmt.Errorf("no goal (id %d) found: %w", goalID, myerrors.ErrNotFound)
 	}
 	if err != nil {
 		return nil, err
@@ -74,4 +58,20 @@ func (s *Service) Details(goalId int64) (*models.GoalDetails, error) {
 	}
 
 	return details, nil
+}
+
+func (s *Service) Create(goal *models.Goal) (int64, error) {
+	return s.goalRepo.Create(goal)
+}
+
+func (s *Service) Update(goal *models.Goal) error {
+	return s.goalRepo.Update(goal)
+}
+
+func (s *Service) Delete(id int64, userID int64) error {
+	return s.goalRepo.Delete(id, userID)
+}
+
+func (s *Service) ListByUserID(userID int64) ([]models.Goal, error) {
+	return s.goalRepo.ListByUserID(userID)
 }

@@ -43,20 +43,21 @@ func Run(cfg *config.Config) error {
 		return err
 	}
 
+	l.Info("Initializing models...")
+	models := repository.New(db)
+
 	l.Info("Initializing services...")
 	deps := service.Dependencies{
 		Repo:                  db,
 		Mailer:                mailer,
 		AccessTokenDurMinutes: cfg.AccessTokenLifetime,
+		Models:                models,
 	}
 
 	services, err := service.NewServices(deps)
 	if err != nil {
 		return err
 	}
-
-	l.Info("Initializing models...")
-	models := repository.New(db)
 
 	l.Info("Initializing handlers...", zap.Int64("rate_limit_per_second", cfg.RateLimitPerSecond))
 	handlerV1 := v1.NewHandler(services, l, models, redis, cfg.RateLimitPerSecond)

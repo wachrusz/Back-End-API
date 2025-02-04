@@ -33,3 +33,8 @@ type GoalDetails struct {
 	CurrentNeed    float64 `json:"current_need"`
 	Gathered       float64 `json:"gathered"`
 }
+
+type GoalTrackerInfo struct {
+	Goal         *Goal              `json:"goal"`
+	Transactions []*GoalTransaction `json:"transactions"`
+}

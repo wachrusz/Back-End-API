@@ -1,6 +1,7 @@
 package repository
 
 import (
+	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"time"
 
 	mydb "github.com/wachrusz/Back-End-API/internal/mydatabase"
@@ -50,12 +51,12 @@ type GoalRepo interface {
 	Update(goal *models.Goal) error
 	Delete(id int64, userID int64) error
 	ListByUserID(userID int64) ([]models.Goal, error)
-	Details(id int64) (*models.GoalDetails, error)
+	Details(id int64, userID int64) (*models.GoalDetails, error)
+	TrackerInfo(userID int64, limitStr, offsetStr int) ([]*models.GoalTrackerInfo, *jsonresponse.Metadata, error)
 }
 
 type GoalTransactionRepo interface {
-	Create(transaction *models.GoalTransaction) (id int64, err error)
-	ListByGoal(goalId int64) ([]*models.GoalTransaction, error)
+	Create(transaction *models.GoalTransaction, userID int64) (id int64, err error)
 }
 
 type IncomeRepo interface {
