@@ -136,6 +136,7 @@ type ProfileTrackerResponse struct {
 // @Failure 500 {object} jsonresponse.ErrorResponse "Server error while fetching tracker data"
 // @Security JWT
 // @Router /profile/tracker [get]
+/*
 func (h *MyHandler) GetProfileTrackerHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
@@ -162,6 +163,7 @@ func (h *MyHandler) GetProfileTrackerHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }
+*/
 
 type ProfileMoreResponse struct {
 	Message    string          `json:"message"`

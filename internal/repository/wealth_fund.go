@@ -81,7 +81,7 @@ func (m *WealthFundModel) Update(wealthFund *models.WealthFund) error {
 	return nil
 }
 
-func (m *WealthFundModel) GetByUserID(userID string) ([]models.WealthFund, error) {
+func (m *WealthFundModel) ListByUserID(userID string) ([]models.WealthFund, error) {
 	rows, err := m.DB.Query("SELECT id, amount, date, planned, currency_code, connected_account FROM wealth_fund WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err

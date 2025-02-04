@@ -36,7 +36,7 @@ func (m *IncomeModel) Create(income *models.Income) (int64, error) {
 	return incomeID, nil
 }
 
-func (m *IncomeModel) GetIncomesByUserID(userID string) ([]models.Income, error) {
+func (m *IncomeModel) ListByUserID(userID string) ([]models.Income, error) {
 	rows, err := m.DB.Query("SELECT id, amount, date, planned, category, sender, connected_account, currency_code FROM income WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (m *IncomeModel) GetIncomesByUserID(userID string) ([]models.Income, error)
 	return incomes, nil
 }
 
-func (m *IncomeModel) GetIncomeForMonth(userID string, month time.Month, year int) (float64, float64, error) {
+func (m *IncomeModel) ListByMonth(userID string, month time.Month, year int) (float64, float64, error) {
 	query := `
 		SELECT
 			COALESCE(SUM(amount), 0) AS total_income,
@@ -90,12 +90,12 @@ func (m *IncomeModel) GetMonthlyIncomeIncrease(userID string) (int, int, error) 
 		previousYear--
 	}
 
-	currentMonthIncome, currentMonthPlanned, err := m.GetIncomeForMonth(userID, currentMonth, currentYear)
+	currentMonthIncome, currentMonthPlanned, err := m.ListByMonth(userID, currentMonth, currentYear)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	previousMonthIncome, _, err := m.GetIncomeForMonth(userID, previousMonth, previousYear)
+	previousMonthIncome, _, err := m.ListByMonth(userID, previousMonth, previousYear)
 	if err != nil {
 		return 0, 0, err
 	}

@@ -2,10 +2,12 @@ package service
 
 import (
 	"github.com/wachrusz/Back-End-API/internal/mydatabase"
+	"github.com/wachrusz/Back-End-API/internal/repository"
 	"github.com/wachrusz/Back-End-API/internal/service/categories"
 	"github.com/wachrusz/Back-End-API/internal/service/currency"
 	"github.com/wachrusz/Back-End-API/internal/service/email"
 	"github.com/wachrusz/Back-End-API/internal/service/fin_health"
+	"github.com/wachrusz/Back-End-API/internal/service/goals"
 	"github.com/wachrusz/Back-End-API/internal/service/token"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	"github.com/wachrusz/Back-End-API/pkg/rabbit"
@@ -18,11 +20,13 @@ type Services struct {
 	Currency   currency.CurrencyService
 	Tokens     token.Tokens
 	FinHealth  fin_health.Health
+	Goals      goals.Goals
 }
 
 type Dependencies struct {
 	Repo                  *mydatabase.Database
 	Mailer                rabbit.Mailer
+	Models                repository.Models
 	AccessTokenDurMinutes int
 }
 
@@ -36,13 +40,14 @@ func NewServices(deps Dependencies) (*Services, error) {
 	u := user.NewService(deps.Repo, cat)
 	h := fin_health.NewService(deps.Repo)
 	t := token.NewService(deps.Repo, e, u, deps.AccessTokenDurMinutes)
+	g := goals.NewService(deps.Models.Goals, deps.Models.GoalsTransactions)
 	return &Services{
 		Users:      u,
 		Categories: cat,
 		Emails:     e,
-		//Reports:    report.NewService(deps.Repo),
-		Currency:  cur,
-		Tokens:    t,
-		FinHealth: h,
+		Currency:   cur,
+		Tokens:     t,
+		FinHealth:  h,
+		Goals:      g,
 	}, nil
 }

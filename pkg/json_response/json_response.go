@@ -73,5 +73,6 @@ type CodeError struct {
 }
 
 type IdRequest struct {
+	// TODO: int64 type
 	ID string `json:"id"`
 }

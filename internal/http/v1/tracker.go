@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/myerrors"
 	"github.com/wachrusz/Back-End-API/internal/repository/models"
+	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
-	"go.uber.org/zap"
-
 	utility "github.com/wachrusz/Back-End-API/pkg/util"
 )
 
@@ -45,9 +45,15 @@ func (h *MyHandler) CreateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal := goalR.Goal
 
 	// Extract the user ID from the request context
-	userID, ok := utility.GetUserIDFromContext(r.Context())
+	userIDStr, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("invalid user ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -101,9 +107,15 @@ func (h *MyHandler) UpdateGoalHandler(w http.ResponseWriter, r *http.Request) {
 	goal := goalR.Goal
 
 	// Extract the user ID from the request context
-	userID, ok := utility.GetUserIDFromContext(r.Context())
+	userIDStr, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("invalid user ID: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -153,13 +165,25 @@ func (h *MyHandler) DeleteGoalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := utility.GetUserIDFromContext(r.Context())
+	goalID, err := strconv.ParseInt(id.ID, 10, 64)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("invalid user ID: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	userIDStr, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		h.errResp(w, fmt.Errorf("user not authenticated"), http.StatusUnauthorized)
 		return
 	}
 
-	if err := h.m.Goals.Delete(id.ID, userID); err != nil {
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("invalid user ID: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	if err := h.m.Goals.Delete(goalID, userID); err != nil {
 		if errors.Is(err, myerrors.ErrNotFound) {
 			h.errResp(w, fmt.Errorf("goal not found: %v", err), http.StatusNotFound)
 		} else {

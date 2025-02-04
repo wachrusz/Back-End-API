@@ -187,77 +187,78 @@ func (s *Service) GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, 
 	return analytics, nil
 }
 
-func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
-	queryGoal := "SELECT id, goal, need, currency, current_state, start_date, end_date FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
-	rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
-	if err != nil {
-		return nil, err
-	}
-	defer rowsGoal.Close()
-
-	var goalList []models.Goal
-	for rowsGoal.Next() {
-		var goal models.Goal
-		if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState, &goal.StartDate, &goal.EndDate); err != nil {
+/*
+	func (s *Service) GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error) {
+		queryGoal := "SELECT id, goal, need, currency, current_state, start_date, end_date FROM goal WHERE user_id = $1 LIMIT $2 OFFSET $3;"
+		rowsGoal, err := s.repo.Query(queryGoal, userID, limitStr, offsetStr)
+		if err != nil {
 			return nil, err
 		}
-		goal.UserID = userID
-		goal.Need = s.ConvertCurrency(goal.Need, goal.Currency, currencyCode)
-		goalList = append(goalList, goal)
-	}
-	trackingState := &repository.TrackingState{
-		State:  s.getTotalState(userID, currencyCode),
-		UserID: userID,
+		defer rowsGoal.Close()
+
+		var goalList []models.Goal
+		for rowsGoal.Next() {
+			var goal models.Goal
+			if err := rowsGoal.Scan(&goal.ID, &goal.Goal, &goal.Need, &goal.Currency, &goal.CurrentState, &goal.StartDate, &goal.EndDate); err != nil {
+				return nil, err
+			}
+			goal.UserID = userID
+			goal.Need = s.ConvertCurrency(goal.Need, goal.Currency, currencyCode)
+			goalList = append(goalList, goal)
+		}
+		trackingState := &repository.TrackingState{
+			State:  s.getTotalState(userID, currencyCode),
+			UserID: userID,
+		}
+
+		tracker := &Tracker{
+			TrackingState: *trackingState,
+			Goal:          goalList,
+		}
+
+		return tracker, nil
 	}
 
-	tracker := &Tracker{
-		TrackingState: *trackingState,
-		Goal:          goalList,
-	}
-
-	return tracker, nil
-}
-
-func (s *Service) getTotalState(userID string, convertionCode string) float64 {
-	var state float64
-	query := `
-	WITH all_transactions AS (
-		SELECT                                     
-			income.id,
-			CASE                                                    
-				WHEN income.currency_code = 'RUB' THEN income.amount
-				ELSE income.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = income.currency_code), 1)
-			END AS converted_amount
-		FROM
-			income
-		WHERE
-			income.user_id = $1
-		UNION ALL
+	func (s *Service) getTotalState(userID string, convertionCode string) float64 {
+		var state float64
+		query := `
+		WITH all_transactions AS (
+			SELECT
+				income.id,
+				CASE
+					WHEN income.currency_code = 'RUB' THEN income.amount
+					ELSE income.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = income.currency_code), 1)
+				END AS converted_amount
+			FROM
+				income
+			WHERE
+				income.user_id = $1
+			UNION ALL
+			SELECT
+				expense.id,
+				CASE
+					WHEN expense.currency_code = 'RUB' THEN -expense.amount
+					ELSE -expense.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = expense.currency_code), 1)
+				END AS converted_amount
+			FROM
+				expense
+			WHERE
+				expense.user_id = $1
+		)
 		SELECT
-			expense.id,
-			CASE
-				WHEN expense.currency_code = 'RUB' THEN -expense.amount
-				ELSE -expense.amount * COALESCE((SELECT rate_to_ruble FROM exchange_rates WHERE currency_code = expense.currency_code), 1)
-			END AS converted_amount                                                                                                      
-		FROM                       
-			expense
-		WHERE
-			expense.user_id = $1
-	)                             
-	SELECT
-		COALESCE(SUM(converted_amount), 0) AS total_balance_in_rubles
-	FROM                                                                                                             
-		all_transactions;
-	
-	`
-	err := s.repo.QueryRow(query, userID).Scan(&state)
-	if err != nil {
-		log.Println(err)
-		return 0
-	}
-	return s.ConvertCurrency(state, "RUB", convertionCode)
-}
+			COALESCE(SUM(converted_amount), 0) AS total_balance_in_rubles
+		FROM
+			all_transactions;
 
+		`
+		err := s.repo.QueryRow(query, userID).Scan(&state)
+		if err != nil {
+			log.Println(err)
+			return 0
+		}
+		return s.ConvertCurrency(state, "RUB", convertionCode)
+	}
+*/
 func (s *Service) GetUserInfoFromDB(userID string) (string, string, error) {
 	query := "SELECT surname, name FROM users WHERE id = $1"
 	var surname, name string
@@ -482,7 +483,7 @@ func (s *Service) GetOperationArchiveFromDB(userID, limit, offset string) ([]rep
 
 type Categories interface {
 	GetAnalyticsFromDB(userID, currencyCode, limitStr, offsetStr, startDateStr, endDateStr string) (*Analytics, error)
-	GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error)
+	//GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr string) (*Tracker, error)
 	GetUserInfoFromDB(userID string) (string, string, error)
 	GetMoreFromDB(userID string) (*More, error)
 	GetAppFromDB(userID string) (*repository.App, error)
