@@ -32,6 +32,13 @@ func SendErrorResponse(w http.ResponseWriter, err error, statusCode int) {
 	w.Write(jsonData)
 }
 
+// Metadata defines a new struct for holding the pagination metadata.
+type Metadata struct {
+	CurrentPage  int `json:"current_page,omitempty"`
+	PageSize     int `json:"page_size,omitempty"`
+	TotalRecords int `json:"total_records,omitempty"`
+}
+
 type IdResponse struct {
 	Message    string `json:"message"`
 	Id         int64  `json:"id"`
@@ -73,5 +80,6 @@ type CodeError struct {
 }
 
 type IdRequest struct {
+	// TODO: int64 type
 	ID string `json:"id"`
 }

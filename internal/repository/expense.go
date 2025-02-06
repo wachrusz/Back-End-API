@@ -37,7 +37,7 @@ func (m *ExpenseModel) Create(expense *models.Expense) (int64, error) {
 	return expenseID, nil
 }
 
-func (m *ExpenseModel) GetByUserID(userID string) ([]models.Expense, error) {
+func (m *ExpenseModel) ListByUserID(userID string) ([]models.Expense, error) {
 	rows, err := m.DB.Query("SELECT id, amount, date, planned, category, sent_to, connected_account, currency_code FROM expense WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err

@@ -2646,6 +2646,55 @@ const docTemplate = `{
             }
         },
         "/tracker/goal": {
+            "get": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Get the existing goal details by id.",
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Get goal details",
+                "parameters": [
+                    {
+                        "description": "goal id",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "goal fetched successfully",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalDetailsResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error getting goal details",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -2811,6 +2860,57 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/tracker/goal/transaction": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Creates new transaction for the goal.",
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Create goal transaction",
+                "parameters": [
+                    {
+                        "description": "goal transaction",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalTransactionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "goal transactions created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalDetailsResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error getting goal details",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2845,23 +2945,6 @@ const docTemplate = `{
                 },
                 "settings": {
                     "$ref": "#/definitions/repository.Settings"
-                }
-            }
-        },
-        "categories.Tracker": {
-            "type": "object",
-            "properties": {
-                "fin_health": {
-                    "$ref": "#/definitions/repository.FinHealth"
-                },
-                "goal": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Goal"
-                    }
-                },
-                "tracking_state": {
-                    "$ref": "#/definitions/repository.TrackingState"
                 }
             }
         },
@@ -2934,6 +3017,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "id": {
+                    "description": "TODO: int64 type",
                     "type": "string"
                 }
             }
@@ -2948,6 +3032,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
+        "jsonresponse.Metadata": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total_records": {
                     "type": "integer"
                 }
             }
@@ -3041,29 +3139,95 @@ const docTemplate = `{
         "models.Goal": {
             "type": "object",
             "properties": {
+                "additional_months": {
+                    "type": "integer"
+                },
+                "amount": {
+                    "type": "number"
+                },
                 "currency": {
                     "type": "string"
                 },
-                "current_state": {
-                    "type": "number"
-                },
-                "end_date": {
-                    "type": "string"
-                },
-                "goal": {
+                "date": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
                 },
-                "need": {
-                    "type": "number"
+                "is_completed": {
+                    "type": "boolean"
                 },
-                "start_date": {
+                "months": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.GoalDetails": {
+            "type": "object",
+            "properties": {
+                "current_need": {
+                    "type": "number"
+                },
+                "current_payment": {
+                    "type": "number"
+                },
+                "gathered": {
+                    "type": "number"
+                },
+                "goal": {
+                    "$ref": "#/definitions/models.Goal"
+                },
+                "month": {
+                    "type": "integer"
+                },
+                "monthly_payment": {
+                    "type": "number"
+                }
+            }
+        },
+        "models.GoalTrackerInfo": {
+            "type": "object",
+            "properties": {
+                "goal": {
+                    "$ref": "#/definitions/models.Goal"
+                },
+                "transactions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.GoalTransaction"
+                    }
+                }
+            }
+        },
+        "models.GoalTransaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "bank_account": {
                     "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "goal_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "planned": {
+                    "type": "boolean"
                 }
             }
         },
@@ -3227,35 +3391,6 @@ const docTemplate = `{
                 }
             }
         },
-        "repository.FinHealth": {
-            "type": "object",
-            "properties": {
-                "expense_score": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "income_score": {
-                    "type": "integer"
-                },
-                "investment_score": {
-                    "type": "integer"
-                },
-                "obligation_score": {
-                    "type": "integer"
-                },
-                "plan_score": {
-                    "type": "integer"
-                },
-                "total_score": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "string"
-                }
-            }
-        },
         "repository.GetTokenRequest": {
             "type": "object",
             "properties": {
@@ -3338,17 +3473,6 @@ const docTemplate = `{
             "properties": {
                 "subscriptions": {
                     "$ref": "#/definitions/models.Subscription"
-                }
-            }
-        },
-        "repository.TrackingState": {
-            "type": "object",
-            "properties": {
-                "state": {
-                    "type": "number"
-                },
-                "user_id": {
-                    "type": "string"
                 }
             }
         },
@@ -3473,11 +3597,33 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.GoalDetailsResp": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "$ref": "#/definitions/models.GoalDetails"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status_code": {
+                    "type": "integer"
+                }
+            }
+        },
         "v1.GoalRequest": {
             "type": "object",
             "properties": {
                 "goal": {
                     "$ref": "#/definitions/models.Goal"
+                }
+            }
+        },
+        "v1.GoalTransactionReq": {
+            "type": "object",
+            "properties": {
+                "transaction": {
+                    "$ref": "#/definitions/models.GoalTransaction"
                 }
             }
         },
@@ -3554,9 +3700,6 @@ const docTemplate = `{
         "v1.ProfileTrackerResponse": {
             "type": "object",
             "properties": {
-                "currency": {
-                    "type": "string"
-                },
                 "message": {
                     "type": "string"
                 },
@@ -3564,7 +3707,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "tracker": {
-                    "$ref": "#/definitions/categories.Tracker"
+                    "$ref": "#/definitions/v1.Tracker"
                 }
             }
         },
@@ -3656,6 +3799,20 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.Tracker": {
+            "type": "object",
+            "properties": {
+                "goals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.GoalTrackerInfo"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/jsonresponse.Metadata"
                 }
             }
         },

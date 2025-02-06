@@ -3,12 +3,38 @@ package models
 import "time"
 
 type Goal struct {
-	ID           int64     `json:"id"`
-	Goal         string    `json:"goal"`
-	Need         float64   `json:"need"`
-	CurrentState float64   `json:"current_state"`
-	Currency     string    `json:"currency"`
-	StartDate    time.Time `json:"start_date"`
-	EndDate      time.Time `json:"end_date"`
-	UserID       string    `json:"user_id"`
+	ID               int64     `json:"id"`
+	Name             string    `json:"name"`
+	Amount           float64   `json:"amount"`
+	Currency         string    `json:"currency"`
+	Date             time.Time `json:"date"`
+	Months           int       `json:"months"`
+	UserID           int64     `json:"user_id"`
+	AdditionalMonths int       `json:"additional_months"`
+	IsCompleted      bool      `json:"is_completed"`
+}
+
+type GoalTransaction struct {
+	ID          int64     `json:"id"`
+	GoalID      int64     `json:"goal_id"`
+	Amount      float64   `json:"amount"`
+	Currency    string    `json:"currency"`
+	Date        time.Time `json:"date"`
+	Planned     bool      `json:"planned"`
+	BankAccount string    `json:"bank_account"`
+	//Type        string    `json:"type"`
+}
+
+type GoalDetails struct {
+	Goal           Goal    `json:"goal"`
+	Month          int     `json:"month"`
+	MonthlyPayment float64 `json:"monthly_payment"`
+	CurrentPayment float64 `json:"current_payment"`
+	CurrentNeed    float64 `json:"current_need"`
+	Gathered       float64 `json:"gathered"`
+}
+
+type GoalTrackerInfo struct {
+	Goal         *Goal              `json:"goal"`
+	Transactions []*GoalTransaction `json:"transactions"`
 }

@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/wachrusz/Back-End-API/internal/repository"
+	"github.com/wachrusz/Back-End-API/internal/repository/models"
 	"github.com/wachrusz/Back-End-API/internal/service/categories"
 	"github.com/wachrusz/Back-End-API/internal/service/user"
 	jsonresponse "github.com/wachrusz/Back-End-API/pkg/json_response"
 	"github.com/wachrusz/Back-End-API/pkg/util"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 )
 
 type ProfileResponse struct {
@@ -114,11 +116,16 @@ func (h *MyHandler) GetProfileAnalyticsHandler(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(response)
 }
 
+// Tracker represents the structure for tracking data, including tracking state and goals.
+type Tracker struct {
+	Goals    []*models.GoalTrackerInfo `json:"goals"`
+	Metadata *jsonresponse.Metadata    `json:"metadata"`
+}
+
 type ProfileTrackerResponse struct {
-	Message    string             `json:"message"`
-	Tracker    categories.Tracker `json:"tracker"`
-	Currency   string             `json:"currency"`
-	StatusCode int                `json:"status_code"`
+	Message    string  `json:"message"`
+	Tracker    Tracker `json:"tracker"`
+	StatusCode int     `json:"status_code"`
 }
 
 // GetProfileTrackerHandler retrieves tracker data for the user's profile.
@@ -137,28 +144,46 @@ type ProfileTrackerResponse struct {
 // @Security JWT
 // @Router /profile/tracker [get]
 func (h *MyHandler) GetProfileTrackerHandler(w http.ResponseWriter, r *http.Request) {
-	userID, ok := utility.GetUserIDFromContext(r.Context())
+	userIDStr, ok := utility.GetUserIDFromContext(r.Context())
 	if !ok {
 		h.errResp(w, errors.New("User not authenticated: "), http.StatusUnauthorized)
 		return
 	}
 
-	currencyCode := r.Header.Get("X-Currency")
-	limitStr := r.URL.Query().Get("limit")
-	offsetStr := r.URL.Query().Get("offset")
-
-	tracker, err := h.s.Categories.GetTrackerFromDB(userID, currencyCode, limitStr, offsetStr)
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
 	if err != nil {
-		h.errResp(w, errors.New("Failed to get tracker data: "+err.Error()), http.StatusInternalServerError)
+		h.errResp(w, fmt.Errorf("invalid user ID: %w", err), http.StatusBadRequest)
 		return
 	}
+
+	//currencyCode := r.Header.Get("X-Currency")
+	limitStr := r.URL.Query().Get("limit")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 10
+	}
+	offsetStr := r.URL.Query().Get("offset")
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
+	goals, meta, err := h.s.Categories.GetTrackerFromDB(userID, limit, offset)
+	if err != nil {
+		h.errResp(w, fmt.Errorf("failed to get tracker data: %w", err), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	response := ProfileTrackerResponse{
-		Message:    "Successfully got tracker",
-		Tracker:    *tracker,
-		Currency:   currencyCode,
+		Message: "Successfully got tracker",
+		Tracker: Tracker{
+			Goals:    goals,
+			Metadata: meta,
+		},
 		StatusCode: http.StatusOK,
 	}
+
 	w.WriteHeader(response.StatusCode)
 	json.NewEncoder(w).Encode(response)
 }

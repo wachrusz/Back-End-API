@@ -43,6 +43,8 @@ func (h *MyHandler) RegisterHandler(r chi.Router) {
 		r.Post("/", h.AuthMiddleware(h.CreateGoalHandler))
 		r.Put("/", h.AuthMiddleware(h.UpdateGoalHandler))
 		r.Delete("/", h.AuthMiddleware(h.DeleteGoalHandler))
+		r.Get("/", h.AuthMiddleware(h.GetGoalDetailsHandler))
+		r.Post("/transaction", h.AuthMiddleware(h.CreateGoalTransactionHandler))
 	})
 
 	r.Route("/settings/subscription", func(r chi.Router) {
