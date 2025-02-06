@@ -35,10 +35,10 @@ func (m *GoalModel) Update(goal *models.Goal) error {
 			currency_code = $2,
             name = $3,
             months = $4,
-            additional_months = $5,
+            is_exceeded = $5,
             is_completed = $6
 		WHERE id = $7 AND user_id = $8
-	`, goal.Amount, goal.Currency, goal.Name, goal.Months, goal.AdditionalMonths, goal.IsCompleted, goal.ID, goal.UserID)
+	`, goal.Amount, goal.Currency, goal.Name, goal.Months, goal.IsExceeded, goal.IsCompleted, goal.ID, goal.UserID)
 
 	if err != nil {
 		return fmt.Errorf("%w: %v", myerrors.ErrInternal, err) // Ошибка получения числа затронутых строк
@@ -80,7 +80,7 @@ func (m *GoalModel) Delete(id int64, userID int64) error {
 }
 
 func (m *GoalModel) ListByUserID(userID int64) ([]models.Goal, error) {
-	rows, err := m.DB.Query("SELECT id, amount, currency_code, name, months, additional_months, is_completed, start_date FROM goals WHERE user_id = $1", userID)
+	rows, err := m.DB.Query("SELECT id, amount, currency_code, name, months, is_exceeded, is_completed, start_date FROM goals WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func (m *GoalModel) ListByUserID(userID int64) ([]models.Goal, error) {
 	for rows.Next() {
 		var goal models.Goal
 		if err := rows.Scan(&goal.ID, &goal.Amount, &goal.Currency, &goal.Name,
-			&goal.Months, &goal.AdditionalMonths, &goal.IsCompleted, &goal.Date); err != nil {
+			&goal.Months, &goal.IsExceeded, &goal.IsCompleted, &goal.Date); err != nil {
 			return nil, err
 		}
 		goal.UserID = userID
@@ -110,7 +110,7 @@ func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error)
 		g.user_id, 
 		g.name, 
 		g.months, 
-		g.additional_months, 
+		g.is_exceeded, 
 		g.is_completed, 
 		g.start_date,
 		-- Количество месяцев, прошедших с start_date
@@ -157,15 +157,38 @@ func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error)
 	`
 
 	err := m.DB.QueryRow(q, id, userID).Scan(&d.Goal.Amount, &d.Goal.Currency, &d.Goal.UserID, &d.Goal.Name,
-		&d.Goal.Months, &d.Goal.AdditionalMonths, &d.Goal.IsCompleted, &d.Goal.Date,
+		&d.Goal.Months, &d.Goal.IsExceeded, &d.Goal.IsCompleted, &d.Goal.Date,
 		&d.Month, &d.Gathered, &d.CurrentPayment)
 	if err != nil {
 		return nil, err
 	}
 
 	d.Goal.ID = id
-	d.MonthlyPayment = d.Goal.Amount / float64(d.Goal.Months)
-	d.CurrentNeed = d.MonthlyPayment*float64(d.Month+1) - d.Gathered
+
+	if d.Goal.Amount <= d.Gathered {
+		d.Goal.IsCompleted = true
+		cp := d.Goal
+		go m.Update(&cp)
+	}
+
+	if d.Goal.IsCompleted {
+		return &d, nil
+	}
+
+	if !d.Goal.IsExceeded && d.Goal.Months <= d.Month {
+		d.Goal.IsExceeded = true
+		cp := d.Goal
+		go m.Update(&cp)
+	}
+
+	if d.Goal.IsExceeded {
+		d.CurrentNeed = d.Goal.Amount - d.Gathered
+		d.MonthlyPayment = d.CurrentNeed
+		return &d, nil
+	}
+
+	d.MonthlyPayment = (d.Goal.Amount - (d.Gathered - d.CurrentPayment)) / float64(d.Goal.Months-d.Month)
+	d.CurrentNeed = max(d.MonthlyPayment-d.CurrentPayment, 0)
 
 	return &d, nil
 }
@@ -228,7 +251,7 @@ func (m *GoalModel) TrackerInfo(userID int64, limit, offset int) ([]*models.Goal
 	}
 
 	goalRows, err := tx.Query(`
-		SELECT COUNT(*) OVER(), id, amount, currency_code, name, months, additional_months, is_completed, start_date 
+		SELECT COUNT(*) OVER(), id, amount, currency_code, name, months, is_exceeded, is_completed, start_date 
 		FROM goals 
 		WHERE user_id=$1
 		LIMIT $2 OFFSET $3`, userID, limit, offset,
@@ -242,7 +265,7 @@ func (m *GoalModel) TrackerInfo(userID int64, limit, offset int) ([]*models.Goal
 	for goalRows.Next() {
 		var goal models.Goal
 		if err := goalRows.Scan(&meta.TotalRecords, &goal.ID, &goal.Amount, &goal.Currency, &goal.Name,
-			&goal.Months, &goal.AdditionalMonths, &goal.IsCompleted, &goal.Date); err != nil {
+			&goal.Months, &goal.IsExceeded, &goal.IsCompleted, &goal.Date); err != nil {
 			return nil, nil, err
 		}
 

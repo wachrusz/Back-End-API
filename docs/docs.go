@@ -3139,9 +3139,6 @@ const docTemplate = `{
         "models.Goal": {
             "type": "object",
             "properties": {
-                "additional_months": {
-                    "type": "integer"
-                },
                 "amount": {
                     "type": "number"
                 },
@@ -3155,6 +3152,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "is_completed": {
+                    "type": "boolean"
+                },
+                "is_exceeded": {
                     "type": "boolean"
                 },
                 "months": {

@@ -45,18 +45,6 @@ func (s *Service) Details(goalID, userID int64) (*models.GoalDetails, error) {
 		return nil, err
 	}
 
-	if details.Goal.Amount <= details.Gathered {
-		details.Goal.IsCompleted = true
-		if err := s.Update(&details.Goal); err != nil {
-			return nil, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
-		}
-	} else if !details.Goal.IsCompleted && details.Month+details.Goal.AdditionalMonths+1 >= details.Goal.Months {
-		details.Goal.AdditionalMonths++
-		if err := s.Update(&details.Goal); err != nil {
-			return nil, fmt.Errorf("%w: %v", myerrors.ErrInternal, err)
-		}
-	}
-
 	return details, nil
 }
 
