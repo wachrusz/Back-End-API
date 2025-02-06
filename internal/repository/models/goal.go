@@ -26,7 +26,7 @@ type GoalTransaction struct {
 }
 
 type GoalDetails struct {
-	Goal           *Goal   `json:"goal"`
+	Goal           Goal    `json:"goal"`
 	Month          int     `json:"month"`
 	MonthlyPayment float64 `json:"monthly_payment"`
 	CurrentPayment float64 `json:"current_payment"`

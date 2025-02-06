@@ -133,8 +133,8 @@ func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error)
 		-- Конвертированная сумма транзакций за последний месяц
 		COALESCE(SUM(
 			CASE
-				WHEN gt.created_at >= DATE_TRUNC('month', CURRENT_DATE) AND 
-				     gt.created_at < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' 
+				WHEN gt.date >= DATE_TRUNC('month', CURRENT_DATE) AND 
+				     gt.date < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' 
 				THEN 
 					CASE
 						WHEN gt.currency_code = g.currency_code THEN gt.amount
@@ -156,8 +156,8 @@ func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error)
 	GROUP BY g.id;
 	`
 
-	err := m.DB.QueryRow(q, id, userID).Scan(d.Goal.Amount, d.Goal.Currency, d.Goal.UserID, d.Goal.Name,
-		d.Goal.Months, d.Goal.AdditionalMonths, d.Goal.IsCompleted, d.Goal.Date,
+	err := m.DB.QueryRow(q, id, userID).Scan(&d.Goal.Amount, &d.Goal.Currency, &d.Goal.UserID, &d.Goal.Name,
+		&d.Goal.Months, &d.Goal.AdditionalMonths, &d.Goal.IsCompleted, &d.Goal.Date,
 		&d.Month, &d.Gathered, &d.CurrentPayment)
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (m *GoalModel) Details(id int64, userID int64) (*models.GoalDetails, error)
 
 	d.Goal.ID = id
 	d.MonthlyPayment = d.Goal.Amount / float64(d.Goal.Months)
-	d.CurrentNeed = d.MonthlyPayment - d.CurrentPayment
+	d.CurrentNeed = d.MonthlyPayment*float64(d.Month+1) - d.Gathered
 
 	return &d, nil
 }

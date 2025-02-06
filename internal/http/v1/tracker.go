@@ -280,7 +280,7 @@ type GoalTransactionReq struct {
 // @Failure 401 {object} jsonresponse.ErrorResponse "User not authenticated"
 // @Failure 500 {object} jsonresponse.ErrorResponse "Error getting goal details"
 // @Security JWT
-// @Router /tracker/goal [get]
+// @Router /tracker/goal/transaction [post]
 func (h *MyHandler) CreateGoalTransactionHandler(w http.ResponseWriter, r *http.Request) {
 	h.l.Debug("Getting goal details...")
 

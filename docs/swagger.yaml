@@ -2363,17 +2363,17 @@ paths:
       tags:
       - Tracker
     get:
-      description: Creates new transaction for the goal.
+      description: Get the existing goal details by id.
       parameters:
-      - description: goal transaction
+      - description: goal id
         in: body
         name: ConnectedAccount
         required: true
         schema:
-          $ref: '#/definitions/v1.GoalTransactionReq'
+          $ref: '#/definitions/jsonresponse.IdRequest'
       responses:
-        "201":
-          description: goal transactions created successfully
+        "200":
+          description: goal fetched successfully
           schema:
             $ref: '#/definitions/v1.GoalDetailsResp'
         "400":
@@ -2390,7 +2390,7 @@ paths:
             $ref: '#/definitions/jsonresponse.ErrorResponse'
       security:
       - JWT: []
-      summary: Create goal transaction
+      summary: Get goal details
       tags:
       - Tracker
     post:
@@ -2465,6 +2465,38 @@ paths:
       security:
       - JWT: []
       summary: Update the goal
+      tags:
+      - Tracker
+  /tracker/goal/transaction:
+    post:
+      description: Creates new transaction for the goal.
+      parameters:
+      - description: goal transaction
+        in: body
+        name: ConnectedAccount
+        required: true
+        schema:
+          $ref: '#/definitions/v1.GoalTransactionReq'
+      responses:
+        "201":
+          description: goal transactions created successfully
+          schema:
+            $ref: '#/definitions/v1.GoalDetailsResp'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "401":
+          description: User not authenticated
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+        "500":
+          description: Error getting goal details
+          schema:
+            $ref: '#/definitions/jsonresponse.ErrorResponse'
+      security:
+      - JWT: []
+      summary: Create goal transaction
       tags:
       - Tracker
 schemes:

@@ -2652,25 +2652,25 @@ const docTemplate = `{
                         "JWT": []
                     }
                 ],
-                "description": "Creates new transaction for the goal.",
+                "description": "Get the existing goal details by id.",
                 "tags": [
                     "Tracker"
                 ],
-                "summary": "Create goal transaction",
+                "summary": "Get goal details",
                 "parameters": [
                     {
-                        "description": "goal transaction",
+                        "description": "goal id",
                         "name": "ConnectedAccount",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.GoalTransactionReq"
+                            "$ref": "#/definitions/jsonresponse.IdRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "goal transactions created successfully",
+                    "200": {
+                        "description": "goal fetched successfully",
                         "schema": {
                             "$ref": "#/definitions/v1.GoalDetailsResp"
                         }
@@ -2854,6 +2854,57 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Error deleting goal",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/tracker/goal/transaction": {
+            "post": {
+                "security": [
+                    {
+                        "JWT": []
+                    }
+                ],
+                "description": "Creates new transaction for the goal.",
+                "tags": [
+                    "Tracker"
+                ],
+                "summary": "Create goal transaction",
+                "parameters": [
+                    {
+                        "description": "goal transaction",
+                        "name": "ConnectedAccount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalTransactionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "goal transactions created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/v1.GoalDetailsResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "User not authenticated",
+                        "schema": {
+                            "$ref": "#/definitions/jsonresponse.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error getting goal details",
                         "schema": {
                             "$ref": "#/definitions/jsonresponse.ErrorResponse"
                         }
